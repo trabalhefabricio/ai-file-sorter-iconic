@@ -77,9 +77,18 @@ std::string llm_choice_to_string(LLMChoice choice) {
         case LLMChoice::Local_3b: return "Local_3b";
         case LLMChoice::Local_7b: return "Local_7b";
         case LLMChoice::Remote: return "Remote";
+        case LLMChoice::Gemini: return "Gemini";
         case LLMChoice::Custom: return "Custom";
         default: return "Unset";
     }
+}
+
+std::string trim_string(const std::string& str) {
+    auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
+    auto trimmed = str;
+    trimmed.erase(trimmed.begin(), std::find_if(trimmed.begin(), trimmed.end(), not_space));
+    trimmed.erase(std::find_if(trimmed.rbegin(), trimmed.rend(), not_space).base(), trimmed.end());
+    return trimmed;
 }
 
 void set_bool_setting(IniConfig& config, const std::string& section, const char* key, bool value) {
@@ -170,6 +179,7 @@ LLMChoice Settings::parse_llm_choice() const
     if (value == "Local_3b") return LLMChoice::Local_3b;
     if (value == "Local_7b") return LLMChoice::Local_7b;
     if (value == "Remote")   return LLMChoice::Remote;
+    if (value == "Gemini")   return LLMChoice::Gemini;
     if (value == "Custom")   return LLMChoice::Custom;
     return LLMChoice::Unset;
 }
@@ -180,6 +190,8 @@ void Settings::load_basic_settings(const std::function<bool(const char*, bool)>&
     llm_choice = parse_llm_choice();
     set_remote_api_key(config.getValue("Settings", "RemoteApiKey", ""));
     set_remote_model(config.getValue("Settings", "RemoteModel", "gpt-4o-mini"));
+    set_gemini_api_key(config.getValue("Settings", "GeminiApiKey", ""));
+    set_gemini_model(config.getValue("Settings", "GeminiModel", "gemini-1.5-flash"));
     use_subcategories = load_bool("UseSubcategories", false);
     use_consistency_hints = load_bool("UseConsistencyHints", false);
     categorize_files = load_bool("CategorizeFiles", true);
@@ -247,6 +259,8 @@ void Settings::save_core_settings()
     config.setValue(settings_section, "LLMChoice", llm_choice_to_string(llm_choice));
     config.setValue(settings_section, "RemoteApiKey", remote_api_key);
     config.setValue(settings_section, "RemoteModel", remote_model.empty() ? "gpt-4o-mini" : remote_model);
+    config.setValue(settings_section, "GeminiApiKey", gemini_api_key);
+    config.setValue(settings_section, "GeminiModel", gemini_model.empty() ? "gemini-1.5-flash" : gemini_model);
     set_bool_setting(config, settings_section, "UseSubcategories", use_subcategories);
     set_bool_setting(config, settings_section, "UseConsistencyHints", use_consistency_hints);
     set_bool_setting(config, settings_section, "CategorizeFiles", categorize_files);
@@ -376,11 +390,7 @@ std::string Settings::get_remote_api_key() const
 
 void Settings::set_remote_api_key(const std::string& key)
 {
-    auto trimmed = key;
-    auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
-    trimmed.erase(trimmed.begin(), std::find_if(trimmed.begin(), trimmed.end(), not_space));
-    trimmed.erase(std::find_if(trimmed.rbegin(), trimmed.rend(), not_space).base(), trimmed.end());
-    remote_api_key = trimmed;
+    remote_api_key = trim_string(key);
 }
 
 std::string Settings::get_remote_model() const
@@ -390,14 +400,35 @@ std::string Settings::get_remote_model() const
 
 void Settings::set_remote_model(const std::string& model)
 {
-    auto trimmed = model;
-    auto not_space = [](unsigned char ch) { return !std::isspace(ch); };
-    trimmed.erase(trimmed.begin(), std::find_if(trimmed.begin(), trimmed.end(), not_space));
-    trimmed.erase(std::find_if(trimmed.rbegin(), trimmed.rend(), not_space).base(), trimmed.end());
+    auto trimmed = trim_string(model);
     if (trimmed.empty()) {
         trimmed = "gpt-4o-mini";
     }
     remote_model = trimmed;
+}
+
+std::string Settings::get_gemini_api_key() const
+{
+    return gemini_api_key;
+}
+
+void Settings::set_gemini_api_key(const std::string& key)
+{
+    gemini_api_key = trim_string(key);
+}
+
+std::string Settings::get_gemini_model() const
+{
+    return gemini_model;
+}
+
+void Settings::set_gemini_model(const std::string& model)
+{
+    auto trimmed = trim_string(model);
+    if (trimmed.empty()) {
+        trimmed = "gemini-1.5-flash";
+    }
+    gemini_model = trimmed;
 }
 
 std::string Settings::get_active_custom_llm_id() const
