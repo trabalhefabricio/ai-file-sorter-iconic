@@ -108,8 +108,8 @@ UndoManager::UndoResult UndoManager::undo_plan(const QString& plan_path) const
         const QJsonObject obj = val.toObject();
         const QString source = obj.value("source").toString();
         const QString destination = obj.value("destination").toString();
-        const qint64 expected_size = obj.value("size").toInteger(0);
-        const qint64 expected_mtime = obj.value("mtime").toInteger(0);
+        const qint64 expected_size = obj.value("size").toVariant().toLongLong();
+        const qint64 expected_mtime = obj.value("mtime").toVariant().toLongLong();
 
         QFileInfo dest_info(destination);
         if (!dest_info.exists()) {
