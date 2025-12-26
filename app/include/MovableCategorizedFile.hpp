@@ -28,8 +28,8 @@ public:
     std::string get_dir_path() const;
     std::string get_category() const;
     std::string get_subcategory() const;
-    void set_category(std::string& category);
-    void set_subcategory(std::string& subcategory);
+    void set_category(const std::string& category);
+    void set_subcategory(const std::string& subcategory);
 
 private:
     struct MovePaths {
@@ -42,6 +42,7 @@ private:
     bool destination_is_available(const std::filesystem::path& destination_path) const;
     bool perform_move(const std::filesystem::path& source_path,
                       const std::filesystem::path& destination_path) const;
+    void update_paths();
 
     std::string file_name;
     std::string dir_path;

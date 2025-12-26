@@ -274,14 +274,40 @@ std::string MovableCategorizedFile::get_subcategory() const
     return subcategory;
 }
 
-void MovableCategorizedFile::set_category(std::string& category)
+void MovableCategorizedFile::update_paths()
 {
-    this->category = category;
+    const std::filesystem::path base_dir = Utils::utf8_to_path(dir_path);
+    category_path = base_dir / Utils::utf8_to_path(category);
+    subcategory_path = category_path / Utils::utf8_to_path(subcategory);
+    destination_path = subcategory_path / Utils::utf8_to_path(file_name);
 }
 
-void MovableCategorizedFile::set_subcategory(std::string& subcategory)
+void MovableCategorizedFile::set_category(const std::string& new_category)
 {
-    this->subcategory = subcategory;
+    std::string validation_error;
+    if (!validate_labels(new_category, this->subcategory, validation_error)) {
+        if (auto logger = Logger::get_logger("core_logger")) {
+            logger->error("Invalid category '{}' in set_category: {}", new_category, validation_error);
+        }
+        throw std::runtime_error("Invalid category: " + validation_error);
+    }
+    
+    this->category = new_category;
+    update_paths();
+}
+
+void MovableCategorizedFile::set_subcategory(const std::string& new_subcategory)
+{
+    std::string validation_error;
+    if (!validate_labels(this->category, new_subcategory, validation_error)) {
+        if (auto logger = Logger::get_logger("core_logger")) {
+            logger->error("Invalid subcategory '{}' in set_subcategory: {}", new_subcategory, validation_error);
+        }
+        throw std::runtime_error("Invalid subcategory: " + validation_error);
+    }
+    
+    this->subcategory = new_subcategory;
+    update_paths();
 }
 
 MovableCategorizedFile::~MovableCategorizedFile() {}
