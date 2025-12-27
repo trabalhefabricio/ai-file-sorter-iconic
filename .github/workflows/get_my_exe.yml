@@ -189,17 +189,15 @@ jobs:
           
           if ($missingFiles.Count -gt 0) {
             if ("${{ steps.cache-llama.outputs.cache-hit }}" -eq "true") {
-              Write-Error @"
-Llama build verification failed: Missing $($missingFiles.Count) required files.
-Cache was restored but files are missing - this may indicate a corrupted cache.
-You may need to clear the cache and rebuild from scratch.
-"@
+              $errorMsg = "Llama build verification failed: Missing $($missingFiles.Count) required files.`n" +
+                          "Cache was restored but files are missing - this may indicate a corrupted cache.`n" +
+                          "You may need to clear the cache and rebuild from scratch."
+              Write-Error $errorMsg
             } else {
-              Write-Error @"
-Llama build verification failed: Missing $($missingFiles.Count) required files.
-This usually means the build_llama_windows.ps1 script failed silently.
-Check the 'Build Llama Engine' step logs for errors.
-"@
+              $errorMsg = "Llama build verification failed: Missing $($missingFiles.Count) required files.`n" +
+                          "This usually means the build_llama_windows.ps1 script failed silently.`n" +
+                          "Check the 'Build Llama Engine' step logs for errors."
+              Write-Error $errorMsg
             }
             exit 1
           }
@@ -278,10 +276,9 @@ Check the 'Build Llama Engine' step logs for errors.
         run: |
           $exePath = "$env:GITHUB_WORKSPACE\build\Release\aifilesorter.exe"
           if (-not (Test-Path $exePath)) {
-            Write-Error @"
-Build verification failed: Expected executable not found at $exePath
-Check the 'Build App' step logs for compilation errors.
-"@
+            $errorMsg = "Build verification failed: Expected executable not found at $exePath`n" +
+                        "Check the 'Build App' step logs for compilation errors."
+            Write-Error $errorMsg
             exit 1
           }
           
@@ -331,11 +328,10 @@ Check the 'Build App' step logs for compilation errors.
           }
           
           if ($missingFiles.Count -gt 0) {
-            Write-Error @"
-Bundle verification failed: Missing $($missingFiles.Count) critical files.
-This usually means windeployqt or dependency copying failed.
-Check the 'Bundle Files' step logs for errors.
-"@
+            $errorMsg = "Bundle verification failed: Missing $($missingFiles.Count) critical files.`n" +
+                        "This usually means windeployqt or dependency copying failed.`n" +
+                        "Check the 'Bundle Files' step logs for errors."
+            Write-Error $errorMsg
             exit 1
           }
           
