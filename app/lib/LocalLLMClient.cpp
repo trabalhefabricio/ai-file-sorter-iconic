@@ -3,8 +3,6 @@
 #include "Utils.hpp"
 #include "TestHooks.hpp"
 #include "LocalLLMTestAccess.hpp"
-#include "AppException.hpp"
-#include "ErrorCode.hpp"
 #include "llama.h"
 #include "gguf.h"
 #include "ggml-backend.h"
@@ -31,8 +29,6 @@
 #include <string_view>
 #include <string>
 #include <array>
-
-using namespace ErrorCodes;
 
 #if defined(__APPLE__)
 #include <mach/mach.h>
@@ -1435,8 +1431,7 @@ void LocalLLMClient::load_model_or_throw(const llama_model_params& model_params,
         if (logger) {
             logger->error("Failed to load model from '{}'", model_path);
         }
-        throw AppException(Code::LLM_MODEL_LOAD_FAILED, 
-            "Failed to load model from '" + model_path + "' - file may be corrupted or incompatible");
+        throw std::runtime_error("Failed to load model");
     }
 
     if (logger) {
