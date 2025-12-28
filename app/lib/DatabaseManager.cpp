@@ -1200,6 +1200,192 @@ void DatabaseManager::initialize_user_profile_schema() {
         db_log(spdlog::level::err, "Failed to create templates index: {}", error_msg);
         sqlite3_free(error_msg);
     }
+    
+    // Phase 1.1: Enhanced schema for new features
+    
+    // Confidence scores table
+    const char *confidence_scores_sql = R"(
+        CREATE TABLE IF NOT EXISTS confidence_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_name TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            dir_path TEXT NOT NULL,
+            category_confidence REAL NOT NULL,
+            subcategory_confidence REAL,
+            confidence_factors TEXT,
+            model_version TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(file_name, file_type, dir_path) REFERENCES file_categorization(file_name, file_type, dir_path),
+            UNIQUE(file_name, file_type, dir_path)
+        );
+    )";
+    if (sqlite3_exec(db, confidence_scores_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create confidence_scores table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Content analysis cache table
+    const char *content_analysis_sql = R"(
+        CREATE TABLE IF NOT EXISTS content_analysis_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_path TEXT NOT NULL UNIQUE,
+            content_hash TEXT NOT NULL,
+            mime_type TEXT,
+            keywords TEXT,
+            detected_language TEXT,
+            metadata TEXT,
+            analysis_summary TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    )";
+    if (sqlite3_exec(db, content_analysis_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create content_analysis_cache table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // API usage tracking table
+    const char *api_usage_sql = R"(
+        CREATE TABLE IF NOT EXISTS api_usage_tracking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            provider TEXT NOT NULL,
+            date DATE NOT NULL,
+            tokens_used INTEGER DEFAULT 0,
+            requests_made INTEGER DEFAULT 0,
+            cost_estimate REAL DEFAULT 0.0,
+            daily_limit INTEGER,
+            remaining INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(provider, date)
+        );
+    )";
+    if (sqlite3_exec(db, api_usage_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create api_usage_tracking table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Enhanced user profiles table for multiple profile support
+    const char *user_profiles_sql = R"(
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            profile_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_name TEXT UNIQUE NOT NULL,
+            is_active INTEGER DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            last_used DATETIME,
+            CHECK(is_active IN (0, 1))
+        );
+    )";
+    if (sqlite3_exec(db, user_profiles_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create user_profiles table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // User corrections table for learning
+    const char *user_corrections_sql = R"(
+        CREATE TABLE IF NOT EXISTS user_corrections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_path TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            original_category TEXT NOT NULL,
+            original_subcategory TEXT,
+            corrected_category TEXT NOT NULL,
+            corrected_subcategory TEXT,
+            file_extension TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            profile_id INTEGER,
+            FOREIGN KEY(profile_id) REFERENCES user_profiles(profile_id)
+        );
+    )";
+    if (sqlite3_exec(db, user_corrections_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create user_corrections table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Categorization sessions table
+    const char *sessions_sql = R"(
+        CREATE TABLE IF NOT EXISTS categorization_sessions (
+            session_id TEXT PRIMARY KEY,
+            folder_path TEXT NOT NULL,
+            started_at DATETIME NOT NULL,
+            completed_at DATETIME,
+            consistency_mode TEXT,
+            consistency_strength REAL DEFAULT 0.5,
+            files_processed INTEGER DEFAULT 0,
+            CHECK(consistency_mode IN ('refined', 'consistent', 'hybrid'))
+        );
+    )";
+    if (sqlite3_exec(db, sessions_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create categorization_sessions table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Enhanced undo history table
+    const char *undo_history_sql = R"(
+        CREATE TABLE IF NOT EXISTS undo_history (
+            undo_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plan_path TEXT NOT NULL,
+            description TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_undone INTEGER DEFAULT 0,
+            CHECK(is_undone IN (0, 1))
+        );
+    )";
+    if (sqlite3_exec(db, undo_history_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create undo_history table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // File Tinder state table
+    const char *file_tinder_sql = R"(
+        CREATE TABLE IF NOT EXISTS file_tinder_state (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            folder_path TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            decision TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            CHECK(decision IN ('keep', 'delete', 'ignore', 'pending')),
+            UNIQUE(folder_path, file_path)
+        );
+    )";
+    if (sqlite3_exec(db, file_tinder_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create file_tinder_state table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Create indices for performance
+    const char *create_confidence_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_confidence_scores_file ON confidence_scores(file_name, file_type, dir_path);";
+    if (sqlite3_exec(db, create_confidence_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create confidence index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    const char *create_content_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_content_analysis_hash ON content_analysis_cache(content_hash);";
+    if (sqlite3_exec(db, create_content_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create content analysis index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    const char *create_api_usage_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_api_usage_date ON api_usage_tracking(provider, date);";
+    if (sqlite3_exec(db, create_api_usage_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create API usage index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    const char *create_corrections_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_user_corrections_profile ON user_corrections(profile_id);";
+    if (sqlite3_exec(db, create_corrections_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create corrections index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    const char *create_sessions_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_sessions_folder ON categorization_sessions(folder_path);";
+    if (sqlite3_exec(db, create_sessions_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create sessions index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
 }
 
 bool DatabaseManager::save_user_profile(const UserProfile& profile) {
@@ -1600,4 +1786,848 @@ std::vector<OrganizationalTemplate> DatabaseManager::load_organizational_templat
 
     sqlite3_finalize(stmt);
     return templates;
+}
+
+// Phase 1.1: Enhanced feature method implementations
+
+bool DatabaseManager::save_confidence_score(const std::string& file_name,
+                                           const std::string& file_type,
+                                           const std::string& dir_path,
+                                           const ConfidenceScore& score) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO confidence_scores (file_name, file_type, dir_path, category_confidence, 
+                                      subcategory_confidence, confidence_factors, model_version)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(file_name, file_type, dir_path) DO UPDATE SET
+            category_confidence = excluded.category_confidence,
+            subcategory_confidence = excluded.subcategory_confidence,
+            confidence_factors = excluded.confidence_factors,
+            model_version = excluded.model_version,
+            timestamp = CURRENT_TIMESTAMP;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare save confidence score: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, file_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, file_type.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, dir_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 4, score.category_confidence);
+    sqlite3_bind_double(stmt, 5, score.subcategory_confidence);
+    sqlite3_bind_text(stmt, 6, score.confidence_factors.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, score.model_version.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::optional<DatabaseManager::ConfidenceScore> DatabaseManager::get_confidence_score(
+    const std::string& file_name,
+    const std::string& file_type,
+    const std::string& dir_path) {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT category_confidence, subcategory_confidence, confidence_factors, model_version
+        FROM confidence_scores
+        WHERE file_name = ? AND file_type = ? AND dir_path = ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    sqlite3_bind_text(stmt, 1, file_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, file_type.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, dir_path.c_str(), -1, SQLITE_TRANSIENT);
+
+    std::optional<ConfidenceScore> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        ConfidenceScore score;
+        score.category_confidence = sqlite3_column_double(stmt, 0);
+        score.subcategory_confidence = sqlite3_column_double(stmt, 1);
+        const char *factors = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *version = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        score.confidence_factors = factors ? factors : "";
+        score.model_version = version ? version : "";
+        result = score;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+bool DatabaseManager::save_content_analysis(const std::string& file_path,
+                                           const ContentAnalysis& analysis) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO content_analysis_cache (file_path, content_hash, mime_type, keywords,
+                                           detected_language, metadata, analysis_summary)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(file_path) DO UPDATE SET
+            content_hash = excluded.content_hash,
+            mime_type = excluded.mime_type,
+            keywords = excluded.keywords,
+            detected_language = excluded.detected_language,
+            metadata = excluded.metadata,
+            analysis_summary = excluded.analysis_summary,
+            timestamp = CURRENT_TIMESTAMP;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare save content analysis: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, file_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, analysis.content_hash.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, analysis.mime_type.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, analysis.keywords.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, analysis.detected_language.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, analysis.metadata.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, analysis.analysis_summary.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::optional<DatabaseManager::ContentAnalysis> DatabaseManager::get_content_analysis(
+    const std::string& file_path) {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT content_hash, mime_type, keywords, detected_language, metadata, analysis_summary
+        FROM content_analysis_cache
+        WHERE file_path = ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    sqlite3_bind_text(stmt, 1, file_path.c_str(), -1, SQLITE_TRANSIENT);
+
+    std::optional<ContentAnalysis> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        ContentAnalysis analysis;
+        const char *hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *mime = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *keywords = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *lang = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *meta = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        const char *summary = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        
+        analysis.content_hash = hash ? hash : "";
+        analysis.mime_type = mime ? mime : "";
+        analysis.keywords = keywords ? keywords : "";
+        analysis.detected_language = lang ? lang : "";
+        analysis.metadata = meta ? meta : "";
+        analysis.analysis_summary = summary ? summary : "";
+        result = analysis;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+std::optional<DatabaseManager::ContentAnalysis> DatabaseManager::get_content_analysis_by_hash(
+    const std::string& content_hash) {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT content_hash, mime_type, keywords, detected_language, metadata, analysis_summary
+        FROM content_analysis_cache
+        WHERE content_hash = ?
+        LIMIT 1;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    sqlite3_bind_text(stmt, 1, content_hash.c_str(), -1, SQLITE_TRANSIENT);
+
+    std::optional<ContentAnalysis> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        ContentAnalysis analysis;
+        const char *hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *mime = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *keywords = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *lang = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *meta = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        const char *summary = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        
+        analysis.content_hash = hash ? hash : "";
+        analysis.mime_type = mime ? mime : "";
+        analysis.keywords = keywords ? keywords : "";
+        analysis.detected_language = lang ? lang : "";
+        analysis.metadata = meta ? meta : "";
+        analysis.analysis_summary = summary ? summary : "";
+        result = analysis;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+bool DatabaseManager::record_api_usage(const std::string& provider,
+                                      int tokens,
+                                      int requests,
+                                      float cost) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO api_usage_tracking (provider, date, tokens_used, requests_made, cost_estimate)
+        VALUES (?, DATE('now'), ?, ?, ?)
+        ON CONFLICT(provider, date) DO UPDATE SET
+            tokens_used = tokens_used + excluded.tokens_used,
+            requests_made = requests_made + excluded.requests_made,
+            cost_estimate = cost_estimate + excluded.cost_estimate,
+            timestamp = CURRENT_TIMESTAMP;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare record API usage: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, provider.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, tokens);
+    sqlite3_bind_int(stmt, 3, requests);
+    sqlite3_bind_double(stmt, 4, cost);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::optional<DatabaseManager::APIUsage> DatabaseManager::get_api_usage_today(
+    const std::string& provider) {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT provider, date, tokens_used, requests_made, cost_estimate, daily_limit, remaining
+        FROM api_usage_tracking
+        WHERE provider = ? AND date = DATE('now');
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    sqlite3_bind_text(stmt, 1, provider.c_str(), -1, SQLITE_TRANSIENT);
+
+    std::optional<APIUsage> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        APIUsage usage;
+        const char *prov = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        
+        usage.provider = prov ? prov : "";
+        usage.date = date ? date : "";
+        usage.tokens_used = sqlite3_column_int(stmt, 2);
+        usage.requests_made = sqlite3_column_int(stmt, 3);
+        usage.cost_estimate = static_cast<float>(sqlite3_column_double(stmt, 4));
+        usage.daily_limit = sqlite3_column_int(stmt, 5);
+        usage.remaining = sqlite3_column_int(stmt, 6);
+        result = usage;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+std::vector<DatabaseManager::APIUsage> DatabaseManager::get_api_usage_history(
+    const std::string& provider,
+    int days) {
+    std::vector<APIUsage> history;
+    if (!db) return history;
+
+    const char *sql = R"(
+        SELECT provider, date, tokens_used, requests_made, cost_estimate, daily_limit, remaining
+        FROM api_usage_tracking
+        WHERE provider = ? AND date >= DATE('now', ?)
+        ORDER BY date DESC;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return history;
+    }
+
+    std::string days_param = "-" + std::to_string(days) + " days";
+    sqlite3_bind_text(stmt, 1, provider.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, days_param.c_str(), -1, SQLITE_TRANSIENT);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        APIUsage usage;
+        const char *prov = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        
+        usage.provider = prov ? prov : "";
+        usage.date = date ? date : "";
+        usage.tokens_used = sqlite3_column_int(stmt, 2);
+        usage.requests_made = sqlite3_column_int(stmt, 3);
+        usage.cost_estimate = static_cast<float>(sqlite3_column_double(stmt, 4));
+        usage.daily_limit = sqlite3_column_int(stmt, 5);
+        usage.remaining = sqlite3_column_int(stmt, 6);
+        history.push_back(usage);
+    }
+
+    sqlite3_finalize(stmt);
+    return history;
+}
+
+int DatabaseManager::create_user_profile(const std::string& profile_name) {
+    if (!db) return -1;
+
+    const char *sql = R"(
+        INSERT INTO user_profiles (profile_name, created_at, last_used)
+        VALUES (?, DATETIME('now'), DATETIME('now'));
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare create profile: {}", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    sqlite3_bind_text(stmt, 1, profile_name.c_str(), -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    int profile_id = static_cast<int>(sqlite3_last_insert_rowid(db));
+    sqlite3_finalize(stmt);
+    return profile_id;
+}
+
+bool DatabaseManager::set_active_profile(int profile_id) {
+    if (!db) return false;
+
+    // First, deactivate all profiles
+    const char *deactivate_sql = "UPDATE user_profiles SET is_active = 0;";
+    char *error_msg = nullptr;
+    if (sqlite3_exec(db, deactivate_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to deactivate profiles: {}", error_msg);
+        sqlite3_free(error_msg);
+        return false;
+    }
+
+    // Then activate the specified profile
+    const char *activate_sql = R"(
+        UPDATE user_profiles 
+        SET is_active = 1, last_used = DATETIME('now')
+        WHERE profile_id = ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, activate_sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, profile_id);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::optional<DatabaseManager::UserProfileInfo> DatabaseManager::get_active_profile() {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT profile_id, profile_name, is_active, created_at, last_used
+        FROM user_profiles
+        WHERE is_active = 1
+        LIMIT 1;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    std::optional<UserProfileInfo> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        UserProfileInfo info;
+        info.profile_id = sqlite3_column_int(stmt, 0);
+        const char *name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *created = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *used = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        
+        info.profile_name = name ? name : "";
+        info.is_active = sqlite3_column_int(stmt, 2) != 0;
+        info.created_at = created ? created : "";
+        info.last_used = used ? used : "";
+        result = info;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+std::vector<DatabaseManager::UserProfileInfo> DatabaseManager::get_all_profiles() {
+    std::vector<UserProfileInfo> profiles;
+    if (!db) return profiles;
+
+    const char *sql = R"(
+        SELECT profile_id, profile_name, is_active, created_at, last_used
+        FROM user_profiles
+        ORDER BY last_used DESC;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return profiles;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        UserProfileInfo info;
+        info.profile_id = sqlite3_column_int(stmt, 0);
+        const char *name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *created = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *used = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        
+        info.profile_name = name ? name : "";
+        info.is_active = sqlite3_column_int(stmt, 2) != 0;
+        info.created_at = created ? created : "";
+        info.last_used = used ? used : "";
+        profiles.push_back(info);
+    }
+
+    sqlite3_finalize(stmt);
+    return profiles;
+}
+
+bool DatabaseManager::delete_profile(int profile_id) {
+    if (!db) return false;
+
+    const char *sql = "DELETE FROM user_profiles WHERE profile_id = ?;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, profile_id);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+bool DatabaseManager::record_correction(const UserCorrection& correction, int profile_id) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO user_corrections (file_path, file_name, original_category, original_subcategory,
+                                     corrected_category, corrected_subcategory, file_extension, profile_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare record correction: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, correction.file_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, correction.file_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, correction.original_category.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, correction.original_subcategory.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, correction.corrected_category.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, correction.corrected_subcategory.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, correction.file_extension.c_str(), -1, SQLITE_TRANSIENT);
+    
+    if (profile_id >= 0) {
+        sqlite3_bind_int(stmt, 8, profile_id);
+    } else {
+        sqlite3_bind_null(stmt, 8);
+    }
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::vector<DatabaseManager::UserCorrection> DatabaseManager::get_corrections(
+    int profile_id, int limit) {
+    std::vector<UserCorrection> corrections;
+    if (!db) return corrections;
+
+    std::string sql = R"(
+        SELECT file_path, file_name, original_category, original_subcategory,
+               corrected_category, corrected_subcategory, file_extension, timestamp
+        FROM user_corrections
+    )";
+    
+    if (profile_id >= 0) {
+        sql += " WHERE profile_id = ?";
+    }
+    
+    sql += " ORDER BY timestamp DESC LIMIT ?;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        return corrections;
+    }
+
+    int param_index = 1;
+    if (profile_id >= 0) {
+        sqlite3_bind_int(stmt, param_index++, profile_id);
+    }
+    sqlite3_bind_int(stmt, param_index, limit);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        UserCorrection correction;
+        const char *path = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *orig_cat = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *orig_sub = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *corr_cat = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        const char *corr_sub = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        const char *ext = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+        const char *ts = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        
+        correction.file_path = path ? path : "";
+        correction.file_name = name ? name : "";
+        correction.original_category = orig_cat ? orig_cat : "";
+        correction.original_subcategory = orig_sub ? orig_sub : "";
+        correction.corrected_category = corr_cat ? corr_cat : "";
+        correction.corrected_subcategory = corr_sub ? corr_sub : "";
+        correction.file_extension = ext ? ext : "";
+        correction.timestamp = ts ? ts : "";
+        corrections.push_back(correction);
+    }
+
+    sqlite3_finalize(stmt);
+    return corrections;
+}
+
+std::map<std::string, int> DatabaseManager::get_correction_patterns() {
+    std::map<std::string, int> patterns;
+    if (!db) return patterns;
+
+    const char *sql = R"(
+        SELECT original_category || ' -> ' || corrected_category as pattern, COUNT(*) as count
+        FROM user_corrections
+        GROUP BY pattern
+        ORDER BY count DESC
+        LIMIT 20;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return patterns;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *pattern = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        int count = sqlite3_column_int(stmt, 1);
+        if (pattern) {
+            patterns[pattern] = count;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return patterns;
+}
+
+bool DatabaseManager::create_session(const std::string& session_id,
+                                    const std::string& folder_path,
+                                    const std::string& consistency_mode,
+                                    float consistency_strength) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO categorization_sessions (session_id, folder_path, started_at,
+                                            consistency_mode, consistency_strength)
+        VALUES (?, ?, DATETIME('now'), ?, ?);
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare create session: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, session_id.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, folder_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, consistency_mode.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 4, consistency_strength);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+bool DatabaseManager::complete_session(const std::string& session_id, int files_processed) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        UPDATE categorization_sessions
+        SET completed_at = DATETIME('now'), files_processed = ?
+        WHERE session_id = ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, files_processed);
+    sqlite3_bind_text(stmt, 2, session_id.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::optional<DatabaseManager::SessionInfo> DatabaseManager::get_session(
+    const std::string& session_id) {
+    if (!db) return std::nullopt;
+
+    const char *sql = R"(
+        SELECT session_id, folder_path, started_at, completed_at, consistency_mode,
+               consistency_strength, files_processed
+        FROM categorization_sessions
+        WHERE session_id = ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return std::nullopt;
+    }
+
+    sqlite3_bind_text(stmt, 1, session_id.c_str(), -1, SQLITE_TRANSIENT);
+
+    std::optional<SessionInfo> result;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        SessionInfo info;
+        const char *sid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *folder = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *started = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *completed = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *mode = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        
+        info.session_id = sid ? sid : "";
+        info.folder_path = folder ? folder : "";
+        info.started_at = started ? started : "";
+        info.completed_at = completed ? completed : "";
+        info.consistency_mode = mode ? mode : "";
+        info.consistency_strength = static_cast<float>(sqlite3_column_double(stmt, 5));
+        info.files_processed = sqlite3_column_int(stmt, 6);
+        result = info;
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+std::vector<DatabaseManager::SessionInfo> DatabaseManager::get_recent_sessions(int limit) {
+    std::vector<SessionInfo> sessions;
+    if (!db) return sessions;
+
+    const char *sql = R"(
+        SELECT session_id, folder_path, started_at, completed_at, consistency_mode,
+               consistency_strength, files_processed
+        FROM categorization_sessions
+        ORDER BY started_at DESC
+        LIMIT ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return sessions;
+    }
+
+    sqlite3_bind_int(stmt, 1, limit);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        SessionInfo info;
+        const char *sid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *folder = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *started = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *completed = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *mode = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        
+        info.session_id = sid ? sid : "";
+        info.folder_path = folder ? folder : "";
+        info.started_at = started ? started : "";
+        info.completed_at = completed ? completed : "";
+        info.consistency_mode = mode ? mode : "";
+        info.consistency_strength = static_cast<float>(sqlite3_column_double(stmt, 5));
+        info.files_processed = sqlite3_column_int(stmt, 6);
+        sessions.push_back(info);
+    }
+
+    sqlite3_finalize(stmt);
+    return sessions;
+}
+
+bool DatabaseManager::record_undo_plan(const std::string& plan_path,
+                                      const std::string& description) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO undo_history (plan_path, description)
+        VALUES (?, ?);
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare record undo plan: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, plan_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, description.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+bool DatabaseManager::mark_plan_undone(int undo_id) {
+    if (!db) return false;
+
+    const char *sql = "UPDATE undo_history SET is_undone = 1 WHERE undo_id = ?;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, undo_id);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::vector<std::pair<int, std::string>> DatabaseManager::get_undo_history(int limit) {
+    std::vector<std::pair<int, std::string>> history;
+    if (!db) return history;
+
+    const char *sql = R"(
+        SELECT undo_id, description, timestamp, is_undone
+        FROM undo_history
+        ORDER BY timestamp DESC
+        LIMIT ?;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return history;
+    }
+
+    sqlite3_bind_int(stmt, 1, limit);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *desc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *ts = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool undone = sqlite3_column_int(stmt, 3) != 0;
+        
+        std::string description = (desc ? desc : "") + std::string(" (") + 
+                                 (ts ? ts : "") + ")" + 
+                                 (undone ? " [UNDONE]" : "");
+        history.emplace_back(id, description);
+    }
+
+    sqlite3_finalize(stmt);
+    return history;
+}
+
+bool DatabaseManager::save_tinder_decision(const FileTinderDecision& decision) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO file_tinder_state (folder_path, file_path, decision)
+        VALUES (?, ?, ?)
+        ON CONFLICT(folder_path, file_path) DO UPDATE SET
+            decision = excluded.decision,
+            timestamp = CURRENT_TIMESTAMP;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare save tinder decision: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, decision.folder_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, decision.file_path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, decision.decision.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::vector<DatabaseManager::FileTinderDecision> DatabaseManager::get_tinder_decisions(
+    const std::string& folder_path) {
+    std::vector<FileTinderDecision> decisions;
+    if (!db) return decisions;
+
+    const char *sql = R"(
+        SELECT folder_path, file_path, decision, timestamp
+        FROM file_tinder_state
+        WHERE folder_path = ?
+        ORDER BY timestamp DESC;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return decisions;
+    }
+
+    sqlite3_bind_text(stmt, 1, folder_path.c_str(), -1, SQLITE_TRANSIENT);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        FileTinderDecision decision;
+        const char *folder = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char *file = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *dec = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *ts = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        
+        decision.folder_path = folder ? folder : "";
+        decision.file_path = file ? file : "";
+        decision.decision = dec ? dec : "";
+        decision.timestamp = ts ? ts : "";
+        decisions.push_back(decision);
+    }
+
+    sqlite3_finalize(stmt);
+    return decisions;
+}
+
+bool DatabaseManager::clear_tinder_session(const std::string& folder_path) {
+    if (!db) return false;
+
+    const char *sql = "DELETE FROM file_tinder_state WHERE folder_path = ?;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, folder_path.c_str(), -1, SQLITE_TRANSIENT);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
 }

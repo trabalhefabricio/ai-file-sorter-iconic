@@ -71,6 +71,120 @@ public:
     bool save_organizational_template(const std::string& user_id,
                                      const OrganizationalTemplate& templ);
     std::vector<OrganizationalTemplate> load_organizational_templates(const std::string& user_id);
+    
+    // Phase 1.1: Enhanced feature methods
+    
+    // Confidence scoring methods
+    struct ConfidenceScore {
+        float category_confidence;
+        float subcategory_confidence;
+        std::string confidence_factors;  // JSON
+        std::string model_version;
+    };
+    bool save_confidence_score(const std::string& file_name,
+                              const std::string& file_type,
+                              const std::string& dir_path,
+                              const ConfidenceScore& score);
+    std::optional<ConfidenceScore> get_confidence_score(const std::string& file_name,
+                                                        const std::string& file_type,
+                                                        const std::string& dir_path);
+    
+    // Content analysis methods
+    struct ContentAnalysis {
+        std::string content_hash;
+        std::string mime_type;
+        std::string keywords;  // JSON array
+        std::string detected_language;
+        std::string metadata;  // JSON
+        std::string analysis_summary;
+    };
+    bool save_content_analysis(const std::string& file_path,
+                              const ContentAnalysis& analysis);
+    std::optional<ContentAnalysis> get_content_analysis(const std::string& file_path);
+    std::optional<ContentAnalysis> get_content_analysis_by_hash(const std::string& content_hash);
+    
+    // API usage tracking methods
+    struct APIUsage {
+        std::string provider;
+        std::string date;
+        int tokens_used;
+        int requests_made;
+        float cost_estimate;
+        int daily_limit;
+        int remaining;
+    };
+    bool record_api_usage(const std::string& provider,
+                         int tokens,
+                         int requests = 1,
+                         float cost = 0.0f);
+    std::optional<APIUsage> get_api_usage_today(const std::string& provider);
+    std::vector<APIUsage> get_api_usage_history(const std::string& provider,
+                                                int days = 30);
+    
+    // Multiple profiles methods
+    struct UserProfileInfo {
+        int profile_id;
+        std::string profile_name;
+        bool is_active;
+        std::string created_at;
+        std::string last_used;
+    };
+    int create_user_profile(const std::string& profile_name);
+    bool set_active_profile(int profile_id);
+    std::optional<UserProfileInfo> get_active_profile();
+    std::vector<UserProfileInfo> get_all_profiles();
+    bool delete_profile(int profile_id);
+    
+    // User corrections methods
+    struct UserCorrection {
+        std::string file_path;
+        std::string file_name;
+        std::string original_category;
+        std::string original_subcategory;
+        std::string corrected_category;
+        std::string corrected_subcategory;
+        std::string file_extension;
+        std::string timestamp;
+    };
+    bool record_correction(const UserCorrection& correction, int profile_id = -1);
+    std::vector<UserCorrection> get_corrections(int profile_id = -1,
+                                               int limit = 100);
+    std::map<std::string, int> get_correction_patterns();
+    
+    // Session management methods
+    struct SessionInfo {
+        std::string session_id;
+        std::string folder_path;
+        std::string started_at;
+        std::string completed_at;
+        std::string consistency_mode;
+        float consistency_strength;
+        int files_processed;
+    };
+    bool create_session(const std::string& session_id,
+                       const std::string& folder_path,
+                       const std::string& consistency_mode,
+                       float consistency_strength);
+    bool complete_session(const std::string& session_id, int files_processed);
+    std::optional<SessionInfo> get_session(const std::string& session_id);
+    std::vector<SessionInfo> get_recent_sessions(int limit = 10);
+    
+    // Undo history methods
+    bool record_undo_plan(const std::string& plan_path,
+                         const std::string& description);
+    bool mark_plan_undone(int undo_id);
+    std::vector<std::pair<int, std::string>> get_undo_history(int limit = 20);
+    
+    // File Tinder methods
+    struct FileTinderDecision {
+        std::string folder_path;
+        std::string file_path;
+        std::string decision;  // keep, delete, ignore, pending
+        std::string timestamp;
+    };
+    bool save_tinder_decision(const FileTinderDecision& decision);
+    std::vector<FileTinderDecision> get_tinder_decisions(const std::string& folder_path);
+    bool clear_tinder_session(const std::string& folder_path);
 
 private:
     struct TaxonomyEntry {
