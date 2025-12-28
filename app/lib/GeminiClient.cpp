@@ -1,8 +1,6 @@
 #include "GeminiClient.hpp"
 
 #include <Logger.hpp>
-#include <AppException.hpp>
-#include <ErrorCode.hpp>
 #include <curl/curl.h>
 #include <json/json.h>
 #include <spdlog/spdlog.h>
@@ -21,7 +19,6 @@
 #include <thread>
 
 using namespace std::chrono_literals;
-using namespace ErrorCodes;
 
 namespace {
 
@@ -409,10 +406,8 @@ std::string GeminiClient::make_payload(const std::string& file_name,
     
     std::string prompt = "You are an intelligent file categorization assistant. "
         "Analyze the file name, extension, and context to understand what the file represents. "
-        "Consider the purpose, content type, and intended use of the file.\n\n"
-        "IMPORTANT: If you are uncertain about the categorization (confidence < 70%), "
-        "respond with: UNCERTAIN : [filename]\n"
-        "Otherwise, respond ONLY with: Category : Subcategory\n"
+        "Consider the purpose, content type, and intended use of the file. "
+        "Return ONLY a category and subcategory in the format: Category : Subcategory. "
         "No explanations, no additional text.\n\n";
     
     if (!consistency_context.empty()) {
@@ -500,32 +495,12 @@ std::string GeminiClient::send_api_request(std::string json_payload) {
     auto http = send_with_retry(effective_model(), url, json_payload, headers);
     
     if (http.status < 200 || http.status >= 300) {
-        // Determine specific error code based on HTTP status
-        Code error_code = Code::API_SERVER_ERROR;
-        std::string context = "HTTP " + std::to_string(http.status);
-        
-        if (http.status == 401) {
-            error_code = Code::API_AUTHENTICATION_FAILED;
-            context += ": Invalid API key";
-        } else if (http.status == 403) {
-            error_code = Code::API_INSUFFICIENT_PERMISSIONS;
-            context += ": Insufficient permissions";
-        } else if (http.status == 429) {
-            error_code = Code::API_RATE_LIMIT_EXCEEDED;
-            context += ": Rate limit exceeded";
-        } else if (http.status >= 500) {
-            error_code = Code::API_SERVER_ERROR;
-            context += ": Server error";
-        } else if (http.status >= 400) {
-            error_code = Code::API_INVALID_REQUEST;
-            context += ": Bad request";
-        }
-        
+        std::string error_msg = "Gemini API request failed with status " + 
+                               std::to_string(http.status);
         if (!http.body.empty()) {
-            context += " - " + http.body;
+            error_msg += ": " + http.body;
         }
-        
-        throw AppException(error_code, context);
+        throw std::runtime_error(error_msg);
     }
     
     Json::CharReaderBuilder builder;
@@ -534,20 +509,18 @@ std::string GeminiClient::send_api_request(std::string json_payload) {
     std::string errors;
     
     if (!Json::parseFromStream(builder, ss, &response, &errors)) {
-        throw AppException(Code::API_RESPONSE_PARSE_ERROR, "JSON parse error: " + errors);
+        throw std::runtime_error("Failed to parse Gemini API response: " + errors);
     }
     
     // Gemini response structure: candidates[0].content.parts[0].text
     if (!response.isMember("candidates") || response["candidates"].empty()) {
-        throw AppException(Code::API_INVALID_RESPONSE, 
-            "Response missing 'candidates' field - model may have blocked the request");
+        throw std::runtime_error("Gemini API response missing candidates");
     }
     
     auto& candidate = response["candidates"][0];
     if (!candidate.isMember("content") || !candidate["content"].isMember("parts") ||
         candidate["content"]["parts"].empty()) {
-        throw AppException(Code::API_INVALID_RESPONSE,
-            "Response missing content parts - model response may be incomplete");
+        throw std::runtime_error("Gemini API response missing content parts");
     }
     
     auto content = candidate["content"]["parts"][0]["text"].asString();
