@@ -19,7 +19,7 @@ This document tracks the implementation status of Gemini API support in the AI F
 2. **Model Detection Logic**
    - Location: `app/lib/LLMClient.cpp:237-242`
    - Case-insensitive detection of "gemini" in model name (lines 238-239)
-   - Automatic routing to appropriate API endpoint (line 242-243)
+   - Automatic routing to appropriate API endpoint (line 243)
 
 3. **Timeout Handling**
    - Location: `app/lib/LLMClient.cpp:241, 246`
@@ -29,8 +29,8 @@ This document tracks the implementation status of Gemini API support in the AI F
 4. **Error Handling**
    - Location: `app/lib/LLMClient.cpp:185-199`
    - Support for both OpenAI and Gemini error response formats
-   - Handles Gemini's array-based error responses (line 191-192)
-   - Handles OpenAI's object-based error responses (line 188-189)
+   - Handles Gemini's array-based error responses (lines 191-192)
+   - Handles OpenAI's object-based error responses (lines 188-189)
 
 5. **Request/Response Flow**
    - Location: `app/lib/LLMClient.cpp:228-261`
