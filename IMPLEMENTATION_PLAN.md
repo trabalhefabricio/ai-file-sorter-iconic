@@ -4,7 +4,7 @@ This document tracks the implementation status of Gemini API support in the AI F
 
 ## Phase 1: Core Gemini API Integration
 
-### Phase 1.1: Basic API Connectivity ✅ COMPLETE
+### Phase 1.1: Basic API Connectivity 🚧 PARTIALLY COMPLETE
 
 **Objective**: Establish basic API connectivity with Google's Gemini API through the OpenAI-compatible endpoint.
 
@@ -12,7 +12,7 @@ This document tracks the implementation status of Gemini API support in the AI F
 
 ##### ✅ Completed Tasks:
 1. **API Endpoint Configuration** 
-   - Location: `app/lib/LLMClient.cpp:243`
+   - Location: `app/lib/LLMClient.cpp:242-243`
    - Gemini API endpoint configured: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
    - Automatic endpoint selection based on model name detection
 
@@ -22,7 +22,7 @@ This document tracks the implementation status of Gemini API support in the AI F
    - Automatic routing to appropriate API endpoint
 
 3. **Timeout Handling**
-   - Location: `app/lib/LLMClient.cpp:241-246`
+   - Location: `app/lib/LLMClient.cpp:241, 244-246`
    - Extended timeout for Gemini API calls (300 seconds vs 30 seconds for OpenAI)
    - Configurable timeout to accommodate Gemini's response latency
 
@@ -66,7 +66,6 @@ This document tracks the implementation status of Gemini API support in the AI F
 - `app/lib/LLMClient.cpp`
   - Lines 184-199: Error handling for both OpenAI and Gemini formats
   - Lines 236-247: Gemini endpoint selection and timeout configuration
-  - Lines 242-243: Model name detection and API URL switching
 
 **Unchanged Files (requiring updates):**
 - `README.md` - Needs Gemini documentation
