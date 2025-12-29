@@ -1413,7 +1413,6 @@ void DatabaseManager::initialize_user_profile_schema() {
     if (sqlite3_exec(db, create_error_resolution_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
         db_log(spdlog::level::err, "Failed to create error resolution index: {}", error_msg);
         sqlite3_free(error_msg);
-        error_msg = nullptr;
     }
 }
 

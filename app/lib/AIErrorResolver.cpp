@@ -3,7 +3,6 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
-#include <fstream>
 
 AIErrorResolver::AIErrorResolver(std::shared_ptr<ILLMClient> llm_client,
                                 DatabaseManager& db_manager)
