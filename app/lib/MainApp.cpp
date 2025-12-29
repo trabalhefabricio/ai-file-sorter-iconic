@@ -420,6 +420,16 @@ void MainApp::connect_checkbox_signals()
             settings.set_enable_profile_learning(checked);
         });
     }
+
+    if (enable_ai_error_resolution_checkbox) {
+        connect(enable_ai_error_resolution_checkbox, &QCheckBox::toggled, this, [this](bool checked) {
+            settings.set_enable_ai_error_resolution(checked);
+            // Clear cached resolver when disabled to free resources
+            if (!checked && ai_error_resolver_) {
+                ai_error_resolver_.reset();
+            }
+        });
+    }
 }
 
 void MainApp::connect_whitelist_signals()
@@ -535,6 +545,9 @@ void MainApp::restore_tree_settings()
     categorize_directories_checkbox->setChecked(settings.get_categorize_directories());
     if (enable_profile_learning_checkbox) {
         enable_profile_learning_checkbox->setChecked(settings.get_enable_profile_learning());
+    }
+    if (enable_ai_error_resolution_checkbox) {
+        enable_ai_error_resolution_checkbox->setChecked(settings.get_enable_ai_error_resolution());
     }
 }
 

@@ -16,6 +16,43 @@
  * This class provides natural language error understanding, diagnosis,
  * and automated resolution capabilities integrated with the existing
  * ErrorCode system.
+ * 
+ * INTEGRATION POINTS FOR FUTURE PHASES:
+ * 
+ * Phase 2.1 (Content Analysis):
+ * - Hook: Add content_analyzer parameter to analyze_error() for file analysis errors
+ * - Use case: When content analysis fails, provide context about file type/content
+ * - Method: extend ErrorAnalysis struct with content_context field
+ * 
+ * Phase 2.2 (Confidence Scoring):
+ * - Hook: Add confidence_calculator to assess error resolution suggestions
+ * - Use case: Rank resolution steps by confidence of success
+ * - Method: Add confidence_score to ResolutionStep struct
+ * 
+ * Phase 2.3 (Learning from Corrections):
+ * - Hook: Track which resolution steps users successfully applied
+ * - Use case: Improve future suggestions based on user patterns
+ * - Method: Add success_rate tracking to database, query in generate_resolution_steps()
+ * 
+ * Phase 2.4 (API Cost Tracking):
+ * - Hook: Monitor LLM API usage for error resolution queries
+ * - Use case: Track/limit AI error help API costs
+ * - Method: Add api_usage_tracker parameter, log before LLM calls
+ * 
+ * Phase 3.1 (User Profiling):
+ * - Hook: Add user_profile parameter for personalized error help
+ * - Use case: Suggest fixes based on user's technical level, past errors
+ * - Method: Query profile_manager for user skill level, adjust explanation detail
+ * 
+ * Phase 5.2 (Conflict Resolution):
+ * - Hook: Detect and help resolve file categorization conflicts
+ * - Use case: When conflicts detected, offer AI-powered resolution
+ * - Method: Add conflict detection to error analysis, special handling for conflict errors
+ * 
+ * Phase 6.2 (Easy Mode):
+ * - Hook: Simplify error messages and solutions for beginner users
+ * - Use case: Non-technical users get plain language help
+ * - Method: Add beginner_mode flag, filter jargon from diagnosis
  */
 class AIErrorResolver {
 public:

@@ -2749,3 +2749,55 @@ std::vector<DatabaseManager::ErrorResolutionEntry> DatabaseManager::get_error_re
     sqlite3_finalize(stmt);
     return history;
 }
+
+DatabaseManager::ErrorResolutionMetrics DatabaseManager::get_error_resolution_metrics() const {
+    ErrorResolutionMetrics metrics{};
+    if (!db) return metrics;
+
+    // Get overall statistics
+    const char *stats_sql = R"(
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN resolution_attempted = 1 THEN 1 ELSE 0 END) as attempted,
+            SUM(CASE WHEN resolution_success = 1 THEN 1 ELSE 0 END) as successful,
+            SUM(CASE WHEN resolution_attempted = 1 AND resolution_success = 0 THEN 1 ELSE 0 END) as failed
+        FROM error_resolution_history;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, stats_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            metrics.total_resolutions = sqlite3_column_int(stmt, 0);
+            int attempted = sqlite3_column_int(stmt, 1);
+            metrics.successful_resolutions = sqlite3_column_int(stmt, 2);
+            metrics.failed_resolutions = sqlite3_column_int(stmt, 3);
+            metrics.total_ai_queries = attempted;  // Each attempt uses AI
+            
+            if (attempted > 0) {
+                metrics.success_rate = static_cast<float>(metrics.successful_resolutions) / attempted;
+            } else {
+                metrics.success_rate = 0.0f;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Get most common error category
+    const char *category_sql = R"(
+        SELECT error_category, COUNT(*) as count
+        FROM error_resolution_history
+        GROUP BY error_category
+        ORDER BY count DESC
+        LIMIT 1;
+    )";
+
+    if (sqlite3_prepare_v2(db, category_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *category = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            metrics.most_common_error_category = category ? category : "Unknown";
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return metrics;
+}

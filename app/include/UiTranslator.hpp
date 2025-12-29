@@ -41,6 +41,7 @@ public:
         QPointer<QCheckBox>& categorize_files_checkbox;
         QPointer<QCheckBox>& categorize_directories_checkbox;
         QPointer<QCheckBox>& enable_profile_learning_checkbox;
+        QPointer<QCheckBox>& enable_ai_error_resolution_checkbox;
     };
 
     struct MenuControls {

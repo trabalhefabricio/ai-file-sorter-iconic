@@ -203,6 +203,17 @@ public:
     std::vector<ErrorResolutionEntry> get_error_resolution_history(
         int error_code = -1,  // -1 means all error codes
         int limit = 20);
+    
+    // Error resolution metrics (for Phase 2.4 API Cost Tracking integration)
+    struct ErrorResolutionMetrics {
+        int total_resolutions;
+        int successful_resolutions;
+        int failed_resolutions;
+        float success_rate;
+        std::string most_common_error_category;
+        int total_ai_queries;  // For API usage tracking
+    };
+    ErrorResolutionMetrics get_error_resolution_metrics() const;
 
 private:
     struct TaxonomyEntry {
