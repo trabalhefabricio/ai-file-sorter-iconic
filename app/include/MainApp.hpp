@@ -14,6 +14,7 @@
 #include "UiTranslator.hpp"
 #include "UndoManager.hpp"
 #include "UserProfileManager.hpp"
+#include "AIErrorResolver.hpp"
 
 #include <QMainWindow>
 #include <QPointer>
@@ -155,6 +156,7 @@ private:
     void apply_whitelist_to_selector();
     void show_user_profile();
     void show_folder_learning_settings();
+    std::shared_ptr<AIErrorResolver> get_or_create_error_resolver();
 
     void run_on_ui(std::function<void()> func);
     void changeEvent(QEvent* event) override;
@@ -189,6 +191,7 @@ private:
     QPointer<QCheckBox> categorize_files_checkbox;
     QPointer<QCheckBox> categorize_directories_checkbox;
     QPointer<QCheckBox> enable_profile_learning_checkbox;  // Profile learning toggle
+    QPointer<QCheckBox> enable_ai_error_resolution_checkbox;  // AI error resolution toggle
     QPointer<QTreeView> tree_view;
     QPointer<QStandardItemModel> tree_model;
     QPointer<QStackedWidget> results_stack;
@@ -257,6 +260,7 @@ private:
     ResultsCoordinator results_coordinator;
     UndoManager undo_manager_;
     std::unique_ptr<UserProfileManager> profile_manager_;
+    std::shared_ptr<AIErrorResolver> ai_error_resolver_;
     bool development_mode_{false};
     bool development_prompt_logging_enabled_{false};
 

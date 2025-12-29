@@ -2,8 +2,10 @@
 #define DIALOGUTILS_HPP
 
 #include <string>
+#include <memory>
 
 class QWidget;
+class AIErrorResolver;
 
 namespace ErrorCodes {
     class AppException;
@@ -20,6 +22,12 @@ public:
     
     // Show error dialog from AppException
     static void show_error_dialog(QWidget* parent, const ErrorCodes::AppException& exception);
+    
+    // Show error dialog with optional AI resolution assistance
+    static void show_error_dialog_with_ai(QWidget* parent, 
+                                         ErrorCodes::Code error_code,
+                                         const std::string& context,
+                                         std::shared_ptr<AIErrorResolver> resolver);
 };
 
 #endif // DIALOGUTILS_HPP

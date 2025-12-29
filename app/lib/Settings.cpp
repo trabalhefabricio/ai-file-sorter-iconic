@@ -201,6 +201,7 @@ void Settings::load_basic_settings(const std::function<bool(const char*, bool)>&
     consistency_pass_enabled = load_bool("ConsistencyPass", false);
     development_prompt_logging = load_bool("DevelopmentPromptLogging", false);
     enable_profile_learning = load_bool("EnableProfileLearning", true);
+    enable_ai_error_resolution = load_bool("EnableAIErrorResolution", true);
     skipped_version = config.getValue("Settings", "SkippedVersion", "0.0.0");
     if (config.hasValue("Settings", "Language")) {
         language = languageFromString(QString::fromStdString(config.getValue("Settings", "Language", "English")));
@@ -275,6 +276,7 @@ void Settings::save_core_settings()
     set_bool_setting(config, settings_section, "ConsistencyPass", consistency_pass_enabled);
     set_bool_setting(config, settings_section, "DevelopmentPromptLogging", development_prompt_logging);
     set_bool_setting(config, settings_section, "EnableProfileLearning", enable_profile_learning);
+    set_bool_setting(config, settings_section, "EnableAIErrorResolution", enable_ai_error_resolution);
     config.setValue(settings_section, "Language", languageToString(language).toStdString());
     config.setValue(settings_section, "CategoryLanguage", categoryLanguageToString(category_language).toStdString());
     config.setValue(settings_section, "CategorizedFileCount", std::to_string(categorized_file_count));
@@ -699,4 +701,14 @@ bool Settings::get_enable_profile_learning() const
 void Settings::set_enable_profile_learning(bool value)
 {
     enable_profile_learning = value;
+}
+
+bool Settings::get_enable_ai_error_resolution() const
+{
+    return enable_ai_error_resolution;
+}
+
+void Settings::set_enable_ai_error_resolution(bool value)
+{
+    enable_ai_error_resolution = value;
 }

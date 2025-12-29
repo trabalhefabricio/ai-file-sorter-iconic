@@ -89,6 +89,10 @@ public:
     bool get_enable_profile_learning() const;
     void set_enable_profile_learning(bool value);
 
+    // AI error resolution settings
+    bool get_enable_ai_error_resolution() const;
+    void set_enable_ai_error_resolution(bool value);
+
 private:
     LLMChoice parse_llm_choice() const;
     void load_basic_settings(const std::function<bool(const char*, bool)>& load_bool,
@@ -132,6 +136,7 @@ private:
     std::vector<CustomLLM> custom_llms;
     std::string active_custom_llm_id;
     bool enable_profile_learning{true};  // Enable user profile learning
+    bool enable_ai_error_resolution{true};  // Enable AI-powered error resolution
 };
 
 #endif

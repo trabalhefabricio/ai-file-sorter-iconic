@@ -1,6 +1,8 @@
 #include "DialogUtils.hpp"
 #include "AppException.hpp"
 #include "ErrorCode.hpp"
+#include "AIErrorResolver.hpp"
+#include "ErrorResolutionDialog.hpp"
 
 #include <QMessageBox>
 #include <QObject>
@@ -63,5 +65,42 @@ void DialogUtils::show_error_dialog(QWidget* parent, const ErrorCodes::AppExcept
         // Show confirmation
         QMessageBox::information(parent, QObject::tr("Copied"),
             QObject::tr("Error details have been copied to clipboard."));
+    }
+}
+
+void DialogUtils::show_error_dialog_with_ai(QWidget* parent,
+                                           ErrorCodes::Code error_code,
+                                           const std::string& context,
+                                           std::shared_ptr<AIErrorResolver> resolver)
+{
+    auto error_info = ErrorCodes::ErrorCatalog::get_error_info(error_code, context);
+    
+    QMessageBox msg_box(parent);
+    msg_box.setIcon(QMessageBox::Critical);
+    msg_box.setWindowTitle(QObject::tr("Error"));
+    msg_box.setText(QString::fromStdString(error_info.get_user_message()));
+    
+    // Add buttons
+    QPushButton* ai_help_button = nullptr;
+    if (resolver) {
+        ai_help_button = msg_box.addButton(QObject::tr("🤖 Get AI Help"), QMessageBox::ActionRole);
+    }
+    QPushButton* copy_button = msg_box.addButton(QObject::tr("Copy Error Details"), QMessageBox::ActionRole);
+    msg_box.addButton(QMessageBox::Ok);
+    
+    msg_box.exec();
+    
+    // Handle button clicks
+    if (msg_box.clickedButton() == copy_button) {
+        QClipboard* clipboard = QApplication::clipboard();
+        clipboard->setText(QString::fromStdString(error_info.get_full_details()));
+        
+        QMessageBox::information(parent, QObject::tr("Copied"),
+            QObject::tr("Error details have been copied to clipboard."));
+    }
+    else if (ai_help_button && msg_box.clickedButton() == ai_help_button) {
+        // Open AI Error Resolution Dialog
+        ErrorResolutionDialog ai_dialog(error_code, context, resolver, parent);
+        ai_dialog.exec();
     }
 }

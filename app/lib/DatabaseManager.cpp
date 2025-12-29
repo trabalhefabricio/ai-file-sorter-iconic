@@ -1351,6 +1351,27 @@ void DatabaseManager::initialize_user_profile_schema() {
         sqlite3_free(error_msg);
     }
     
+    // Phase 1.2: Error resolution history table
+    const char *error_resolution_sql = R"(
+        CREATE TABLE IF NOT EXISTS error_resolution_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            error_code INTEGER NOT NULL,
+            error_category TEXT NOT NULL,
+            context TEXT,
+            user_description TEXT,
+            ai_diagnosis TEXT,
+            resolution_attempted INTEGER DEFAULT 0,
+            resolution_success INTEGER DEFAULT 0,
+            steps_taken TEXT,
+            error_detail TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    )";
+    if (sqlite3_exec(db, error_resolution_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create error_resolution_history table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
     // Create indices for performance
     const char *create_confidence_index_sql =
         "CREATE INDEX IF NOT EXISTS idx_confidence_scores_file ON confidence_scores(file_name, file_type, dir_path);";
@@ -1384,6 +1405,13 @@ void DatabaseManager::initialize_user_profile_schema() {
         "CREATE INDEX IF NOT EXISTS idx_sessions_folder ON categorization_sessions(folder_path);";
     if (sqlite3_exec(db, create_sessions_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
         db_log(spdlog::level::err, "Failed to create sessions index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    const char *create_error_resolution_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_error_resolution_code ON error_resolution_history(error_code, timestamp DESC);";
+    if (sqlite3_exec(db, create_error_resolution_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create error resolution index: {}", error_msg);
         sqlite3_free(error_msg);
     }
 }
@@ -2630,4 +2658,146 @@ bool DatabaseManager::clear_tinder_session(const std::string& folder_path) {
     bool success = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return success;
+}
+
+// Phase 1.2: Error resolution history methods
+
+bool DatabaseManager::record_error_resolution(const ErrorResolutionEntry& entry) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO error_resolution_history (error_code, error_category, context, user_description,
+                                             ai_diagnosis, resolution_attempted, resolution_success,
+                                             steps_taken, error_detail)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare record error resolution: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, entry.error_code);
+    sqlite3_bind_text(stmt, 2, entry.error_category.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, entry.context.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, entry.user_description.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, entry.ai_diagnosis.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 6, entry.resolution_attempted ? 1 : 0);
+    sqlite3_bind_int(stmt, 7, entry.resolution_success ? 1 : 0);
+    sqlite3_bind_text(stmt, 8, entry.steps_taken.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 9, entry.error_detail.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+std::vector<DatabaseManager::ErrorResolutionEntry> DatabaseManager::get_error_resolution_history(
+    int error_code, int limit) {
+    std::vector<ErrorResolutionEntry> history;
+    if (!db) return history;
+
+    std::string sql = R"(
+        SELECT error_code, error_category, context, user_description, ai_diagnosis,
+               resolution_attempted, resolution_success, steps_taken, error_detail, timestamp
+        FROM error_resolution_history
+    )";
+    
+    if (error_code >= 0) {
+        sql += " WHERE error_code = ?";
+    }
+    
+    sql += " ORDER BY timestamp DESC LIMIT ?;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        return history;
+    }
+
+    int param_index = 1;
+    if (error_code >= 0) {
+        sqlite3_bind_int(stmt, param_index++, error_code);
+    }
+    sqlite3_bind_int(stmt, param_index, limit);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ErrorResolutionEntry entry;
+        entry.error_code = sqlite3_column_int(stmt, 0);
+        
+        const char *category = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char *context = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char *user_desc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char *diagnosis = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        const char *steps = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        const char *detail = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+        const char *ts = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
+        
+        entry.error_category = category ? category : "";
+        entry.context = context ? context : "";
+        entry.user_description = user_desc ? user_desc : "";
+        entry.ai_diagnosis = diagnosis ? diagnosis : "";
+        entry.resolution_attempted = sqlite3_column_int(stmt, 5) != 0;
+        entry.resolution_success = sqlite3_column_int(stmt, 6) != 0;
+        entry.steps_taken = steps ? steps : "";
+        entry.error_detail = detail ? detail : "";
+        entry.timestamp = ts ? ts : "";
+        
+        history.push_back(entry);
+    }
+
+    sqlite3_finalize(stmt);
+    return history;
+}
+
+DatabaseManager::ErrorResolutionMetrics DatabaseManager::get_error_resolution_metrics() const {
+    ErrorResolutionMetrics metrics{};
+    if (!db) return metrics;
+
+    // Get overall statistics
+    const char *stats_sql = R"(
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN resolution_attempted = 1 THEN 1 ELSE 0 END) as attempted,
+            SUM(CASE WHEN resolution_success = 1 THEN 1 ELSE 0 END) as successful,
+            SUM(CASE WHEN resolution_attempted = 1 AND resolution_success = 0 THEN 1 ELSE 0 END) as failed
+        FROM error_resolution_history;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, stats_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            metrics.total_resolutions = sqlite3_column_int(stmt, 0);
+            int attempted = sqlite3_column_int(stmt, 1);
+            metrics.successful_resolutions = sqlite3_column_int(stmt, 2);
+            metrics.failed_resolutions = sqlite3_column_int(stmt, 3);
+            metrics.total_ai_queries = attempted;  // Each attempt uses AI
+            
+            if (attempted > 0) {
+                metrics.success_rate = static_cast<float>(metrics.successful_resolutions) / attempted;
+            } else {
+                metrics.success_rate = 0.0f;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Get most common error category
+    const char *category_sql = R"(
+        SELECT error_category, COUNT(*) as count
+        FROM error_resolution_history
+        GROUP BY error_category
+        ORDER BY count DESC
+        LIMIT 1;
+    )";
+
+    if (sqlite3_prepare_v2(db, category_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *category = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            metrics.most_common_error_category = category ? category : "Unknown";
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return metrics;
 }

@@ -169,6 +169,9 @@ MainApp::MainApp(Settings& settings, bool development_mode, QWidget* parent)
     profile_manager_ = std::make_unique<UserProfileManager>(db_manager, core_logger);
     profile_manager_->initialize_profile("default");
 
+    // AI Error Resolver will be lazily initialized on first use to avoid overhead
+    // See get_or_create_error_resolver()
+
     using_local_llm = settings.get_llm_choice() != LLMChoice::Remote;
 
     MainAppUiBuilder ui_builder;
@@ -417,6 +420,16 @@ void MainApp::connect_checkbox_signals()
             settings.set_enable_profile_learning(checked);
         });
     }
+
+    if (enable_ai_error_resolution_checkbox) {
+        connect(enable_ai_error_resolution_checkbox, &QCheckBox::toggled, this, [this](bool checked) {
+            settings.set_enable_ai_error_resolution(checked);
+            // Clear cached resolver when disabled to free resources
+            if (!checked && ai_error_resolver_) {
+                ai_error_resolver_.reset();
+            }
+        });
+    }
 }
 
 void MainApp::connect_whitelist_signals()
@@ -532,6 +545,9 @@ void MainApp::restore_tree_settings()
     categorize_directories_checkbox->setChecked(settings.get_categorize_directories());
     if (enable_profile_learning_checkbox) {
         enable_profile_learning_checkbox->setChecked(settings.get_enable_profile_learning());
+    }
+    if (enable_ai_error_resolution_checkbox) {
+        enable_ai_error_resolution_checkbox->setChecked(settings.get_enable_ai_error_resolution());
     }
 }
 
@@ -1531,6 +1547,42 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
     return client;
 }
 
+std::shared_ptr<AIErrorResolver> MainApp::get_or_create_error_resolver()
+{
+    // Return existing resolver if already created
+    if (ai_error_resolver_) {
+        return ai_error_resolver_;
+    }
+
+    try {
+        // Create LLM client for error resolution
+        auto llm_client = make_llm_client();
+        if (!llm_client) {
+            if (core_logger) {
+                core_logger->warn("Failed to create LLM client for AI error resolution");
+            }
+            return nullptr;
+        }
+
+        // Create and cache the AIErrorResolver
+        ai_error_resolver_ = std::make_shared<AIErrorResolver>(
+            std::move(llm_client),
+            db_manager
+        );
+
+        if (core_logger) {
+            core_logger->info("AI Error Resolver initialized successfully");
+        }
+
+        return ai_error_resolver_;
+    } catch (const std::exception& ex) {
+        if (core_logger) {
+            core_logger->error("Failed to initialize AI Error Resolver: {}", ex.what());
+        }
+        return nullptr;
+    }
+}
+
 void MainApp::notify_recategorization_reset(const std::vector<CategorizedFile>& entries,
                                             const std::string& reason)
 {
@@ -1610,11 +1662,39 @@ void MainApp::show_results_dialog(const std::vector<CategorizedFile>& results)
 
 void MainApp::show_error_dialog(const std::string& message)
 {
+    // Check if AI error resolution is enabled
+    if (settings.get_enable_ai_error_resolution()) {
+        auto resolver = get_or_create_error_resolver();
+        if (resolver) {
+            // Try to convert legacy error messages to error codes
+            ErrorCodes::Code error_code = ErrorMessages::get_code_for_message(message.c_str());
+            
+            // Use AI-enhanced error dialog
+            DialogUtils::show_error_dialog_with_ai(this, error_code, "", resolver);
+            return;
+        }
+    }
+    // Fall back to standard error dialog
     DialogUtils::show_error_dialog(this, message);
 }
 
 void MainApp::show_error_dialog(const ErrorCodes::AppException& exception)
 {
+    // Check if AI error resolution is enabled
+    if (settings.get_enable_ai_error_resolution()) {
+        auto resolver = get_or_create_error_resolver();
+        if (resolver) {
+            // Use AI-enhanced error dialog with the specific error code
+            DialogUtils::show_error_dialog_with_ai(
+                this, 
+                exception.get_error_info().code,
+                exception.get_error_info().technical_details,
+                resolver
+            );
+            return;
+        }
+    }
+    // Fall back to standard error dialog
     DialogUtils::show_error_dialog(this, exception);
 }
 

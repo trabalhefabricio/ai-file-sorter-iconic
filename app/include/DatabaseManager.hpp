@@ -185,6 +185,35 @@ public:
     bool save_tinder_decision(const FileTinderDecision& decision);
     std::vector<FileTinderDecision> get_tinder_decisions(const std::string& folder_path);
     bool clear_tinder_session(const std::string& folder_path);
+    
+    // Error resolution history methods (Phase 1.2)
+    struct ErrorResolutionEntry {
+        int error_code;
+        std::string error_category;
+        std::string context;
+        std::string user_description;
+        std::string ai_diagnosis;
+        bool resolution_attempted;
+        bool resolution_success;
+        std::string steps_taken;  // JSON array
+        std::string error_detail;
+        std::string timestamp;
+    };
+    bool record_error_resolution(const ErrorResolutionEntry& entry);
+    std::vector<ErrorResolutionEntry> get_error_resolution_history(
+        int error_code = -1,  // -1 means all error codes
+        int limit = 20);
+    
+    // Error resolution metrics (for Phase 2.4 API Cost Tracking integration)
+    struct ErrorResolutionMetrics {
+        int total_resolutions;
+        int successful_resolutions;
+        int failed_resolutions;
+        float success_rate;
+        std::string most_common_error_category;
+        int total_ai_queries;  // For API usage tracking
+    };
+    ErrorResolutionMetrics get_error_resolution_metrics() const;
 
 private:
     struct TaxonomyEntry {
