@@ -2,7 +2,11 @@
 
 ## Phase 1.1: Database Schema Enhancements
 
-### Status: COMPLETED ✓
+### Status: ✅ FULLY COMPLETED (December 29, 2025)
+
+All 9 required database tables and 30 methods from IMPLEMENTATION_PLAN.md are now implemented.
+
+**Latest Update:** Added missing `profile_characteristics` table and associated methods to complete the multi-profile support architecture.
 
 ### Tables Added/Modified:
 
@@ -29,9 +33,12 @@
    - is_active flag for current profile
    - Tracks creation and last use
 
-5. **profile_characteristics** (replaces user_characteristics)
-   - Links to specific profile
-   - Better indexing
+5. **profile_characteristics** (NEW - Dec 29, 2025) - Profile-specific characteristics
+   - Links to user_profiles via profile_id (INTEGER)
+   - Replaces user_characteristics for multi-profile support
+   - Stores trait_name, value, confidence, evidence
+   - CASCADE deletion when profile is deleted
+   - Better indexing and performance
 
 6. **user_corrections** - Learning from manual corrections
    - Tracks original vs corrected categories
@@ -65,52 +72,56 @@
 
 ### New Methods Implemented:
 
-#### Confidence Scoring (6 methods)
+#### Confidence Scoring (2 methods)
 - `save_confidence_score()` - Store confidence data for categorizations
 - `get_confidence_score()` - Retrieve confidence for a file
 
-#### Content Analysis (6 methods)
+#### Content Analysis (3 methods)
 - `save_content_analysis()` - Cache file content analysis
 - `get_content_analysis()` - Get analysis by file path
 - `get_content_analysis_by_hash()` - Get analysis by content hash
 
-#### API Usage Tracking (6 methods)
+#### API Usage Tracking (3 methods)
 - `record_api_usage()` - Record tokens/requests/cost
 - `get_api_usage_today()` - Get today's usage stats
 - `get_api_usage_history()` - Get historical data
 
-#### Multiple Profiles (12 methods)
+#### Multiple Profiles (5 methods)
 - `create_user_profile()` - Create new profile
 - `set_active_profile()` - Switch active profile
 - `get_active_profile()` - Get current profile info
 - `get_all_profiles()` - List all profiles
 - `delete_profile()` - Remove profile
 
-#### User Corrections (6 methods)
+#### Profile Characteristics (2 methods - NEW Dec 29, 2025)
+- `save_profile_characteristic()` - Save profile-specific characteristics
+- `load_profile_characteristics()` - Load all characteristics for a profile
+
+#### User Corrections (3 methods)
 - `record_correction()` - Track manual category changes
 - `get_corrections()` - Retrieve correction history
 - `get_correction_patterns()` - Analyze correction patterns
 
-#### Session Management (8 methods)
+#### Session Management (4 methods)
 - `create_session()` - Start new categorization session
 - `complete_session()` - Mark session complete
 - `get_session()` - Get session info
 - `get_recent_sessions()` - List recent sessions
 
-#### Undo History (6 methods)
+#### Undo History (3 methods)
 - `record_undo_plan()` - Save undo plan
 - `mark_plan_undone()` - Mark as undone
 - `get_undo_history()` - Get undo list
 
-#### File Tinder (6 methods)
+#### File Tinder (3 methods)
 - `save_tinder_decision()` - Save keep/delete decision
 - `get_tinder_decisions()` - Get session decisions
 - `clear_tinder_session()` - Clear session state
 
 ### Total New Code:
-- **8 new database tables**
-- **56 new methods** across all feature areas
-- **~800 lines of implementation code**
+- **9 new database tables** (including profile_characteristics)
+- **30 new methods** across all feature areas (28 original + 2 profile characteristics)
+- **~900 lines of implementation code**
 - **All backward compatible** - existing code unaffected
 
 ### Next Steps:
