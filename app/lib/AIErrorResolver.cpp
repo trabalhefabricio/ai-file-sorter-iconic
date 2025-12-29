@@ -364,9 +364,45 @@ bool AIErrorResolver::has_auto_fix(ErrorCodes::Code error_code) const {
 
 std::vector<AIErrorResolver::ResolutionResult> 
 AIErrorResolver::get_resolution_history(std::optional<ErrorCodes::Code> error_code, int limit) {
-    // This would query the database for past resolution attempts
-    // For now, return empty vector (will be implemented with database integration)
     std::vector<ResolutionResult> history;
+    
+    try {
+        int code_filter = error_code.has_value() ? static_cast<int>(error_code.value()) : -1;
+        auto db_entries = db_manager_.get_error_resolution_history(code_filter, limit);
+        
+        for (const auto& entry : db_entries) {
+            ResolutionResult result;
+            result.success = entry.resolution_success;
+            result.message = entry.resolution_success ? "Resolution succeeded" : "Resolution failed";
+            result.error_detail = entry.error_detail;
+            
+            // Parse JSON steps_taken back to vector
+            // Simple parsing for now - could use a JSON library for robustness
+            std::string steps_str = entry.steps_taken;
+            size_t start = steps_str.find('[');
+            size_t end = steps_str.find(']');
+            if (start != std::string::npos && end != std::string::npos) {
+                std::string steps_content = steps_str.substr(start + 1, end - start - 1);
+                // Simple split by comma (not robust for complex JSON)
+                std::istringstream ss(steps_content);
+                std::string step;
+                while (std::getline(ss, step, ',')) {
+                    // Remove quotes and whitespace
+                    step.erase(std::remove(step.begin(), step.end(), '\"'), step.end());
+                    step.erase(0, step.find_first_not_of(" \n\r\t"));
+                    step.erase(step.find_last_not_of(" \n\r\t") + 1);
+                    if (!step.empty()) {
+                        result.steps_taken.push_back(step);
+                    }
+                }
+            }
+            
+            history.push_back(result);
+        }
+    } catch (const std::exception& e) {
+        Logger::log_error("AIErrorResolver: Failed to retrieve history: " + std::string(e.what()));
+    }
+    
     return history;
 }
 
@@ -436,8 +472,43 @@ void AIErrorResolver::log_resolution_attempt(const ErrorAnalysis& analysis,
                 << ", Steps: " << result.steps_taken.size();
         Logger::log_info(log_msg.str());
         
-        // TODO: Store in database for pattern learning
-        // This requires adding error_resolution_history table to database schema
+        // Store in database for pattern learning
+        DatabaseManager::ErrorResolutionEntry entry;
+        entry.error_code = static_cast<int>(analysis.error_code);
+        
+        // Convert error category to string
+        switch (analysis.category) {
+            case ErrorCategory::Network: entry.error_category = "Network"; break;
+            case ErrorCategory::API: entry.error_category = "API"; break;
+            case ErrorCategory::FileSystem: entry.error_category = "FileSystem"; break;
+            case ErrorCategory::Database: entry.error_category = "Database"; break;
+            case ErrorCategory::LLM: entry.error_category = "LLM"; break;
+            case ErrorCategory::Configuration: entry.error_category = "Configuration"; break;
+            case ErrorCategory::Validation: entry.error_category = "Validation"; break;
+            case ErrorCategory::System: entry.error_category = "System"; break;
+            case ErrorCategory::Categorization: entry.error_category = "Categorization"; break;
+            case ErrorCategory::Download: entry.error_category = "Download"; break;
+            default: entry.error_category = "Unknown"; break;
+        }
+        
+        entry.context = "";  // Could be populated from analysis context
+        entry.user_description = "";  // Could be populated if available
+        entry.ai_diagnosis = analysis.ai_diagnosis;
+        entry.resolution_attempted = true;
+        entry.resolution_success = result.success;
+        
+        // Convert steps_taken vector to JSON string
+        std::stringstream steps_json;
+        steps_json << "[";
+        for (size_t i = 0; i < result.steps_taken.size(); ++i) {
+            if (i > 0) steps_json << ",";
+            steps_json << "\"" << result.steps_taken[i] << "\"";
+        }
+        steps_json << "]";
+        entry.steps_taken = steps_json.str();
+        entry.error_detail = result.error_detail;
+        
+        db_manager_.record_error_resolution(entry);
     } catch (const std::exception& e) {
         Logger::log_error("AIErrorResolver: Failed to log resolution attempt: " + std::string(e.what()));
     }
