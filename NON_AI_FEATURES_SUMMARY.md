@@ -77,7 +77,11 @@ These features work WITHOUT AI and provide immediate value:
 ### 6. File Tinder Tool (COMPLEX but VALUABLE)
 **What it does:** Swipe-style file cleanup
 - Preview files (images, text, metadata)
-- Keep/Delete/Ignore with keyboard shortcuts (V/X/I)
+- Arrow key navigation with visual feedback:
+  - ← Left Arrow: Delete file
+  - → Right Arrow: Keep file
+  - ↑ Up Arrow: Send to back of queue
+  - ↓ Down Arrow: Ignore for this session
 - Review marked files before deletion
 - Save and resume sessions
 
