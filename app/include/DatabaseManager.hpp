@@ -185,6 +185,20 @@ public:
     bool save_tinder_decision(const FileTinderDecision& decision);
     std::vector<FileTinderDecision> get_tinder_decisions(const std::string& folder_path);
     bool clear_tinder_session(const std::string& folder_path);
+    
+    // Cache management methods
+    struct CacheStatistics {
+        int entry_count;
+        int64_t database_size_bytes;
+        std::string oldest_entry_date;
+        std::string newest_entry_date;
+        int distinct_folders;
+    };
+    CacheStatistics get_cache_statistics();
+    bool clear_all_cache();
+    bool clear_cache_for_folder(const std::string& folder_path);
+    bool clear_cache_older_than(int days);
+    bool optimize_database();  // VACUUM
 
 private:
     struct TaxonomyEntry {

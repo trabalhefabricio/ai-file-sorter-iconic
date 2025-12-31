@@ -218,6 +218,7 @@ UiTranslator::Dependencies MainAppUiBuilder::build_translator_dependencies(MainA
             app.toggle_llm_action,
             app.manage_whitelists_action,
             app.clear_cache_action,
+            app.manage_cache_action,
             app.development_prompt_logging_action,
             app.consistency_pass_action,
             app.english_action,
@@ -343,6 +344,9 @@ void MainAppUiBuilder::build_settings_menu(MainApp& app) {
     
     app.clear_cache_action = app.settings_menu->addAction(icon_for(app, "edit-clear", QStyle::SP_DialogResetButton), QString());
     QObject::connect(app.clear_cache_action, &QAction::triggered, &app, &MainApp::clear_categorization_cache);
+    
+    app.manage_cache_action = app.settings_menu->addAction(icon_for(app, "preferences-system", QStyle::SP_DriveHDIcon), QString());
+    QObject::connect(app.manage_cache_action, &QAction::triggered, &app, &MainApp::show_cache_manager);
 
     app.settings_menu->addSeparator();
 

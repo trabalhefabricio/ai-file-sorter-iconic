@@ -19,6 +19,7 @@
 #include "MainAppUiBuilder.hpp"
 #include "UiTranslator.hpp"
 #include "WhitelistManagerDialog.hpp"
+#include "CacheManagerDialog.hpp"
 #include "UndoManager.hpp"
 #include "UserProfileDialog.hpp"
 #include "FolderLearningDialog.hpp"
@@ -845,6 +846,13 @@ void MainApp::show_whitelist_manager()
     whitelist_dialog->show();
     whitelist_dialog->raise();
     whitelist_dialog->activateWindow();
+}
+
+void MainApp::show_cache_manager()
+{
+    auto* cache_dialog = new CacheManagerDialog(db_manager, this);
+    cache_dialog->setAttribute(Qt::WA_DeleteOnClose);
+    cache_dialog->exec();
 }
 
 void MainApp::initialize_whitelists()

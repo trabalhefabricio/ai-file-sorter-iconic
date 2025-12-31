@@ -2,9 +2,11 @@
 
 #include "Settings.hpp"
 #include "CategoryLanguage.hpp"
+#include "CategorySuggestionWizard.hpp"
 #include "DatabaseManager.hpp"
 #include "ILLMClient.hpp"
 #include "Utils.hpp"
+#include "WhitelistStore.hpp"
 #include "AppException.hpp"
 #include "ErrorCode.hpp"
 
@@ -797,4 +799,159 @@ std::string CategorizationService::format_hint_block(const std::vector<CategoryP
     }
     oss << "Prefer one of the above when it fits; otherwise, choose the closest consistent alternative.";
     return oss.str();
+}
+
+// Wizard integration methods
+
+bool CategorizationService::should_trigger_wizard(
+    const std::string& category,
+    const std::string& subcategory,
+    double confidence_score) const
+{
+    // Check if wizard mode is enabled
+    if (!settings.get_enable_category_wizard()) {
+        return false;
+    }
+
+    // Check confidence threshold
+    const double threshold = settings.get_wizard_confidence_threshold();
+    if (confidence_score > 0.0 && confidence_score < threshold) {
+        return true;
+    }
+
+    // Check for generic categories
+    const std::string cat_lower = to_lower_copy_str(category);
+    const std::string sub_lower = to_lower_copy_str(subcategory);
+    if (cat_lower == "uncategorized" || cat_lower == "miscellaneous" || 
+        cat_lower == "other" || cat_lower == "unknown" ||
+        sub_lower == "uncategorized" || sub_lower == "miscellaneous" || 
+        sub_lower == "other" || sub_lower == "unknown") {
+        return true;
+    }
+
+    return false;
+}
+
+std::optional<DatabaseManager::ResolvedCategory> CategorizationService::handle_wizard_categorization(
+    const FileEntry& entry,
+    const std::string& suggested_parent,
+    double confidence_score,
+    WhitelistStore* whitelist_store,
+    const ProgressCallback& progress_callback) const
+{
+    if (!whitelist_store) {
+        return std::nullopt;
+    }
+    
+    // Get all existing paths from the whitelist for validation
+    std::vector<std::string> existing_paths;
+    existing_paths = whitelist_store->get_all_paths_from_entry("Default");
+    
+    // Create and show the wizard dialog
+    CategorySuggestionWizard wizard(entry, suggested_parent, confidence_score, existing_paths);
+    
+    if (wizard.exec() == QDialog::Accepted) {
+        const auto wizard_result = wizard.get_result();
+        const std::string result_path = wizard.get_path();
+        
+        if (progress_callback) {
+            progress_callback(fmt::format("[WIZARD] User chose: {} for '{}'",
+                                         wizard_result == CategorySuggestionWizard::UseParent ? "Use Parent" :
+                                         wizard_result == CategorySuggestionWizard::CreateNew ? "Create New" : "Skip",
+                                         entry.name));
+        }
+        
+        if (core_logger) {
+            core_logger->info("Wizard result for '{}': {} (path: '{}')",
+                             entry.name,
+                             wizard_result == CategorySuggestionWizard::UseParent ? "UseParent" :
+                             wizard_result == CategorySuggestionWizard::CreateNew ? "CreateNew" : "Skip",
+                             result_path);
+        }
+        
+        // Handle the user's choice
+        switch (wizard_result) {
+            case CategorySuggestionWizard::UseParent: {
+                // Place file at parent level
+                auto slash_pos = result_path.find('/');
+                if (slash_pos != std::string::npos) {
+                    // Return category without subcategory for parent-level placement
+                    return DatabaseManager::ResolvedCategory{
+                        -1,  // No whitelist index for dynamically created paths
+                        result_path.substr(0, slash_pos),  // Category
+                        ""  // Empty subcategory means parent-level placement
+                    };
+                } else {
+                    return DatabaseManager::ResolvedCategory{
+                        -1,
+                        result_path,
+                        ""
+                    };
+                }
+                break;
+            }
+            
+            case CategorySuggestionWizard::CreateNew: {
+                // Add the new path to the whitelist
+                if (add_path_to_whitelist(whitelist_store, result_path)) {
+                    // Parse the path to return category + subcategory
+                    auto slash_pos = result_path.find('/');
+                    if (slash_pos != std::string::npos && slash_pos < result_path.size() - 1) {
+                        return DatabaseManager::ResolvedCategory{
+                            -1,  // No whitelist index for dynamically created paths
+                            result_path.substr(0, slash_pos),  // Category
+                            result_path.substr(slash_pos + 1)   // Subcategory
+                        };
+                    } else {
+                        return DatabaseManager::ResolvedCategory{
+                            -1,
+                            result_path,
+                            ""
+                        };
+                    }
+                }
+                break;
+            }
+            
+            case CategorySuggestionWizard::Skip:
+                // User chose to skip - return empty
+                if (progress_callback) {
+                    progress_callback(fmt::format("[WIZARD] Skipping '{}'", entry.name));
+                }
+                return std::nullopt;
+        }
+    }
+    
+    // Dialog was cancelled or something went wrong
+    return std::nullopt;
+}
+
+bool CategorizationService::add_path_to_whitelist(
+    WhitelistStore* whitelist_store,
+    const std::string& path) const
+{
+    if (!whitelist_store) {
+        if (core_logger) {
+            core_logger->error("Cannot add path to whitelist: WhitelistStore is null");
+        }
+        return false;
+    }
+
+    const std::string default_name = whitelist_store->default_name();
+    const bool success = whitelist_store->add_path_to_entry(default_name, path);
+    
+    if (success) {
+        // Save immediately to persist changes
+        whitelist_store->save();
+        
+        if (core_logger) {
+            core_logger->info("Added path '{}' to whitelist '{}'", path, default_name);
+        }
+    } else {
+        if (core_logger) {
+            core_logger->warn("Failed to add path '{}' to whitelist", path);
+        }
+    }
+    
+    return success;
 }

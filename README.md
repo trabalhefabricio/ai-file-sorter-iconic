@@ -108,12 +108,13 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ## Features
 
-- **🧠 User Profiling & Adaptive Learning**: AI File Sorter learns from your file organization patterns over time to provide increasingly personalized categorization suggestions
+### Core Features (Original)
+
 - **AI-Powered Categorization**: Classify files intelligently using either a **local LLM** (LLaMa, Mistral), ChatGPT with your own OpenAI API key, or **Google Gemini** with your own Gemini API key (choose any model your key allows).
 - **Offline-Friendly**: Use a local LLM to categorize files entirely - no internet or API key required.
 - **Smart Free-Tier Support**: Gemini integration includes intelligent rate limiting (15 RPM), adaptive timeout handling (20s-240s), and self-operating retry logic optimized for free tier users - no more timeouts!
-  **Robust Categorization Algorithm**: Consistency across categories is supported by taxonomy and heuristics.
-  **Customizable Sorting Rules**: Automatically assign categories and subcategories for granular organization.
+- **Robust Categorization Algorithm**: Consistency across categories is supported by taxonomy and heuristics.
+- **Customizable Sorting Rules**: Automatically assign categories and subcategories for granular organization.
 - **Two categorization modes**: Pick **More Refined** for detailed labels or **More Consistent** to bias toward uniform categories within a folder.
 - **Category whitelists**: Define named whitelists of allowed categories/subcategories, manage them under **Settings → Manage category whitelists…**, and toggle/select them in the main window when you want to constrain model output for a session.
 - **Multilingual categorization**: Have the LLM assign categories in Dutch, French, German, Italian, Polish, Portuguese, Spanish, or Turkish (model dependent).
@@ -123,10 +124,81 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history.
 - **Cross-Platform Compatibility**: Works on Windows, macOS, and Linux.
 - **Local Database Caching**: Speeds up repeated categorization and minimizes remote LLM usage costs.
 - **Sorting Preview**: See how files will be organized before confirming changes.
-- 🧪 **Dry run** / preview-only mode to inspect planned moves without touching files.
-- ↩️ **Persistent Undo** ("Undo last run") even after closing the sort dialog.
 - **Bring your own key**: Paste your OpenAI or Gemini API key once; it's stored locally and reused for subsequent runs.
 - **Update Notifications**: Get notified about updates - with optional or required update flows.
+
+### Custom Features (This Fork)
+
+#### ✅ Implemented Custom Features
+
+- **🧠 User Profiling & Adaptive Learning**: AI File Sorter learns from your file organization patterns over time to provide increasingly personalized categorization suggestions
+  - **Profile Building**: Automatically analyzes folders to understand your hobbies, work patterns, and organizational style
+  - **Adaptive Categorization**: Uses learned profile to provide personalized file categorization suggestions
+  - **Folder Insights**: Tracks category usage, file counts, and dominant patterns per folder over time
+  - **Profile Evolution**: Confidence in characteristics grows as more folders are analyzed
+  - **View User Profile**: New menu option (Help → View User Profile) displays all learned characteristics and folder insights
+  - **Optional Learning**: Toggle "Learn from my organization patterns" checkbox on main screen to enable/disable
+  - **Per-Folder Control**: Configure learning level for each folder (Full, Partial, or None)
+  
+- 🧪 **Dry Run / Preview Mode**: Inspect planned moves without touching files with From→To table visualization
+
+- ↩️ **Persistent Undo**: "Undo last run" even after closing the sort dialog - the latest sort saves a plan file
+
+- 🗄️ **Cache Manager** (Settings → Manage Cache): Comprehensive database cache management
+  - View cache statistics (entry count, size, dates, folders)
+  - Clear all cache with confirmation
+  - Clear cache older than X days (configurable)
+  - Optimize database (VACUUM) to reclaim space
+  - Real-time statistics refresh
+
+#### 🔨 Planned Custom Features
+
+These features are designed and ready for implementation. See [NON_AI_FEATURES_SUMMARY.md](NON_AI_FEATURES_SUMMARY.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for details.
+
+**File Management & Organization:**
+- **File Tinder Tool**: Swipe-style file cleanup with arrow key navigation (←delete, →keep, ↑back, ↓ignore)
+- **Enhanced Undo System**: Multiple undo history, partial undo, redo support, visual timeline
+- **Session Management**: Save/resume categorization sessions, reapply settings to new folders
+- **Selective Execution**: Choose which files to move from preview with checkboxes and filters
+
+**Enhanced Categorization:**
+- **Hybrid Categorization Mode**: Third mode between refined/consistent with smart file clustering
+- **Post-Sorting Rename**: Bulk category changes with auto-complete and undo support
+- **Enhanced Simulation Mode**: Tree/graph views, before/after comparison, conflict highlighting
+
+**Monitoring & Insights:**
+- **Enhanced Progress Logging**: Real-time file path display, files/second rate, time estimates, log export
+- **API Usage Tracking Display**: OpenAI/Gemini usage dashboard, free tier quota monitoring, cost estimates
+
+See also:
+- **[AI_ALTERNATIVES.md](AI_ALTERNATIVES.md)**: Non-AI alternatives for AI-dependent features (85-95% effectiveness)
+- **[FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md)**: 25+ improvement ideas with priority matrix and timeline
+
+---
+
+### Feature Comparison Table
+
+| Feature | Original | This Fork | Status |
+|---------|----------|-----------|--------|
+| AI Categorization (LLM) | ✅ | ✅ | Original |
+| Local LLM Support | ✅ | ✅ | Original |
+| OpenAI/Gemini API | ✅ | ✅ | Original |
+| Category Whitelists | ✅ | ✅ | Original |
+| Dry Run Preview | ✅ | ✅ | Original |
+| Basic Undo | ✅ | ✅ Enhanced | Enhanced |
+| Database Caching | ✅ | ✅ | Original |
+| User Profiling | ❌ | ✅ | **New** |
+| Adaptive Learning | ❌ | ✅ | **New** |
+| Folder Insights | ❌ | ✅ | **New** |
+| Cache Manager UI | ❌ | ✅ | **New** |
+| Persistent Undo | ❌ | ✅ | **New** |
+| File Tinder | ❌ | 🔨 Planned | **New** |
+| Session Management | ❌ | 🔨 Planned | **New** |
+| Enhanced Undo | ❌ | 🔨 Planned | **New** |
+| API Usage Tracking | ❌ | 🔨 Planned | **New** |
+| Hybrid Mode | ❌ | 🔨 Planned | **New** |
+
+*Legend: ✅ Implemented | 🔨 Planned | ❌ Not Available*
 
 ---
 

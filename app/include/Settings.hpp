@@ -89,6 +89,12 @@ public:
     bool get_enable_profile_learning() const;
     void set_enable_profile_learning(bool value);
 
+    // Category suggestion wizard settings
+    bool get_enable_category_wizard() const;
+    void set_enable_category_wizard(bool value);
+    double get_wizard_confidence_threshold() const;
+    void set_wizard_confidence_threshold(double value);
+
 private:
     LLMChoice parse_llm_choice() const;
     void load_basic_settings(const std::function<bool(const char*, bool)>& load_bool,
@@ -132,6 +138,8 @@ private:
     std::vector<CustomLLM> custom_llms;
     std::string active_custom_llm_id;
     bool enable_profile_learning{true};  // Enable user profile learning
+    bool enable_category_wizard{false};  // Enable dynamic category creation wizard
+    double wizard_confidence_threshold{0.7};  // Confidence threshold for triggering wizard
 };
 
 #endif

@@ -17,6 +17,7 @@
 
 class Settings;
 class ILLMClient;
+class WhitelistStore;
 namespace spdlog { class logger; }
 
 class CategorizationService {
@@ -132,6 +133,21 @@ private:
                                const std::string& item_name,
                                const DatabaseManager::ResolvedCategory& resolved,
                                const std::string& item_path) const;
+
+    // Wizard integration methods
+    bool should_trigger_wizard(const std::string& category, 
+                              const std::string& subcategory,
+                              double confidence_score) const;
+    
+    std::optional<DatabaseManager::ResolvedCategory> handle_wizard_categorization(
+        const FileEntry& entry,
+        const std::string& suggested_parent,
+        double confidence_score,
+        WhitelistStore* whitelist_store,
+        const ProgressCallback& progress_callback) const;
+    
+    bool add_path_to_whitelist(WhitelistStore* whitelist_store,
+                               const std::string& path) const;
 
     static std::string make_file_signature(FileType file_type, const std::string& extension);
     static std::string extract_extension(const std::string& file_name);

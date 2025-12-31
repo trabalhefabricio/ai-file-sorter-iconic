@@ -2631,3 +2631,153 @@ bool DatabaseManager::clear_tinder_session(const std::string& folder_path) {
     sqlite3_finalize(stmt);
     return success;
 }
+
+// Cache management methods
+DatabaseManager::CacheStatistics DatabaseManager::get_cache_statistics() {
+    CacheStatistics stats{};
+    stats.entry_count = 0;
+    stats.database_size_bytes = 0;
+    stats.distinct_folders = 0;
+    
+    if (!db) return stats;
+    
+    // Get entry count
+    const char *count_sql = "SELECT COUNT(*) FROM file_categorization;";
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, count_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            stats.entry_count = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    // Get database file size
+    const char *size_sql = "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size();";
+    if (sqlite3_prepare_v2(db, size_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            stats.database_size_bytes = sqlite3_column_int64(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    // Get oldest and newest entry dates
+    const char *date_sql = R"(
+        SELECT 
+            MIN(timestamp) as oldest, 
+            MAX(timestamp) as newest
+        FROM file_categorization;
+    )";
+    if (sqlite3_prepare_v2(db, date_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *oldest = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            const char *newest = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            stats.oldest_entry_date = oldest ? oldest : "N/A";
+            stats.newest_entry_date = newest ? newest : "N/A";
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    // Get distinct folder count
+    const char *folder_sql = "SELECT COUNT(DISTINCT dir_path) FROM file_categorization;";
+    if (sqlite3_prepare_v2(db, folder_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            stats.distinct_folders = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    return stats;
+}
+
+bool DatabaseManager::clear_all_cache() {
+    if (!db) return false;
+    
+    char *error_msg = nullptr;
+    const char *sql = "DELETE FROM file_categorization;";
+    
+    bool success = sqlite3_exec(db, sql, nullptr, nullptr, &error_msg) == SQLITE_OK;
+    if (!success && error_msg) {
+        db_log(spdlog::level::err, "Failed to clear all cache: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Also clear content analysis cache
+    const char *content_sql = "DELETE FROM content_analysis_cache;";
+    sqlite3_exec(db, content_sql, nullptr, nullptr, nullptr);
+    
+    return success;
+}
+
+bool DatabaseManager::clear_cache_for_folder(const std::string& folder_path) {
+    if (!db) return false;
+    
+    const char *sql = "DELETE FROM file_categorization WHERE dir_path = ?;";
+    
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare clear folder cache: {}", sqlite3_errmsg(db));
+        return false;
+    }
+    
+    sqlite3_bind_text(stmt, 1, folder_path.c_str(), -1, SQLITE_TRANSIENT);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    
+    if (!success) {
+        db_log(spdlog::level::err, "Failed to clear cache for folder '{}'", folder_path);
+    }
+    
+    return success;
+}
+
+bool DatabaseManager::clear_cache_older_than(int days) {
+    if (!db || days < 0) return false;
+    
+    const char *sql = R"(
+        DELETE FROM file_categorization 
+        WHERE timestamp < datetime('now', '-' || ? || ' days');
+    )";
+    
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare clear old cache: {}", sqlite3_errmsg(db));
+        return false;
+    }
+    
+    sqlite3_bind_int(stmt, 1, days);
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    
+    if (!success) {
+        db_log(spdlog::level::err, "Failed to clear cache older than {} days", days);
+    }
+    
+    // Also clear old content analysis
+    const char *content_sql = R"(
+        DELETE FROM content_analysis_cache 
+        WHERE timestamp < datetime('now', '-' || ? || ' days');
+    )";
+    if (sqlite3_prepare_v2(db, content_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, days);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+    
+    return success;
+}
+
+bool DatabaseManager::optimize_database() {
+    if (!db) return false;
+    
+    char *error_msg = nullptr;
+    bool success = sqlite3_exec(db, "VACUUM;", nullptr, nullptr, &error_msg) == SQLITE_OK;
+    
+    if (!success && error_msg) {
+        db_log(spdlog::level::err, "Failed to optimize database: {}", error_msg);
+        sqlite3_free(error_msg);
+    } else {
+        db_log(spdlog::level::info, "Database optimized successfully");
+    }
+    
+    return success;
+}
