@@ -7,6 +7,9 @@
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QCheckBox>
+#include <QRadioButton>
+#include <QGroupBox>
+#include <QButtonGroup>
 #include "WhitelistStore.hpp"
 
 class WhitelistTreeEditor : public QDialog {
@@ -24,12 +27,16 @@ private slots:
     void on_remove_item();
     void on_item_changed(QTreeWidgetItem* item, int column);
     void on_selection_changed();
+    void on_mode_changed();
+    void on_edit_shared_subcategories();
 
 private:
     void setup_ui();
     void populate_tree(const WhitelistEntry& entry);
     void add_category_node(const QString& name, const QStringList& subcategories);
     QTreeWidgetItem* get_selected_category_node();
+    void update_mode_ui();
+    void populate_tree_for_mode();
     
     QLineEdit* name_edit_;
     QTreeWidget* tree_widget_;
@@ -38,6 +45,18 @@ private:
     QPushButton* remove_btn_;
     QTextEdit* context_edit_;
     QCheckBox* advanced_checkbox_;
+    
+    // Mode selection
+    QButtonGroup* mode_group_;
+    QRadioButton* hierarchical_mode_radio_;
+    QRadioButton* shared_mode_radio_;
+    
+    // Shared subcategories UI
+    QGroupBox* shared_subs_group_;
+    QLabel* shared_subs_label_;
+    QPushButton* edit_shared_subs_btn_;
+    
+    QStringList shared_subcategories_;  // Store shared subs when in shared mode
     
     bool updating_tree_{false};  // Prevent recursion during updates
 };
