@@ -201,6 +201,8 @@ void Settings::load_basic_settings(const std::function<bool(const char*, bool)>&
     consistency_pass_enabled = load_bool("ConsistencyPass", false);
     development_prompt_logging = load_bool("DevelopmentPromptLogging", false);
     enable_profile_learning = load_bool("EnableProfileLearning", true);
+    enable_category_wizard = load_bool("EnableCategoryWizard", false);
+    wizard_confidence_threshold = std::stod(config.getValue("Settings", "WizardConfidenceThreshold", "0.7"));
     skipped_version = config.getValue("Settings", "SkippedVersion", "0.0.0");
     if (config.hasValue("Settings", "Language")) {
         language = languageFromString(QString::fromStdString(config.getValue("Settings", "Language", "English")));
@@ -275,6 +277,8 @@ void Settings::save_core_settings()
     set_bool_setting(config, settings_section, "ConsistencyPass", consistency_pass_enabled);
     set_bool_setting(config, settings_section, "DevelopmentPromptLogging", development_prompt_logging);
     set_bool_setting(config, settings_section, "EnableProfileLearning", enable_profile_learning);
+    set_bool_setting(config, settings_section, "EnableCategoryWizard", enable_category_wizard);
+    config.setValue(settings_section, "WizardConfidenceThreshold", std::to_string(wizard_confidence_threshold));
     config.setValue(settings_section, "Language", languageToString(language).toStdString());
     config.setValue(settings_section, "CategoryLanguage", categoryLanguageToString(category_language).toStdString());
     config.setValue(settings_section, "CategorizedFileCount", std::to_string(categorized_file_count));
@@ -699,4 +703,27 @@ bool Settings::get_enable_profile_learning() const
 void Settings::set_enable_profile_learning(bool value)
 {
     enable_profile_learning = value;
+}
+
+bool Settings::get_enable_category_wizard() const
+{
+    return enable_category_wizard;
+}
+
+void Settings::set_enable_category_wizard(bool value)
+{
+    enable_category_wizard = value;
+}
+
+double Settings::get_wizard_confidence_threshold() const
+{
+    return wizard_confidence_threshold;
+}
+
+void Settings::set_wizard_confidence_threshold(double value)
+{
+    // Clamp between 0.0 and 1.0
+    if (value < 0.0) value = 0.0;
+    if (value > 1.0) value = 1.0;
+    wizard_confidence_threshold = value;
 }
