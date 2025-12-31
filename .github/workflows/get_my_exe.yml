@@ -55,7 +55,7 @@ jobs:
           }
 
           echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          Write-Host "✓ OpenBLAS installed successfully"
+          Write-Host "[OK] OpenBLAS installed successfully"
 
       # Cache vcpkg installation to avoid cloning and bootstrapping on every build
       # Invalidates when vcpkg.json changes
@@ -184,7 +184,7 @@ jobs:
               $missingFiles += $libPath
               Write-Warning "Missing required library: $libPath"
             } else {
-              Write-Host "✓ Found: $libPath"
+              Write-Host "[OK] Found: $libPath"
             }
           }
 
@@ -194,7 +194,7 @@ jobs:
               $missingFiles += $dllPath
               Write-Warning "Missing required DLL: $dllPath"
             } else {
-              Write-Host "✓ Found: $dllPath"
+              Write-Host "[OK] Found: $dllPath"
             }
           }
 
@@ -212,9 +212,9 @@ jobs:
           }
 
           if ("${{ steps.cache-llama.outputs.cache-hit }}" -eq "true") {
-            Write-Host "✓ All required Llama build artifacts verified from cache."
+            Write-Host "[OK] All required Llama build artifacts verified from cache."
           } else {
-            Write-Host "✓ All required Llama build artifacts verified from fresh build."
+            Write-Host "[OK] All required Llama build artifacts verified from fresh build."
           }
 
       # 2. FIND AND STAGE LLAMA.DLL (Prevents 'missing file' errors)
@@ -293,7 +293,7 @@ jobs:
           }
 
           $exeSize = (Get-Item $exePath).Length
-          Write-Host "✓ Build successful! aifilesorter.exe created ($([math]::Round($exeSize/1MB, 2)) MB)"
+          Write-Host "[OK] Build successful! aifilesorter.exe created ($([math]::Round($exeSize/1MB, 2)) MB)"
 
       - name: Bundle Files
         shell: cmd
@@ -333,7 +333,7 @@ jobs:
               $missingFiles += $file
               Write-Warning "Missing critical file in bundle: $file"
             } else {
-              Write-Host "✓ Found: $file"
+              Write-Host "[OK] Found: $file"
             }
           }
 
@@ -345,7 +345,7 @@ jobs:
           }
 
           $fileCount = (Get-ChildItem $outputDir -File).Count
-          Write-Host "✓ Bundle verified successfully! Total files: $fileCount"
+          Write-Host "[OK] Bundle verified successfully! Total files: $fileCount"
 
       - name: Upload Finished App
         uses: actions/upload-artifact@v4
