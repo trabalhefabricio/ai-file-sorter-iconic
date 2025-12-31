@@ -7,6 +7,7 @@
 #include <curl/curl.h>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <system_error>
 #include <stdexcept>
 
@@ -236,9 +237,11 @@ void LLMDownloader::perform_download()
             throw std::runtime_error("Failed to open file: " + download_destination);
         }
 
+        // Use RAII to ensure file is closed even if an exception is thrown
+        std::unique_ptr<FILE, decltype(&fclose)> file_guard(fp, &fclose);
+
         setup_download_curl_options(curl, fp, offset);
         CURLcode result = curl_easy_perform(curl);
-        fclose(fp);
         return result;
     };
 
@@ -364,9 +367,18 @@ long LLMDownloader::determine_resume_offset() const
     FILE* fp = fopen(download_destination.c_str(), "rb");
     if (!fp) return 0;
 
-    fseek(fp, 0, SEEK_END);
+    // Use RAII to ensure file is closed even if fseek/ftell fail
+    std::unique_ptr<FILE, decltype(&fclose)> file_guard(fp, &fclose);
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        return 0;  // fseek failed
+    }
+    
     long offset = ftell(fp);
-    fclose(fp);
+    if (offset < 0) {
+        return 0;  // ftell failed
+    }
+    
     return offset;
 }
 
