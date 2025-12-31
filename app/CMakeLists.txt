@@ -17,6 +17,11 @@ endif()
 # Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
+# Enable Qt MOC, UIC, and RCC for all targets
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
 # Third-party deps (resolved best via vcpkg on Windows)
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
