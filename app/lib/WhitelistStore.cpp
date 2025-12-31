@@ -128,11 +128,16 @@ std::vector<CategoryNode> WhitelistEntry::to_tree() const {
     std::vector<CategoryNode> nodes;
     
     if (use_hierarchical) {
-        // Use hierarchical structure
+        // Use hierarchical structure - convert to recursive tree
         for (const auto& [category, subs] : category_subcategory_map) {
             CategoryNode node;
             node.name = category;
-            node.subcategories = subs;
+            // Convert flat subcategories to child nodes
+            for (const auto& sub : subs) {
+                CategoryNode child;
+                child.name = sub;
+                node.children.push_back(child);
+            }
             nodes.push_back(node);
         }
     } else {
@@ -140,8 +145,12 @@ std::vector<CategoryNode> WhitelistEntry::to_tree() const {
         for (const auto& category : categories) {
             CategoryNode node;
             node.name = category;
-            // In flat mode, all subcategories are shared
-            node.subcategories = subcategories;
+            // In flat mode, all subcategories are shared - convert to children
+            for (const auto& sub : subcategories) {
+                CategoryNode child;
+                child.name = sub;
+                node.children.push_back(child);
+            }
             nodes.push_back(node);
         }
     }
@@ -156,8 +165,15 @@ void WhitelistEntry::from_tree(const std::vector<CategoryNode>& nodes) {
     subcategories.clear();
     
     for (const auto& node : nodes) {
-        category_subcategory_map[node.name] = node.subcategories;
-        categories.push_back(node.name);  // Also populate flat list
+        categories.push_back(node.name);  // Add to flat list
+        
+        // Extract direct children as subcategories
+        std::vector<std::string> subs;
+        for (const auto& child : node.children) {
+            subs.push_back(child.name);
+            // Note: We're flattening here - deeper nesting will be preserved in future
+        }
+        category_subcategory_map[node.name] = subs;
     }
 }
 

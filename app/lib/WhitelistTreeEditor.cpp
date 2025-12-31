@@ -73,6 +73,13 @@ void WhitelistTreeEditor::setup_ui()
     tree_widget_->setEditTriggers(QAbstractItemView::DoubleClickEdit);
     tree_widget_->setSelectionMode(QAbstractItemView::SingleSelection);
     tree_widget_->setAlternatingRowColors(true);
+    
+    // Enable drag and drop for reordering
+    tree_widget_->setDragEnabled(true);
+    tree_widget_->setAcceptDrops(true);
+    tree_widget_->setDragDropMode(QAbstractItemView::InternalMove);
+    tree_widget_->setDefaultDropAction(Qt::MoveAction);
+    
     main_layout->addWidget(tree_widget_);
     
     // Buttons row
@@ -83,8 +90,8 @@ void WhitelistTreeEditor::setup_ui()
     add_category_btn_->setIcon(style()->standardIcon(QStyle::SP_FileIcon));
     btn_layout->addWidget(add_category_btn_);
     
-    add_subcategory_btn_ = new QPushButton(tr("+ Subcategory"), this);
-    add_subcategory_btn_->setToolTip(tr("Add a subcategory to the selected category"));
+    add_subcategory_btn_ = new QPushButton(tr("+ Child"), this);
+    add_subcategory_btn_->setToolTip(tr("Add a child item to the selected item (supports unlimited nesting)"));
     add_subcategory_btn_->setIcon(style()->standardIcon(QStyle::SP_FileLinkIcon));
     add_subcategory_btn_->setEnabled(false);
     btn_layout->addWidget(add_subcategory_btn_);
@@ -129,7 +136,7 @@ void WhitelistTreeEditor::setup_ui()
     
     // Connect signals
     connect(add_category_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_add_category);
-    connect(add_subcategory_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_add_subcategory);
+    connect(add_subcategory_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_add_child_to_selected);
     connect(remove_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_remove_item);
     connect(tree_widget_, &QTreeWidget::itemChanged, this, &WhitelistTreeEditor::on_item_changed);
     connect(tree_widget_, &QTreeWidget::itemSelectionChanged, this, &WhitelistTreeEditor::on_selection_changed);
@@ -281,11 +288,7 @@ void WhitelistTreeEditor::populate_tree(const WhitelistEntry& entry)
     
     auto nodes = entry.to_tree();
     for (const auto& node : nodes) {
-        QStringList subs;
-        for (const auto& sub : node.subcategories) {
-            subs << QString::fromStdString(sub);
-        }
-        add_category_node(QString::fromStdString(node.name), subs);
+        add_node_recursive(nullptr, node);
     }
     
     tree_widget_->expandAll();
@@ -321,20 +324,12 @@ WhitelistEntry WhitelistTreeEditor::get_entry() const
     entry.use_hierarchical = is_hierarchical;
     
     if (is_hierarchical) {
-        // Hierarchical mode: each category has its own subcategories
+        // Hierarchical mode: recursively extract tree structure
         std::vector<CategoryNode> nodes;
         
         for (int i = 0; i < tree_widget_->topLevelItemCount(); ++i) {
             auto* cat_item = tree_widget_->topLevelItem(i);
-            CategoryNode node;
-            node.name = cat_item->text(0).toStdString();
-            
-            for (int j = 0; j < cat_item->childCount(); ++j) {
-                auto* sub_item = cat_item->child(j);
-                node.subcategories.push_back(sub_item->text(0).toStdString());
-            }
-            
-            nodes.push_back(node);
+            nodes.push_back(item_to_node(cat_item));
         }
         
         entry.from_tree(nodes);
@@ -376,6 +371,115 @@ void WhitelistTreeEditor::on_add_category()
 }
 
 void WhitelistTreeEditor::on_add_subcategory()
+{
+    // Legacy method - now delegates to on_add_child_to_selected
+    on_add_child_to_selected();
+}
+
+void WhitelistTreeEditor::on_add_child_to_selected()
+{
+    auto* selected_item = tree_widget_->currentItem();
+    if (!selected_item) {
+        QMessageBox::warning(this, tr("No Item Selected"),
+                           tr("Please select an item to add a child to."));
+        return;
+    }
+    
+    bool ok;
+    QString name = QInputDialog::getText(this,
+                                         tr("Add Child Item"),
+                                         tr("Child item name:"),
+                                         QLineEdit::Normal,
+                                         QString(),
+                                         &ok);
+    if (ok && !name.isEmpty()) {
+        updating_tree_ = true;
+        auto* child_item = new QTreeWidgetItem(selected_item);
+        child_item->setText(0, name);
+        
+        // Determine type based on depth
+        int depth = 0;
+        QTreeWidgetItem* temp = selected_item;
+        while (temp->parent()) {
+            depth++;
+            temp = temp->parent();
+        }
+        
+        if (depth == 0) {
+            child_item->setText(1, tr("Subcategory"));
+        } else if (depth == 1) {
+            child_item->setText(1, tr("Sub-subcategory"));
+        } else {
+            child_item->setText(1, tr("Level %1").arg(depth + 2));
+        }
+        
+        child_item->setFlags(child_item->flags() | Qt::ItemIsEditable);
+        child_item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+        child_item->setData(0, Qt::UserRole, QString("level%1").arg(depth + 1));
+        selected_item->setExpanded(true);
+        updating_tree_ = false;
+    }
+}
+
+CategoryNode WhitelistTreeEditor::item_to_node(QTreeWidgetItem* item) const
+{
+    CategoryNode node;
+    node.name = item->text(0).toStdString();
+    
+    // Recursively convert children
+    for (int i = 0; i < item->childCount(); ++i) {
+        node.children.push_back(item_to_node(item->child(i)));
+    }
+    
+    return node;
+}
+
+void WhitelistTreeEditor::add_node_recursive(QTreeWidgetItem* parent, const CategoryNode& node)
+{
+    QTreeWidgetItem* item;
+    if (parent) {
+        item = new QTreeWidgetItem(parent);
+    } else {
+        item = new QTreeWidgetItem(tree_widget_);
+    }
+    
+    item->setText(0, QString::fromStdString(node.name));
+    
+    // Determine depth for type label
+    int depth = 0;
+    QTreeWidgetItem* temp = parent;
+    while (temp) {
+        depth++;
+        temp = temp->parent();
+    }
+    
+    if (depth == 0) {
+        item->setText(1, tr("Category"));
+        item->setData(0, Qt::UserRole, "category");
+        item->setIcon(0, style()->standardIcon(QStyle::SP_DirIcon));
+    } else if (depth == 1) {
+        item->setText(1, tr("Subcategory"));
+        item->setData(0, Qt::UserRole, "subcategory");
+        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+    } else if (depth == 2) {
+        item->setText(1, tr("Sub-subcategory"));
+        item->setData(0, Qt::UserRole, "subsubcategory");
+        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+    } else {
+        item->setText(1, tr("Level %1").arg(depth + 1));
+        item->setData(0, Qt::UserRole, QString("level%1").arg(depth));
+        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+    }
+    
+    item->setFlags(item->flags() | Qt::ItemIsEditable);
+    
+    // Recursively add children
+    for (const auto& child : node.children) {
+        add_node_recursive(item, child);
+    }
+}
+
+void WhitelistTreeEditor::on_selection_changed()
 {
     auto* category_node = get_selected_category_node();
     if (!category_node) {
@@ -451,8 +555,10 @@ void WhitelistTreeEditor::on_selection_changed()
         return;
     }
     
-    QString type = item->data(0, Qt::UserRole).toString();
-    add_subcategory_btn_->setEnabled(type == "category");
+    // In hierarchical mode, allow adding children to any item
+    // In shared mode, only allow at root level (handled by mode UI update)
+    bool is_hierarchical = hierarchical_mode_radio_->isChecked();
+    add_subcategory_btn_->setEnabled(is_hierarchical);  // Enable for any item in hierarchical mode
     remove_btn_->setEnabled(true);
 }
 

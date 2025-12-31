@@ -10,9 +10,23 @@
 class Settings;
 
 // Hierarchical category structure for tree-based whitelist editor
+// Now supports recursive nesting (sub-subcategories and beyond)
 struct CategoryNode {
     std::string name;
-    std::vector<std::string> subcategories;
+    std::vector<CategoryNode> children;  // Recursive: can contain more CategoryNodes
+    
+    // Helper to check if this is a leaf node
+    bool is_leaf() const { return children.empty(); }
+    
+    // Helper to get depth
+    int depth() const {
+        if (is_leaf()) return 0;
+        int max_depth = 0;
+        for (const auto& child : children) {
+            max_depth = std::max(max_depth, child.depth());
+        }
+        return max_depth + 1;
+    }
 };
 
 struct WhitelistEntry {
