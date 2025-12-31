@@ -1,4 +1,5 @@
 #include "WhitelistManagerDialog.hpp"
+#include "WhitelistTreeEditor.hpp"
 
 #include <QListWidget>
 #include <QPushButton>
@@ -159,18 +160,26 @@ void WhitelistManagerDialog::refresh_list()
 
 bool WhitelistManagerDialog::edit_entry(const QString& name, WhitelistEntry& entry)
 {
-    auto result = show_edit_dialog(this, name, entry);
-    if (!result.has_value()) {
+    // Use the new tree-based editor
+    WhitelistTreeEditor editor(name, entry, this);
+    if (editor.exec() != QDialog::Accepted) {
         return false;
     }
-
-    store_.remove(name.toStdString());
-    WhitelistEntry new_entry;
-    new_entry.categories = result->categories;
-    new_entry.subcategories = result->subcategories;
-    new_entry.context = result->context;
-    new_entry.enable_advanced_subcategories = result->enable_advanced_subcategories;
-    store_.set(result->name.toStdString(), new_entry);
+    
+    // Remove old entry if name changed
+    QString new_name = editor.get_name().trimmed();
+    if (new_name.isEmpty()) {
+        QMessageBox::warning(this, tr("Invalid Name"), tr("Whitelist name cannot be empty."));
+        return false;
+    }
+    
+    if (!name.isEmpty() && name != new_name) {
+        store_.remove(name.toStdString());
+    }
+    
+    // Save new entry
+    WhitelistEntry new_entry = editor.get_entry();
+    store_.set(new_name.toStdString(), new_entry);
     store_.save();
     refresh_list();
     notify_changed();

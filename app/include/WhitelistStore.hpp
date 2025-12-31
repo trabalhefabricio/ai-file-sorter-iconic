@@ -4,15 +4,33 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <optional>
 
 class Settings;
 
+// Hierarchical category structure for tree-based whitelist editor
+struct CategoryNode {
+    std::string name;
+    std::vector<std::string> subcategories;
+};
+
 struct WhitelistEntry {
+    // Legacy flat structure (for backward compatibility)
     std::vector<std::string> categories;
     std::vector<std::string> subcategories;
+    
+    // New hierarchical structure (preferred)
+    std::map<std::string, std::vector<std::string>> category_subcategory_map;
+    
     std::string context;  // User-provided context for better categorization
     bool enable_advanced_subcategories{false};  // Generate subcategories dynamically
+    bool use_hierarchical{false};  // True if using category_subcategory_map
+    
+    // Helper methods
+    std::vector<CategoryNode> to_tree() const;
+    void from_tree(const std::vector<CategoryNode>& nodes);
+    void flatten_to_legacy();  // Convert hierarchical to flat for AI prompt
 };
 
 class WhitelistStore {

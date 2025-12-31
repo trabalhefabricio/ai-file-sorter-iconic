@@ -4,6 +4,7 @@
 
 #include <QSettings>
 #include <algorithm>
+#include <set>
 
 namespace {
 // Changed from comma to semicolon as the primary separator
@@ -55,13 +56,26 @@ bool WhitelistStore::load()
         const auto subs = split_csv(settings.value("Subcategories").toString());
         const auto context = settings.value("Context", "").toString().toStdString();
         const bool advanced = settings.value("AdvancedSubcategories", false).toBool();
+        const bool hierarchical = settings.value("UseHierarchical", false).toBool();
+        
+        WhitelistEntry entry;
+        entry.categories = cats;
+        entry.subcategories = subs;
+        entry.context = context;
+        entry.enable_advanced_subcategories = advanced;
+        entry.use_hierarchical = hierarchical;
+        
+        // Load hierarchical structure if present
+        if (hierarchical) {
+            for (const auto& category : cats) {
+                QString key = QString("Subcategories_%1").arg(QString::fromStdString(category));
+                auto cat_subs = split_csv(settings.value(key).toString());
+                entry.category_subcategory_map[category] = cat_subs;
+            }
+        }
+        
         settings.endGroup();
         if (!cats.empty() || !subs.empty()) {
-            WhitelistEntry entry;
-            entry.categories = cats;
-            entry.subcategories = subs;
-            entry.context = context;
-            entry.enable_advanced_subcategories = advanced;
             entries_[group.toStdString()] = entry;
         }
     }
@@ -82,6 +96,16 @@ bool WhitelistStore::save() const
         settings.setValue("Subcategories", join_csv(pair.second.subcategories));
         settings.setValue("Context", QString::fromStdString(pair.second.context));
         settings.setValue("AdvancedSubcategories", pair.second.enable_advanced_subcategories);
+        settings.setValue("UseHierarchical", pair.second.use_hierarchical);
+        
+        // Save hierarchical structure if present
+        if (pair.second.use_hierarchical) {
+            for (const auto& [category, subs] : pair.second.category_subcategory_map) {
+                QString key = QString("Subcategories_%1").arg(QString::fromStdString(category));
+                settings.setValue(key, join_csv(subs));
+            }
+        }
+        
         settings.endGroup();
     }
     settings.sync();
@@ -97,6 +121,64 @@ std::vector<std::string> WhitelistStore::list_names() const
     }
     std::sort(names.begin(), names.end());
     return names;
+}
+
+// WhitelistEntry helper methods
+std::vector<CategoryNode> WhitelistEntry::to_tree() const {
+    std::vector<CategoryNode> nodes;
+    
+    if (use_hierarchical) {
+        // Use hierarchical structure
+        for (const auto& [category, subs] : category_subcategory_map) {
+            CategoryNode node;
+            node.name = category;
+            node.subcategories = subs;
+            nodes.push_back(node);
+        }
+    } else {
+        // Convert flat structure to tree
+        for (const auto& category : categories) {
+            CategoryNode node;
+            node.name = category;
+            // In flat mode, all subcategories are shared
+            node.subcategories = subcategories;
+            nodes.push_back(node);
+        }
+    }
+    
+    return nodes;
+}
+
+void WhitelistEntry::from_tree(const std::vector<CategoryNode>& nodes) {
+    use_hierarchical = true;
+    category_subcategory_map.clear();
+    categories.clear();
+    subcategories.clear();
+    
+    for (const auto& node : nodes) {
+        category_subcategory_map[node.name] = node.subcategories;
+        categories.push_back(node.name);  // Also populate flat list
+    }
+}
+
+void WhitelistEntry::flatten_to_legacy() {
+    if (!use_hierarchical) {
+        return;  // Already flat
+    }
+    
+    // Flatten hierarchical structure to legacy format
+    categories.clear();
+    subcategories.clear();
+    std::set<std::string> unique_subs;
+    
+    for (const auto& [category, subs] : category_subcategory_map) {
+        categories.push_back(category);
+        for (const auto& sub : subs) {
+            unique_subs.insert(sub);
+        }
+    }
+    
+    subcategories.assign(unique_subs.begin(), unique_subs.end());
 }
 
 std::optional<WhitelistEntry> WhitelistStore::get(const std::string& name) const
