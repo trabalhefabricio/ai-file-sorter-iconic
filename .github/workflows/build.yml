@@ -19,24 +19,68 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/Qt
+            ~/.cache/ccache
+          key: qt-${{ runner.os }}-6.6.3-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            qt-${{ runner.os }}-6.6.3-
+
       - name: Set up Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.6.3'
           host: linux
           target: desktop
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build libcurl4-openssl-dev libjsoncpp-dev libsqlite3-dev libssl-dev libfmt-dev libspdlog-dev
+          sudo apt-get install -y build-essential cmake ninja-build libcurl4-openssl-dev libjsoncpp-dev libsqlite3-dev libssl-dev libfmt-dev libspdlog-dev ccache
+
+      - name: Setup ccache
+        run: |
+          ccache --set-config=max_size=500M
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            app/include/external/llama.cpp/build
+          key: cmake-build-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/*.cpp', 'app/**/*.h', 'app/include/external/llama.cpp/**/*.cpp', 'app/include/external/llama.cpp/**/*.h') }}
+          restore-keys: |
+            cmake-build-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt') }}-
+            cmake-build-${{ runner.os }}-
 
       - name: Configure
         run: |
-          cmake -S app -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          export PATH="/usr/lib/ccache:$PATH"
+          cmake -S app -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build build
+        run: |
+          export PATH="/usr/lib/ccache:$PATH"
+          cmake --build build
+
+      - name: Show ccache statistics
+        run: ccache --show-stats
 
       - name: Run ctest
         run: cd build && ctest --output-on-failure
