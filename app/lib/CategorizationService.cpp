@@ -2,9 +2,11 @@
 
 #include "Settings.hpp"
 #include "CategoryLanguage.hpp"
+#include "CategorySuggestionWizard.hpp"
 #include "DatabaseManager.hpp"
 #include "ILLMClient.hpp"
 #include "Utils.hpp"
+#include "WhitelistStore.hpp"
 #include "AppException.hpp"
 #include "ErrorCode.hpp"
 
@@ -837,23 +839,93 @@ std::optional<DatabaseManager::ResolvedCategory> CategorizationService::handle_w
     WhitelistStore* whitelist_store,
     const ProgressCallback& progress_callback) const
 {
-    // This method would invoke the CategorySuggestionWizard dialog
-    // For now, we return empty to maintain current behavior
-    // Full UI integration will be added in Commit 4
-    
-    if (progress_callback) {
-        progress_callback(fmt::format("[WIZARD-READY] {} (confidence: {:.2f}, parent: '{}')",
-                                     entry.name, confidence_score, suggested_parent));
+    if (!whitelist_store) {
+        return std::nullopt;
     }
     
-    if (core_logger) {
-        core_logger->info("Wizard trigger for '{}' with confidence {:.2f} and parent '{}'",
-                         entry.name, confidence_score, suggested_parent);
+    // Get all existing paths from the whitelist for validation
+    std::vector<std::string> existing_paths;
+    if (whitelist_store) {
+        const auto& whitelist = whitelist_store->get_whitelist("Default");
+        existing_paths = whitelist_store->get_all_paths_from_entry(whitelist);
     }
     
-    // TODO: In Commit 4, instantiate CategorySuggestionWizard here
-    // and handle the result (UseParent/CreateNew/Skip)
+    // Create and show the wizard dialog
+    CategorySuggestionWizard wizard(entry, suggested_parent, confidence_score, existing_paths);
     
+    if (wizard.exec() == QDialog::Accepted) {
+        const auto wizard_result = wizard.get_result();
+        const std::string result_path = wizard.get_path();
+        
+        if (progress_callback) {
+            progress_callback(fmt::format("[WIZARD] User chose: {} for '{}'",
+                                         wizard_result == CategorySuggestionWizard::UseParent ? "Use Parent" :
+                                         wizard_result == CategorySuggestionWizard::CreateNew ? "Create New" : "Skip",
+                                         entry.name));
+        }
+        
+        if (core_logger) {
+            core_logger->info("Wizard result for '{}': {} (path: '{}')",
+                             entry.name,
+                             wizard_result == CategorySuggestionWizard::UseParent ? "UseParent" :
+                             wizard_result == CategorySuggestionWizard::CreateNew ? "CreateNew" : "Skip",
+                             result_path);
+        }
+        
+        // Handle the user's choice
+        switch (wizard_result) {
+            case CategorySuggestionWizard::UseParent: {
+                // Place file at parent level
+                auto slash_pos = result_path.find('/');
+                if (slash_pos != std::string::npos) {
+                    // Return category without subcategory for parent-level placement
+                    return DatabaseManager::ResolvedCategory{
+                        -1,  // No whitelist index for dynamically created paths
+                        result_path.substr(0, slash_pos),  // Category
+                        ""  // Empty subcategory means parent-level placement
+                    };
+                } else {
+                    return DatabaseManager::ResolvedCategory{
+                        -1,
+                        result_path,
+                        ""
+                    };
+                }
+                break;
+            }
+            
+            case CategorySuggestionWizard::CreateNew: {
+                // Add the new path to the whitelist
+                if (add_path_to_whitelist(whitelist_store, result_path)) {
+                    // Parse the path to return category + subcategory
+                    auto slash_pos = result_path.find('/');
+                    if (slash_pos != std::string::npos && slash_pos < result_path.size() - 1) {
+                        return DatabaseManager::ResolvedCategory{
+                            -1,  // No whitelist index for dynamically created paths
+                            result_path.substr(0, slash_pos),  // Category
+                            result_path.substr(slash_pos + 1)   // Subcategory
+                        };
+                    } else {
+                        return DatabaseManager::ResolvedCategory{
+                            -1,
+                            result_path,
+                            ""
+                        };
+                    }
+                }
+                break;
+            }
+            
+            case CategorySuggestionWizard::Skip:
+                // User chose to skip - return empty
+                if (progress_callback) {
+                    progress_callback(fmt::format("[WIZARD] Skipping '{}'", entry.name));
+                }
+                return std::nullopt;
+        }
+    }
+    
+    // Dialog was cancelled or something went wrong
     return std::nullopt;
 }
 
