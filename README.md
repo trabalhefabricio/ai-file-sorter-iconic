@@ -151,12 +151,26 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history.
   - Optimize database (VACUUM) to reclaim space
   - Real-time statistics refresh
 
+- 📊 **API Usage Tracking Display** (Tools → API Usage Statistics): Monitor OpenAI/Gemini API usage and costs
+  - Today's token usage and request counts
+  - Estimated costs per day and month
+  - Remaining free tier quota (Gemini: 15 RPM, 1500 RPD)
+  - Historical usage graphs (last 30 days)
+  - Automatic tracking of all API calls
+  - Color-coded quota warnings
+
+- 🎯 **File Tinder Tool** (Tools → File Tinder): Swipe-style file cleanup with keyboard shortcuts
+  - Quick review interface: V (keep), X (delete), I (ignore), R (revert)
+  - File previews (images, text, metadata)
+  - Session save/resume functionality
+  - Safety review before deletion
+  - Progress tracking
+
 #### 🔨 Planned Custom Features
 
 These features are designed and ready for implementation. See [NON_AI_FEATURES_SUMMARY.md](NON_AI_FEATURES_SUMMARY.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for details.
 
 **File Management & Organization:**
-- **File Tinder Tool**: Swipe-style file cleanup with arrow key navigation (←delete, →keep, ↑back, ↓ignore)
 - **Enhanced Undo System**: Multiple undo history, partial undo, redo support, visual timeline
 - **Session Management**: Save/resume categorization sessions, reapply settings to new folders
 - **Selective Execution**: Choose which files to move from preview with checkboxes and filters
@@ -168,7 +182,6 @@ These features are designed and ready for implementation. See [NON_AI_FEATURES_S
 
 **Monitoring & Insights:**
 - **Enhanced Progress Logging**: Real-time file path display, files/second rate, time estimates, log export
-- **API Usage Tracking Display**: OpenAI/Gemini usage dashboard, free tier quota monitoring, cost estimates
 
 See also:
 - **[AI_ALTERNATIVES.md](AI_ALTERNATIVES.md)**: Non-AI alternatives for AI-dependent features (85-95% effectiveness)
@@ -192,10 +205,10 @@ See also:
 | Folder Insights | ❌ | ✅ | **New** |
 | Cache Manager UI | ❌ | ✅ | **New** |
 | Persistent Undo | ❌ | ✅ | **New** |
-| File Tinder | ❌ | 🔨 Planned | **New** |
+| File Tinder | ❌ | ✅ | **New** |
+| API Usage Tracking | ❌ | ✅ | **New** |
 | Session Management | ❌ | 🔨 Planned | **New** |
 | Enhanced Undo | ❌ | 🔨 Planned | **New** |
-| API Usage Tracking | ❌ | 🔨 Planned | **New** |
 | Hybrid Mode | ❌ | 🔨 Planned | **New** |
 
 *Legend: ✅ Implemented | 🔨 Planned | ❌ Not Available*
