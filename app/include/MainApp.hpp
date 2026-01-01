@@ -144,6 +144,8 @@ private:
     bool perform_undo_from_plan(const QString& plan_path);
     void clear_categorization_cache();
     void show_cache_manager();
+    void show_api_usage_stats();
+    void show_file_tinder();
 
     std::unique_ptr<ILLMClient> make_llm_client();
     void notify_recategorization_reset(const std::vector<CategorizedFile>& entries,
@@ -206,6 +208,7 @@ private:
     QMenu* edit_menu{nullptr};
     QMenu* view_menu{nullptr};
     QMenu* settings_menu{nullptr};
+    QMenu* tools_menu{nullptr};
     QMenu* development_menu{nullptr};
     QMenu* development_settings_menu{nullptr};
     QMenu* language_menu{nullptr};
@@ -222,6 +225,8 @@ private:
     QAction* manage_whitelists_action{nullptr};
     QAction* clear_cache_action{nullptr};
     QAction* manage_cache_action{nullptr};
+    QAction* api_usage_stats_action{nullptr};
+    QAction* file_tinder_action{nullptr};
     QAction* development_prompt_logging_action{nullptr};
     QAction* consistency_pass_action{nullptr};
     QActionGroup* language_group{nullptr};

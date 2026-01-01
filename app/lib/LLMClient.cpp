@@ -3,6 +3,8 @@
 #include <Logger.hpp>
 #include <AppException.hpp>
 #include <ErrorCode.hpp>
+#include <DatabaseManager.hpp>
+#include <APIUsageTracker.hpp>
 #include <curl/curl.h>
 #include <json/json.h>
 #include <spdlog/spdlog.h>
@@ -366,8 +368,8 @@ void ensure_curl_initialized() {
 }
 } // anonymous namespace
 
-LLMClient::LLMClient(std::string api_key, std::string model)
-    : api_key(std::move(api_key)), model(std::move(model)) {
+LLMClient::LLMClient(std::string api_key, std::string model, DatabaseManager* db)
+    : api_key(std::move(api_key)), model(std::move(model)), db_manager(db) {
     ensure_curl_initialized();
 }
 
@@ -512,6 +514,23 @@ std::string LLMClient::send_api_request(std::string json_payload) {
     
     if (!response.isMember("choices") || response["choices"].empty()) {
         throw AppException(Code::API_INVALID_RESPONSE, "Response missing 'choices' field");
+    }
+    
+    // Extract token usage if available
+    int total_tokens = 0;
+    if (response.isMember("usage") && response["usage"].isMember("total_tokens")) {
+        total_tokens = response["usage"]["total_tokens"].asInt();
+    }
+    
+    // Record API usage for tracking
+    if (db_manager && total_tokens > 0) {
+        float cost = APIUsageTracker::estimate_cost(effective_model(), total_tokens);
+        if (!db_manager->record_api_usage("openai", total_tokens, 1, cost)) {
+            // Log warning but don't fail the request
+            if (auto logger = Logger::get_logger("core_logger")) {
+                logger->warn("Failed to record OpenAI API usage");
+            }
+        }
     }
     
     auto& choice = response["choices"][0];

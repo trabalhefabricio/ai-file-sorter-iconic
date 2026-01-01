@@ -19,6 +19,7 @@ private:
     void build_edit_menu(MainApp& app);
     void build_view_menu(MainApp& app);
     void build_settings_menu(MainApp& app);
+    void build_tools_menu(MainApp& app);
     void build_development_menu(MainApp& app);
     void build_help_menu(MainApp& app);
     static QIcon icon_for(MainApp& app, const char* name, QStyle::StandardPixmap fallback);

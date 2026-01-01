@@ -202,6 +202,7 @@ UiTranslator::Dependencies MainAppUiBuilder::build_translator_dependencies(MainA
             app.edit_menu,
             app.view_menu,
             app.settings_menu,
+            app.tools_menu,
             app.development_menu,
             app.development_settings_menu,
             app.language_menu,
@@ -219,6 +220,8 @@ UiTranslator::Dependencies MainAppUiBuilder::build_translator_dependencies(MainA
             app.manage_whitelists_action,
             app.clear_cache_action,
             app.manage_cache_action,
+            app.api_usage_stats_action,
+            app.file_tinder_action,
             app.development_prompt_logging_action,
             app.consistency_pass_action,
             app.english_action,
@@ -272,6 +275,7 @@ void MainAppUiBuilder::build_menus(MainApp& app) {
     build_edit_menu(app);
     build_view_menu(app);
     build_settings_menu(app);
+    build_tools_menu(app);
     if (app.is_development_mode()) {
         build_development_menu(app);
     }
@@ -416,6 +420,22 @@ void MainAppUiBuilder::build_settings_menu(MainApp& app) {
         const CategoryLanguage chosen = static_cast<CategoryLanguage>(action->data().toInt());
         app.on_category_language_selected(chosen);
     });
+}
+
+void MainAppUiBuilder::build_tools_menu(MainApp& app) {
+    app.tools_menu = app.menuBar()->addMenu(QString());
+    
+    // File Tinder
+    app.file_tinder_action = app.tools_menu->addAction(
+        icon_for(app, "folder-open", QStyle::SP_DirIcon), QString());
+    QObject::connect(app.file_tinder_action, &QAction::triggered, &app, &MainApp::show_file_tinder);
+    
+    app.tools_menu->addSeparator();
+    
+    // API Usage Statistics
+    app.api_usage_stats_action = app.tools_menu->addAction(
+        icon_for(app, "view-statistics", QStyle::SP_FileDialogInfoView), QString());
+    QObject::connect(app.api_usage_stats_action, &QAction::triggered, &app, &MainApp::show_api_usage_stats);
 }
 
 void MainAppUiBuilder::build_development_menu(MainApp& app) {

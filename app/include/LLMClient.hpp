@@ -5,9 +5,11 @@
 #include <Types.hpp>
 #include <string>
 
+class DatabaseManager;
+
 class LLMClient : public ILLMClient {
 public:
-    LLMClient(std::string api_key, std::string model);
+    LLMClient(std::string api_key, std::string model, DatabaseManager* db = nullptr);
     ~LLMClient() override;
     std::string categorize_file(const std::string& file_name,
                                 const std::string& file_path,
@@ -31,6 +33,7 @@ private:
     bool prompt_logging_enabled{false};
     std::string last_prompt;
     std::string model;
+    DatabaseManager* db_manager{nullptr};
 };
 
 #endif

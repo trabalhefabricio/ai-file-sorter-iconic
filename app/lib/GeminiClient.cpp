@@ -3,6 +3,7 @@
 #include <Logger.hpp>
 #include <AppException.hpp>
 #include <ErrorCode.hpp>
+#include <DatabaseManager.hpp>
 #include <curl/curl.h>
 #include <json/json.h>
 #include <spdlog/spdlog.h>
@@ -602,8 +603,8 @@ void ensure_curl_initialized() {
 }
 } // anonymous namespace
 
-GeminiClient::GeminiClient(std::string api_key, std::string model)
-    : api_key(std::move(api_key)), model(std::move(model)) {
+GeminiClient::GeminiClient(std::string api_key, std::string model, DatabaseManager* db)
+    : api_key(std::move(api_key)), model(std::move(model)), db_manager(db) {
     ensure_curl_initialized();
 }
 
@@ -766,6 +767,16 @@ std::string GeminiClient::send_api_request(std::string json_payload) {
         candidate["content"]["parts"].empty()) {
         throw AppException(Code::API_INVALID_RESPONSE,
             "Response missing content parts - model response may be incomplete");
+    }
+    
+    // Record API usage for Gemini (free tier doesn't provide token counts)
+    if (db_manager) {
+        if (!db_manager->record_api_usage("gemini", 0, 1, 0.0f)) {
+            // Log warning but don't fail the request
+            if (auto logger = Logger::get_logger("core_logger")) {
+                logger->warn("Failed to record Gemini API usage");
+            }
+        }
     }
     
     auto content = candidate["content"]["parts"][0]["text"].asString();
