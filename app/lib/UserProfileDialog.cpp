@@ -107,7 +107,7 @@ void UserProfileDialog::setup_overview_tab() {
                   [](const auto* a, const auto* b) { return a->confidence > b->confidence; });
         for (const auto* hobby : hobbies) {
             int confidence_pct = static_cast<int>(hobby->confidence * 100);
-            summary << "  • " << hobby->value << " (confidence: " << confidence_pct << "%)\n";
+            summary << "  * " << hobby->value << " (confidence: " << confidence_pct << "%)\n";
         }
         summary << "\n";
     }
@@ -117,7 +117,7 @@ void UserProfileDialog::setup_overview_tab() {
         summary << "**Work Patterns:**\n";
         for (const auto* trait : grouped_traits["work_pattern"]) {
             int confidence_pct = static_cast<int>(trait->confidence * 100);
-            summary << "  • " << trait->value << " (confidence: " << confidence_pct << "%)\n";
+            summary << "  * " << trait->value << " (confidence: " << confidence_pct << "%)\n";
         }
         summary << "\n";
     }
@@ -127,7 +127,7 @@ void UserProfileDialog::setup_overview_tab() {
         summary << "**Organization Style:**\n";
         for (const auto* trait : grouped_traits["organization_style"]) {
             int confidence_pct = static_cast<int>(trait->confidence * 100);
-            summary << "  • " << trait->value << " (confidence: " << confidence_pct << "%)\n";
+            summary << "  * " << trait->value << " (confidence: " << confidence_pct << "%)\n";
         }
         summary << "\n";
     }
@@ -139,8 +139,8 @@ void UserProfileDialog::setup_overview_tab() {
         for (const auto& insight : profile_.folder_insights) {
             total_files += insight.file_count;
         }
-        summary << "  • Total files analyzed: " << total_files << "\n";
-        summary << "  • Folders tracked: " << profile_.folder_insights.size() << "\n";
+        summary << "  * Total files analyzed: " << total_files << "\n";
+        summary << "  * Folders tracked: " << profile_.folder_insights.size() << "\n";
     }
     
     summary_text_->setText(QString::fromStdString(summary.str()));

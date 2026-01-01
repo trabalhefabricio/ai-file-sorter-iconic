@@ -62,7 +62,7 @@ void UiTranslator::translate_primary_controls(bool analysis_in_progress) const
         label->setText(tr("Folder:"));
     }
     if (auto* button = raw_ptr(deps_.primary.browse_button)) {
-        button->setText(tr("Browse…"));
+        button->setText(tr("Browse..."));
     }
     if (auto* checkbox = raw_ptr(deps_.primary.use_subcategories_checkbox)) {
         checkbox->setText(tr("Use subcategories"));
@@ -163,10 +163,10 @@ void UiTranslator::translate_menus_and_actions() const
         {deps_.actions.paste_action, "&Paste"},
         {deps_.actions.delete_action, "&Delete"},
         {deps_.actions.toggle_explorer_action, "File &Explorer"},
-        {deps_.actions.toggle_llm_action, "Select &LLM…"},
-        {deps_.actions.manage_whitelists_action, "Manage category whitelists…"},
-        {deps_.actions.clear_cache_action, "&Clear Categorization Cache…"},
-        {deps_.actions.manage_cache_action, "&Manage Cache…"},
+        {deps_.actions.toggle_llm_action, "Select &LLM..."},
+        {deps_.actions.manage_whitelists_action, "Manage category whitelists..."},
+        {deps_.actions.clear_cache_action, "&Clear Categorization Cache..."},
+        {deps_.actions.manage_cache_action, "&Manage Cache..."},
         {deps_.actions.development_prompt_logging_action, "Log prompts and responses to stdout"},
         {deps_.actions.consistency_pass_action, "Run &consistency pass"},
         {deps_.actions.english_action, "&English"},
@@ -219,9 +219,9 @@ void UiTranslator::translate_status_messages(const State& state) const
 
     if (state.analysis_in_progress) {
         if (state.stop_analysis_requested) {
-            bar->showMessage(tr("Cancelling analysis…"), 4000);
+            bar->showMessage(tr("Cancelling analysis..."), 4000);
         } else {
-            bar->showMessage(tr("Analyzing…"));
+            bar->showMessage(tr("Analyzing..."));
         }
     } else if (state.status_is_ready) {
         bar->showMessage(tr("Ready"));

@@ -221,7 +221,7 @@ struct UiTranslatorTestHarness {
 void verify_primary_controls(const UiTranslatorTestHarness& h)
 {
     REQUIRE(h.path_label->text() == QStringLiteral("Folder:"));
-    REQUIRE(h.browse_button->text() == QStringLiteral("Browse…"));
+    REQUIRE(h.browse_button->text() == QStringLiteral("Browse..."));
     REQUIRE(h.analyze_button->text() == QStringLiteral("Analyze folder"));
     REQUIRE(h.subcategories_checkbox->text() == QStringLiteral("Use subcategories"));
     REQUIRE(h.style_heading->text() == QStringLiteral("Categorization type"));
@@ -236,8 +236,8 @@ void verify_menus_and_actions(const UiTranslatorTestHarness& h)
 {
     REQUIRE(h.file_menu->title() == QStringLiteral("&File"));
     REQUIRE(h.settings_menu->title() == QStringLiteral("&Settings"));
-    REQUIRE(h.toggle_llm_action->text() == QStringLiteral("Select &LLM…"));
-    REQUIRE(h.manage_whitelists_action->text() == QStringLiteral("Manage category whitelists…"));
+    REQUIRE(h.toggle_llm_action->text() == QStringLiteral("Select &LLM..."));
+    REQUIRE(h.manage_whitelists_action->text() == QStringLiteral("Manage category whitelists..."));
     REQUIRE(h.development_prompt_logging_action->text() ==
             QStringLiteral("Log prompts and responses to stdout"));
 

@@ -36,7 +36,7 @@ void CustomLLMDialog::setup_ui()
     description_edit = new QTextEdit(this);
     description_edit->setFixedHeight(70);
     path_edit = new QLineEdit(this);
-    browse_button = new QPushButton(tr("Browse…"), this);
+    browse_button = new QPushButton(tr("Browse..."), this);
     auto* path_row = new QHBoxLayout();
     path_row->addWidget(path_edit, 1);
     path_row->addWidget(browse_button);

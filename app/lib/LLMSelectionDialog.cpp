@@ -201,8 +201,8 @@ void LLMSelectionDialog::setup_ui()
     custom_combo = new QComboBox(custom_row);
     custom_combo->setMinimumContentsLength(18);
     custom_combo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    add_custom_button = new QPushButton(tr("Add…"), custom_row);
-    edit_custom_button = new QPushButton(tr("Edit…"), custom_row);
+    add_custom_button = new QPushButton(tr("Add..."), custom_row);
+    edit_custom_button = new QPushButton(tr("Edit..."), custom_row);
     delete_custom_button = new QPushButton(tr("Delete"), custom_row);
     custom_layout->addWidget(custom_combo, 1);
     custom_layout->addWidget(add_custom_button);
@@ -739,7 +739,7 @@ void LLMSelectionDialog::start_download()
     is_downloading = true;
     download_button->setEnabled(false);
     progress_bar->setVisible(true);
-    set_status_message(tr("Downloading…"));
+    set_status_message(tr("Downloading..."));
     progress_bar->setValue(0);
     button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
 

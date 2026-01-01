@@ -190,7 +190,7 @@ void CategorySuggestionWizard::load_file_preview() {
     // Fallback: show file icon and type
     if (!is_image) {
         QString file_type = ext.isEmpty() ? "File" : ext.mid(1).toUpper() + " File";
-        file_preview_label_->setText(QString("📄\n%1").arg(file_type));
+        file_preview_label_->setText(QString("[File]\n%1").arg(file_type));
         file_preview_label_->setStyleSheet(
             "QLabel { border: 1px solid #ccc; background-color: #f5f5f5; "
             "font-size: 14pt; color: #666; }");
@@ -211,7 +211,7 @@ void CategorySuggestionWizard::load_file_preview() {
     QString confidence_str = QString::number(confidence_score_, 'f', 2);
     if (parent_path_.empty()) {
         ai_suggestion_label_->setText(
-            QString("⚠️ AI is uncertain about this file (confidence: %1)")
+            QString("Warning: AI is uncertain about this file (confidence: %1)")
                 .arg(confidence_str));
     } else {
         ai_suggestion_label_->setText(
@@ -245,7 +245,7 @@ void CategorySuggestionWizard::on_subcategory_input_changed(const QString& text)
         validation_label_->setVisible(false);
         create_button_->setEnabled(true);
     } else {
-        validation_label_->setText("⚠️ " + error);
+        validation_label_->setText("Warning: " + error);
         validation_label_->setVisible(true);
         create_button_->setEnabled(false);
     }
@@ -269,7 +269,7 @@ void CategorySuggestionWizard::on_create_clicked() {
     if (create_new_radio_->isChecked()) {
         QString error = validate_input();
         if (!error.isEmpty()) {
-            validation_label_->setText("⚠️ " + error);
+            validation_label_->setText("Warning: " + error);
             validation_label_->setVisible(true);
             return;
         }

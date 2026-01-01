@@ -1,2 +1,0 @@
-/usr/bin/ar qc libggml.a CMakeFiles/ggml.dir/ggml_autogen/mocs_compilation.cpp.o "CMakeFiles/ggml.dir/ggml-backend-reg.cpp.o"
-/usr/bin/ranlib libggml.a

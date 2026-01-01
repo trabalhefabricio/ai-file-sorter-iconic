@@ -676,7 +676,7 @@ LibraryHandle open_cuda_runtime() {
 #ifdef _WIN32
     std::string dllName = Utils::get_cudart_dll_name();
     if (dllName.empty()) {
-        log_core(spdlog::level::warn, "[CUDA] DLL name is empty — likely failed to get CUDA version.");
+        log_core(spdlog::level::warn, "[CUDA] DLL name is empty - likely failed to get CUDA version.");
         return nullptr;
     }
     LibraryHandle handle = loadLibrary(dllName.c_str());

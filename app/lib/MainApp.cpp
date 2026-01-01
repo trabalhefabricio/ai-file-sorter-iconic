@@ -933,7 +933,7 @@ void MainApp::update_analyze_button_state(bool analyzing)
         if (analyze_button) {
             analyze_button->setText(tr("Stop analyzing"));
         }
-        statusBar()->showMessage(tr("Analyzing…"));
+        statusBar()->showMessage(tr("Analyzing..."));
         status_is_ready_ = false;
     } else {
         if (analyze_button) {
@@ -1425,7 +1425,7 @@ void MainApp::handle_development_prompt_logging(bool checked)
 void MainApp::request_stop_analysis()
 {
     stop_analysis = true;
-    statusBar()->showMessage(tr("Cancelling analysis…"), 4000);
+    statusBar()->showMessage(tr("Cancelling analysis..."), 4000);
     status_is_ready_ = false;
 }
 
