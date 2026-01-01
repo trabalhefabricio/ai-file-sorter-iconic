@@ -20,6 +20,8 @@
 #include "UiTranslator.hpp"
 #include "WhitelistManagerDialog.hpp"
 #include "CacheManagerDialog.hpp"
+#include "UsageStatsDialog.hpp"
+#include "FileTinderDialog.hpp"
 #include "UndoManager.hpp"
 #include "UserProfileDialog.hpp"
 #include "FolderLearningDialog.hpp"
@@ -853,6 +855,27 @@ void MainApp::show_cache_manager()
     auto* cache_dialog = new CacheManagerDialog(db_manager, this);
     cache_dialog->setAttribute(Qt::WA_DeleteOnClose);
     cache_dialog->exec();
+}
+
+void MainApp::show_api_usage_stats()
+{
+    auto* usage_dialog = new UsageStatsDialog(db_manager, this);
+    usage_dialog->setAttribute(Qt::WA_DeleteOnClose);
+    usage_dialog->exec();
+}
+
+void MainApp::show_file_tinder()
+{
+    QString folder_path_qstr = QString::fromStdString(get_folder_path());
+    if (folder_path_qstr.isEmpty()) {
+        QMessageBox::information(this, tr("No Folder Selected"),
+            tr("Please select a folder first using the file explorer on the left."));
+        return;
+    }
+    
+    auto* tinder_dialog = new FileTinderDialog(get_folder_path(), db_manager, this);
+    tinder_dialog->setAttribute(Qt::WA_DeleteOnClose);
+    tinder_dialog->exec();
 }
 
 void MainApp::initialize_whitelists()

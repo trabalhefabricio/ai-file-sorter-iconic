@@ -48,6 +48,7 @@ public:
         QMenu*& edit_menu;
         QMenu*& view_menu;
         QMenu*& settings_menu;
+        QMenu*& tools_menu;
         QMenu*& development_menu;
         QMenu*& development_settings_menu;
         QMenu*& language_menu;
@@ -67,6 +68,8 @@ public:
         QAction*& manage_whitelists_action;
         QAction*& clear_cache_action;
         QAction*& manage_cache_action;
+        QAction*& api_usage_stats_action;
+        QAction*& file_tinder_action;
         QAction*& development_prompt_logging_action;
         QAction*& consistency_pass_action;
         QAction*& english_action;
