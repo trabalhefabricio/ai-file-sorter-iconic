@@ -1518,7 +1518,7 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
             throw ErrorCodes::AppException(ErrorCodes::Code::API_KEY_MISSING, 
                 "OpenAI API key is required. Please add it in Settings → Select LLM.");
         }
-        auto client = std::make_unique<LLMClient>(api_key, model);
+        auto client = std::make_unique<LLMClient>(api_key, model, &db_manager);
         client->set_prompt_logging_enabled(should_log_prompts());
         return client;
     }
@@ -1530,7 +1530,7 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
             throw ErrorCodes::AppException(ErrorCodes::Code::API_KEY_MISSING,
                 "Gemini API key is required. Please add it in Settings → Select LLM.");
         }
-        auto client = std::make_unique<GeminiClient>(api_key, model);
+        auto client = std::make_unique<GeminiClient>(api_key, model, &db_manager);
         client->set_prompt_logging_enabled(should_log_prompts());
         return client;
     }
