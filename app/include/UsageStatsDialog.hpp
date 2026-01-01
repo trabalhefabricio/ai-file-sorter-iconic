@@ -34,8 +34,8 @@ private:
     void update_gemini_stats();
     void populate_history_table(QTableWidget* table, const std::string& provider);
     
-    QString format_cost(float cost);
-    QString format_tokens(int tokens);
+    QString format_cost(float cost) const;
+    QString format_tokens(int tokens) const;
     
     DatabaseManager& db_;
     APIUsageTracker tracker_;

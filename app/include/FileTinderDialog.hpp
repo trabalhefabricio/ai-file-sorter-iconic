@@ -66,9 +66,9 @@ private:
     void move_to_next_file();
     void update_progress();
     void show_review_screen();
-    QString get_decision_icon(Decision decision);
-    QString get_decision_text(Decision decision);
-    QString format_file_size(int64_t bytes);
+    QString get_decision_icon(Decision decision) const;
+    QString get_decision_text(Decision decision) const;
+    QString format_file_size(int64_t bytes) const;
     
     std::vector<FileToReview> files_;
     size_t current_index_{0};
@@ -87,8 +87,6 @@ private:
     QPushButton* ignore_button_;
     QPushButton* revert_button_;
     QPushButton* finish_button_;
-    
-    QWidget* review_widget_;
 };
 
 #endif // FILETINDERDIALOG_HPP

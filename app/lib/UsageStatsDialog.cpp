@@ -222,14 +222,14 @@ void UsageStatsDialog::populate_history_table(QTableWidget* table, const std::st
     table->resizeColumnsToContents();
 }
 
-QString UsageStatsDialog::format_cost(float cost) {
+QString UsageStatsDialog::format_cost(float cost) const {
     if (cost < 0.01f && cost > 0.0f) {
         return QString("< $0.01");
     }
     return QString("$%1").arg(cost, 0, 'f', 2);
 }
 
-QString UsageStatsDialog::format_tokens(int tokens) {
+QString UsageStatsDialog::format_tokens(int tokens) const {
     if (tokens >= 1000000) {
         return QString("%1M").arg(tokens / 1000000.0, 0, 'f', 2);
     } else if (tokens >= 1000) {

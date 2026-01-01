@@ -13,6 +13,7 @@
 #include <QHeaderView>
 #include <QFile>
 #include <QTextStream>
+#include <QFont>
 #include <algorithm>
 
 FileTinderDialog::FileTinderDialog(const std::string& folder_path,
@@ -504,7 +505,7 @@ void FileTinderDialog::keyPressEvent(QKeyEvent* event) {
     }
 }
 
-QString FileTinderDialog::format_file_size(int64_t bytes) {
+QString FileTinderDialog::format_file_size(int64_t bytes) const {
     const int64_t KB = 1024;
     const int64_t MB = KB * 1024;
     const int64_t GB = MB * 1024;
@@ -519,7 +520,7 @@ QString FileTinderDialog::format_file_size(int64_t bytes) {
     return QString("%1 bytes").arg(bytes);
 }
 
-QString FileTinderDialog::get_decision_icon(Decision decision) {
+QString FileTinderDialog::get_decision_icon(Decision decision) const {
     switch (decision) {
         case Decision::Keep: return "✓";
         case Decision::Delete: return "✗";
@@ -528,7 +529,7 @@ QString FileTinderDialog::get_decision_icon(Decision decision) {
     }
 }
 
-QString FileTinderDialog::get_decision_text(Decision decision) {
+QString FileTinderDialog::get_decision_text(Decision decision) const {
     switch (decision) {
         case Decision::Keep: return tr("Keep");
         case Decision::Delete: return tr("Delete");
