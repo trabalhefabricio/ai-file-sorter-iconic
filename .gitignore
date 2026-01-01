@@ -117,6 +117,7 @@ build-windows/
 build-tests/
 build/
 dist/
+*_codeql_build_dir/
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode
 
