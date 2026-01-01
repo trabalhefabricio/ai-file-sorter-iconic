@@ -7,12 +7,12 @@
 
 QStringList DllVersionChecker::getRequiredGgmlSymbols() {
     // Critical symbols that must be present in ggml.dll/llama.dll
-    // based on llama.cpp version b7130 (commit 3f3a4fb9c)
+    // based on llama.cpp version b7130 (commit 3f3a4fb9c from 2025-11-22)
     return {
         "ggml_init",
         "ggml_free",
         "ggml_new_tensor",
-        "ggml_xielu",  // Added in October 2025 - critical for new models
+        "ggml_xielu",  // Added in llama.cpp in October/November 2025 - critical for new models
         "ggml_backend_init",
         "ggml_backend_free"
     };
@@ -155,7 +155,7 @@ DllVersionChecker::CheckResult DllVersionChecker::checkLlamaDllCompatibility(con
     
     if (!result.isCompatible) {
         result.errorMessage += "\n\nThis usually means the llama.dll was built with an older version of llama.cpp.\n"
-                               "The application requires llama.cpp version b7130 (November 2025) or later.";
+                               "The application requires llama.cpp version b7130 (2025-11-22) or later.";
     }
     
     return result;

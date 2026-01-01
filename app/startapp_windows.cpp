@@ -550,22 +550,38 @@ QStringList build_forwarded_args(int argc, char* argv[], bool &console_log_flag)
 {
     QStringList forwardedArgs;
     console_log_flag = false;
+    
+    // List of flag prefixes that should not be forwarded (handled by starter only)
+    static const QStringList excludedPrefixes = {
+        QStringLiteral("--cuda="),
+        QStringLiteral("--vulkan=")
+    };
+    
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
-        // Check for console-log flag before adding to forwarded args
+        
+        // Check for console-log flag
         if (arg == QStringLiteral("--console-log")) {
             console_log_flag = true;
         }
-        // Don't duplicate backend override flags (they're handled by the starter)
-        if (!arg.startsWith(QStringLiteral("--cuda=")) && 
-            !arg.startsWith(QStringLiteral("--vulkan="))) {
+        
+        // Skip backend override flags - they're for the starter, not the main app
+        bool shouldExclude = false;
+        for (const QString& prefix : excludedPrefixes) {
+            if (arg.startsWith(prefix)) {
+                shouldExclude = true;
+                break;
+            }
+        }
+        
+        if (!shouldExclude) {
             forwardedArgs.append(arg);
         }
     }
-    // Always add --allow-direct-launch flag
+    
+    // Always add --allow-direct-launch to indicate app was launched via starter
     forwardedArgs.prepend(QStringLiteral("--allow-direct-launch"));
-    // BUG FIX: The --console-log flag was already added in the loop above, 
-    // so we don't need to add it again here
+    
     return forwardedArgs;
 }
 
