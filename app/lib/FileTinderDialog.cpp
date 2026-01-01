@@ -14,6 +14,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QFont>
+#include <QLocale>
 #include <algorithm>
 
 FileTinderDialog::FileTinderDialog(const std::string& folder_path,
@@ -248,7 +249,7 @@ void FileTinderDialog::preview_file(const std::string& path) {
             .arg(file_info.fileName())
             .arg(format_file_size(file_info.size()))
             .arg(suffix.isEmpty() ? tr("(no extension)") : suffix)
-            .arg(file_info.lastModified().toString(Qt::LocaleDate));
+            .arg(QLocale::system().toString(file_info.lastModified()));
         preview_area_->setText(info);
         preview_area_->setAlignment(Qt::AlignCenter);
     }

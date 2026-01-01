@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QLabel>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QTabWidget>
 #include <QTableWidget>
