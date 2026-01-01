@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: windows-2022
     timeout-minutes: 120  # 2 hours max to prevent runaway builds
+    
+    permissions:
+      contents: read
+      actions: read
 
     steps:
       - name: Checkout Code
