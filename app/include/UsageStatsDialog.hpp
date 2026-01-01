@@ -20,6 +20,7 @@
  */
 class UsageStatsDialog : public QDialog {
     Q_OBJECT
+    Q_DISABLE_COPY(UsageStatsDialog)
 
 public:
     explicit UsageStatsDialog(DatabaseManager& db, QWidget* parent = nullptr);

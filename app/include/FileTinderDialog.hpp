@@ -24,6 +24,7 @@
  */
 class FileTinderDialog : public QDialog {
     Q_OBJECT
+    Q_DISABLE_COPY(FileTinderDialog)
 
 public:
     explicit FileTinderDialog(const std::string& folder_path,
