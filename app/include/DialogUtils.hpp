@@ -12,14 +12,20 @@ namespace ErrorCodes {
 
 class DialogUtils {
 public:
-    // Show simple error dialog with message
+    // Show simple error dialog with message (includes copy button)
     static void show_error_dialog(QWidget* parent, const std::string& message);
     
-    // Show error dialog with error code and full details
+    // Show error dialog with error code and full details (includes copy button)
     static void show_error_dialog(QWidget* parent, ErrorCodes::Code error_code, const std::string& context = "");
     
-    // Show error dialog from AppException
+    // Show error dialog from AppException (includes copy button)
     static void show_error_dialog(QWidget* parent, const ErrorCodes::AppException& exception);
+    
+    // Show warning dialog with copyable text
+    static void show_warning_dialog(QWidget* parent, const std::string& title, const std::string& message);
+    
+    // Show information dialog with copyable text
+    static void show_info_dialog(QWidget* parent, const std::string& title, const std::string& message);
 };
 
 #endif // DIALOGUTILS_HPP
