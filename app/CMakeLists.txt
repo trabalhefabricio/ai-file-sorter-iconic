@@ -182,6 +182,10 @@ if(WIN32)
     set(STARTER_TARGET StartAiFileSorter)
     add_executable(${STARTER_TARGET} WIN32
         "${CMAKE_CURRENT_SOURCE_DIR}/startapp_windows.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/lib/DllVersionChecker.cpp"
+    )
+    target_include_directories(${STARTER_TARGET} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
     target_link_libraries(${STARTER_TARGET} PRIVATE
         Qt6::Widgets Qt6::Gui Qt6::Core

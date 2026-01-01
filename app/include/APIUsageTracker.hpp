@@ -58,15 +58,15 @@ public:
      */
     static float estimate_cost(const std::string& model, int tokens);
 
+    // Gemini free tier limits
+    static constexpr int GEMINI_FREE_RPM = 15;  // Requests per minute
+    static constexpr int GEMINI_FREE_RPD = 1500;  // Requests per day
+
 private:
     DatabaseManager& db_;
     
     // Model pricing (cost per 1M tokens in USD)
     static const std::map<std::string, float> model_costs_;
-    
-    // Gemini free tier limits
-    static constexpr int GEMINI_FREE_RPM = 15;  // Requests per minute
-    static constexpr int GEMINI_FREE_RPD = 1500;  // Requests per day
 };
 
 #endif // APIUSAGETRACKER_HPP
