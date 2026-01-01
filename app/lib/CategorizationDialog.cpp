@@ -810,7 +810,7 @@ void CategorizationDialog::remove_empty_parent_directories(const std::string& de
     auto parent = dest_path.parent_path();
     while (!parent.empty()) {
         std::error_code ec;
-        if (!std::filesystem::exists(parent)) {
+        if (!std::filesystem::exists(parent, ec) || ec) {
             parent = parent.parent_path();
             continue;
         }
@@ -830,7 +830,7 @@ bool CategorizationDialog::move_file_back(const std::string& source, const std::
     auto destination_path = Utils::utf8_to_path(destination);
     auto source_path = Utils::utf8_to_path(source);
 
-    if (!std::filesystem::exists(destination_path)) {
+    if (!std::filesystem::exists(destination_path, ec) || ec) {
         if (core_logger) {
             core_logger->warn("Undo skipped; destination '{}' missing", destination);
         }
