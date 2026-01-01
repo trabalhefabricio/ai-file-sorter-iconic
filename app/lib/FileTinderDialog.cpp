@@ -141,6 +141,9 @@ void FileTinderDialog::load_files() {
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->error("Folder does not exist: {}", folder_path_);
         }
+        // Initialize progress bar even if folder doesn't exist
+        progress_bar_->setMaximum(0);
+        progress_bar_->setValue(0);
         return;
     }
     

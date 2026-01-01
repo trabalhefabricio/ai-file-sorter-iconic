@@ -89,7 +89,6 @@ private:
     QPushButton* finish_button_;
     
     QWidget* review_widget_;
-    QLabel* stats_label_;
 };
 
 #endif // FILETINDERDIALOG_HPP
