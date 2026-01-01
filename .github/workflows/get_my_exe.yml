@@ -334,7 +334,8 @@ jobs:
           }
 
           # Run windeployqt
-          $exePath = Get-Item "output\*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $exeFiles = Get-ChildItem -Path "output" -Filter "*.exe" -ErrorAction SilentlyContinue
+          $exePath = $exeFiles | Select-Object -First 1
           if ($exePath) {
             Write-Host "Running windeployqt for: $($exePath.FullName)"
             & windeployqt --release --dir output $exePath.FullName
@@ -391,9 +392,9 @@ jobs:
           )
 
           foreach ($pattern in $openblasFiles) {
-            $files = Get-Item $pattern -ErrorAction SilentlyContinue
+            $files = Get-ChildItem -Path (Split-Path $pattern -Parent) -Filter (Split-Path $pattern -Leaf) -ErrorAction SilentlyContinue
             if ($files) {
-              Copy-Item $files "output\" -Force
+              Copy-Item $files.FullName "output\" -Force
               Write-Host "[OK] Copied OpenBLAS dependency: $pattern"
             }
           }
