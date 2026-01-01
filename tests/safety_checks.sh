@@ -36,7 +36,7 @@ report_warning() {
 }
 
 echo "1. Checking for unsafe string operations..."
-UNSAFE_STRINGS=$(find "$APP_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) | xargs grep -n "strcpy\|strcat\|sprintf" | wc -l) || UNSAFE_STRINGS=0
+UNSAFE_STRINGS=$(find "$APP_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) -exec grep -n "strcpy\|strcat\|sprintf" {} + 2>/dev/null | wc -l) || UNSAFE_STRINGS=0
 if [ "$UNSAFE_STRINGS" -eq 0 ]; then
     report_success "No unsafe string operations found"
 else
@@ -47,7 +47,7 @@ echo ""
 echo "2. Checking for potential null pointer dereferences..."
 # Note: This is a basic heuristic. For comprehensive analysis, use static analysis tools
 # like clang-static-analyzer or clang-tidy
-ARROW_OPS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c '\->' {} + | awk '{sum+=$1} END {print sum}') || ARROW_OPS=0
+ARROW_OPS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c '\->' {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}') || ARROW_OPS=0
 if [ "$ARROW_OPS" -gt 0 ]; then
     report_success "Found $ARROW_OPS pointer dereferences - recommend static analysis for thorough review"
 else
@@ -56,8 +56,8 @@ fi
 
 echo ""
 echo "3. Checking for manual memory management..."
-RAW_NEWS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n "new \w" | grep -v "// " | wc -l) || RAW_NEWS=0
-RAW_DELETES=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n "delete " | grep -v "delete\[\]" | grep -v "// " | grep -v "\"" | wc -l) || RAW_DELETES=0
+RAW_NEWS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n "new \w" {} + 2>/dev/null | grep -v "// " | wc -l) || RAW_NEWS=0
+RAW_DELETES=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n "delete " {} + 2>/dev/null | grep -v "delete\[\]" | grep -v "// " | grep -v "\"" | wc -l) || RAW_DELETES=0
 
 if [ "$RAW_NEWS" -lt 30 ]; then
     report_success "Low usage of raw new ($RAW_NEWS instances) - good use of smart pointers"
@@ -74,7 +74,7 @@ fi
 echo ""
 echo "4. Checking for proper exception handling..."
 # Note: This is a heuristic - manual review of catch blocks recommended
-CATCH_ALL=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c 'catch.*\.\.\.' {} + | awk '{sum+=$1} END {print sum}') || CATCH_ALL=0
+CATCH_ALL=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c 'catch.*\.\.\.' {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}') || CATCH_ALL=0
 if [ "$CATCH_ALL" -lt 10 ]; then
     report_success "Limited use of catch-all handlers ($CATCH_ALL) - appears appropriate"
 else
@@ -83,7 +83,7 @@ fi
 
 echo ""
 echo "5. Checking for hardcoded paths..."
-HARDCODED_PATHS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n '\".*[/\\].*\"' | grep -v "//" | grep -v "://" | wc -l) || HARDCODED_PATHS=0
+HARDCODED_PATHS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n '\".*[/\\].*\"' {} + 2>/dev/null | grep -v "//" | grep -v "://" | wc -l) || HARDCODED_PATHS=0
 if [ "$HARDCODED_PATHS" -lt 20 ]; then
     report_success "Low number of potential hardcoded paths ($HARDCODED_PATHS)"
 else
@@ -92,7 +92,7 @@ fi
 
 echo ""
 echo "6. Checking for TODO/FIXME markers..."
-TODOS=$(find "$APP_DIR" -name "*.cpp" -o -name "*.hpp" | xargs grep -i "TODO\|FIXME" | wc -l) || TODOS=0
+TODOS=$(find "$APP_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec grep -i "TODO\|FIXME" {} + 2>/dev/null | wc -l) || TODOS=0
 if [ "$TODOS" -eq 0 ]; then
     report_success "No TODO/FIXME markers found"
 else
@@ -100,9 +100,10 @@ else
 fi
 
 echo ""
+echo ""
 echo "7. Checking for proper mutex usage..."
-MUTEX_LOCKS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -c "\.lock()" | awk '{sum+=$1} END {print sum}') || MUTEX_LOCKS=0
-LOCK_GUARDS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -c "lock_guard\|unique_lock" | awk '{sum+=$1} END {print sum}') || LOCK_GUARDS=0
+MUTEX_LOCKS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c "\.lock()" {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}') || MUTEX_LOCKS=0
+LOCK_GUARDS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c "lock_guard\|unique_lock" {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}') || LOCK_GUARDS=0
 
 if [ "$MUTEX_LOCKS" -eq 0 ]; then
     report_success "No raw mutex.lock() calls - excellent use of RAII lock guards"
@@ -117,13 +118,13 @@ fi
 echo ""
 echo "8. Checking for integer overflow risks..."
 # Note: This is informational only. Use static analysis tools for comprehensive overflow detection
-ARITHMETIC_OPS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c '+\|-\|*\|/' {} + | awk '{sum+=$1} END {print sum}') || ARITHMETIC_OPS=0
+ARITHMETIC_OPS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -c '+\|-\|*\|/' {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}') || ARITHMETIC_OPS=0
 report_success "Found $ARITHMETIC_OPS lines with arithmetic - recommend bounds checking in critical paths"
 
 echo ""
 echo "9. Checking for proper resource cleanup..."
-OPEN_CALLS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n "\.open(" | wc -l) || OPEN_CALLS=0
-CLOSE_CALLS=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n "\.close()" | wc -l) || CLOSE_CALLS=0
+OPEN_CALLS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n "\.open(" {} + 2>/dev/null | wc -l) || OPEN_CALLS=0
+CLOSE_CALLS=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n "\.close()" {} + 2>/dev/null | wc -l) || CLOSE_CALLS=0
 
 if [ "$OPEN_CALLS" -le "$CLOSE_CALLS" ]; then
     report_success "Resource cleanup appears balanced (open: $OPEN_CALLS, close: $CLOSE_CALLS)"
@@ -134,7 +135,7 @@ fi
 echo ""
 echo "10. Checking for SQL injection risks..."
 # Look for string concatenation with SQL
-SQL_CONCAT=$(find "$APP_DIR/lib" -name "*.cpp" | xargs grep -n "SELECT.*+\|INSERT.*+\|UPDATE.*+\|DELETE.*+" | wc -l) || SQL_CONCAT=0
+SQL_CONCAT=$(find "$APP_DIR/lib" -name "*.cpp" -exec grep -n "SELECT.*+\|INSERT.*+\|UPDATE.*+\|DELETE.*+" {} + 2>/dev/null | wc -l) || SQL_CONCAT=0
 if [ "$SQL_CONCAT" -eq 0 ]; then
     report_success "No obvious SQL concatenation found - using prepared statements"
 else
