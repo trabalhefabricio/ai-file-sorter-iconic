@@ -70,7 +70,7 @@ void WhitelistTreeEditor::setup_ui()
     tree_widget_ = new QTreeWidget(this);
     tree_widget_->setHeaderLabels({tr("Category / Subcategory"), tr("Type")});
     tree_widget_->setColumnWidth(0, 400);
-    tree_widget_->setEditTriggers(QAbstractItemView::DoubleClickEdit);
+    tree_widget_->setEditTriggers(QAbstractItemView::EditTrigger::DoubleClicked);
     tree_widget_->setSelectionMode(QAbstractItemView::SingleSelection);
     tree_widget_->setAlternatingRowColors(true);
     
@@ -476,35 +476,6 @@ void WhitelistTreeEditor::add_node_recursive(QTreeWidgetItem* parent, const Cate
     // Recursively add children
     for (const auto& child : node.children) {
         add_node_recursive(item, child);
-    }
-}
-
-void WhitelistTreeEditor::on_selection_changed()
-{
-    auto* category_node = get_selected_category_node();
-    if (!category_node) {
-        QMessageBox::warning(this, tr("No Category Selected"),
-                           tr("Please select a category first."));
-        return;
-    }
-    
-    bool ok;
-    QString name = QInputDialog::getText(this,
-                                         tr("Add Subcategory"),
-                                         tr("Subcategory name:"),
-                                         QLineEdit::Normal,
-                                         QString(),
-                                         &ok);
-    if (ok && !name.isEmpty()) {
-        updating_tree_ = true;
-        auto* sub_item = new QTreeWidgetItem(category_node);
-        sub_item->setText(0, name);
-        sub_item->setText(1, tr("Subcategory"));
-        sub_item->setFlags(sub_item->flags() | Qt::ItemIsEditable);
-        sub_item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
-        sub_item->setData(0, Qt::UserRole, "subcategory");
-        category_node->setExpanded(true);
-        updating_tree_ = false;
     }
 }
 

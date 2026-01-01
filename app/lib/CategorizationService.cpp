@@ -858,12 +858,12 @@ std::optional<DatabaseManager::ResolvedCategory> CategorizationService::handle_w
             progress_callback(fmt::format("[WIZARD] User chose: {} for '{}'",
                                          wizard_result == CategorySuggestionWizard::UseParent ? "Use Parent" :
                                          wizard_result == CategorySuggestionWizard::CreateNew ? "Create New" : "Skip",
-                                         entry.name));
+                                         entry.file_name));
         }
         
         if (core_logger) {
             core_logger->info("Wizard result for '{}': {} (path: '{}')",
-                             entry.name,
+                             entry.file_name,
                              wizard_result == CategorySuggestionWizard::UseParent ? "UseParent" :
                              wizard_result == CategorySuggestionWizard::CreateNew ? "CreateNew" : "Skip",
                              result_path);
@@ -916,7 +916,7 @@ std::optional<DatabaseManager::ResolvedCategory> CategorizationService::handle_w
             case CategorySuggestionWizard::Skip:
                 // User chose to skip - return empty
                 if (progress_callback) {
-                    progress_callback(fmt::format("[WIZARD] Skipping '{}'", entry.name));
+                    progress_callback(fmt::format("[WIZARD] Skipping '{}'", entry.file_name));
                 }
                 return std::nullopt;
         }

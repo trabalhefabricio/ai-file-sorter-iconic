@@ -1492,7 +1492,7 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
         const std::string api_key = settings.get_remote_api_key();
         const std::string model = settings.get_remote_model();
         if (api_key.empty()) {
-            throw AppException(Code::API_KEY_MISSING, 
+            throw ErrorCodes::AppException(ErrorCodes::Code::API_KEY_MISSING, 
                 "OpenAI API key is required. Please add it in Settings → Select LLM.");
         }
         auto client = std::make_unique<LLMClient>(api_key, model);
@@ -1504,7 +1504,7 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
         const std::string api_key = settings.get_gemini_api_key();
         const std::string model = settings.get_gemini_model();
         if (api_key.empty()) {
-            throw AppException(Code::API_KEY_MISSING,
+            throw ErrorCodes::AppException(ErrorCodes::Code::API_KEY_MISSING,
                 "Gemini API key is required. Please add it in Settings → Select LLM.");
         }
         auto client = std::make_unique<GeminiClient>(api_key, model);
@@ -1516,7 +1516,7 @@ std::unique_ptr<ILLMClient> MainApp::make_llm_client()
         const auto id = settings.get_active_custom_llm_id();
         const CustomLLM custom = settings.find_custom_llm(id);
         if (custom.id.empty() || custom.path.empty()) {
-            throw AppException(Code::LLM_MODEL_NOT_FOUND,
+            throw ErrorCodes::AppException(ErrorCodes::Code::LLM_MODEL_NOT_FOUND,
                 "Selected custom LLM is missing or invalid. Please select a valid model in Settings → Select LLM.");
         }
         auto client = std::make_unique<LocalLLMClient>(custom.path);
@@ -1653,7 +1653,7 @@ void MainApp::clear_categorization_cache()
     
     if (confirm_dialog.clickedButton() == current_folder_button) {
         // Clear cache for current folder only
-        QString folder_path = folder_path_input->text();
+        QString folder_path = path_entry->text();
         if (folder_path.isEmpty()) {
             show_error_dialog(tr("Please select a folder first.").toStdString());
             return;

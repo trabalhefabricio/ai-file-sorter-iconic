@@ -318,8 +318,8 @@ HttpResponse send_with_retry(const std::string& model, const std::string& url,
             if (s.retry_after_until_ms <= now_ms()) {
                 uint64_t base = 1000ULL * (1ULL << attempt);
                 std::uniform_real_distribution<double> dist(0.5, 1.5);
-                uint64_t jittered = (uint64_t)(base * dist(rng));
-                s.retry_after_until_ms = now_ms() + std::min(jittered, 60000ULL);
+                uint64_t jittered = static_cast<uint64_t>(base * dist(rng));
+                s.retry_after_until_ms = now_ms() + std::min(jittered, static_cast<uint64_t>(60000ULL));
             }
             state.put(model, s);
             

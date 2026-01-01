@@ -17,6 +17,11 @@ endif()
 # Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
+# Enable Qt MOC, UIC, and RCC for all targets
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
 # Third-party deps (resolved best via vcpkg on Windows)
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -45,7 +50,10 @@ set(APP_MAIN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 file(GLOB APP_LIB_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.cpp"
 )
-set(APP_SOURCES ${APP_MAIN_SOURCE} ${APP_LIB_SOURCES})
+file(GLOB APP_HEADERS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+)
+set(APP_SOURCES ${APP_MAIN_SOURCE} ${APP_LIB_SOURCES} ${APP_HEADERS})
 
 # Executable (GUI subsystem on Windows)
 if(WIN32)

@@ -516,7 +516,6 @@ HttpResponse send_with_retry(const std::string& model, const std::string& url,
         
         // Special handling for timeout errors - use CURLcode for robust detection
         bool is_timeout = (http.curl_code == CURLE_OPERATION_TIMEDOUT || 
-                          http.curl_code == CURLE_OPERATION_TIMEOUT ||
                           (http.status == 0 && http.body.find("Timeout") != std::string::npos));
         
         if (is_timeout) {

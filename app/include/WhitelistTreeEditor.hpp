@@ -10,6 +10,7 @@
 #include <QRadioButton>
 #include <QGroupBox>
 #include <QButtonGroup>
+#include <QLabel>
 #include "WhitelistStore.hpp"
 
 class WhitelistTreeEditor : public QDialog {

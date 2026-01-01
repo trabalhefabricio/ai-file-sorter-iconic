@@ -127,9 +127,10 @@ void CategorySuggestionWizard::create_options_section() {
     options_layout->addWidget(skip_radio_);
 
     // Apply to similar checkbox
+    QFileInfo file_info_temp(QString::fromStdString(file_.file_name));
     apply_to_similar_checkbox_ = new QCheckBox(
         QString("Apply to similar files (%1) in this batch")
-            .arg(QString::fromStdString(file_.extension)), 
+            .arg(file_info_temp.suffix()), 
         this);
     apply_to_similar_checkbox_->setToolTip(
         "Automatically use this category for other files with the same extension");
@@ -156,19 +157,25 @@ void CategorySuggestionWizard::create_buttons_section() {
             this, &CategorySuggestionWizard::on_cancel_clicked);
     button_layout->addWidget(cancel_button_);
 
-    layout()->addLayout(button_layout);
+    // Cast layout to QVBoxLayout to add the button layout
+    if (auto* main_layout = qobject_cast<QVBoxLayout*>(layout())) {
+        main_layout->addLayout(button_layout);
+    }
 }
 
 void CategorySuggestionWizard::load_file_preview() {
-    QFileInfo file_info(QString::fromStdString(file_.path));
+    QFileInfo file_info(QString::fromStdString(file_.full_path));
 
     // Try to load image preview
     bool is_image = false;
     QStringList image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"};
-    QString ext = QString::fromStdString(file_.extension).toLower();
+    QString ext = file_info.suffix().toLower();
+    if (!ext.isEmpty()) {
+        ext = "." + ext;  // Add dot prefix for comparison
+    }
     
     if (image_extensions.contains(ext)) {
-        QImageReader reader(QString::fromStdString(file_.path));
+        QImageReader reader(QString::fromStdString(file_.full_path));
         if (reader.canRead()) {
             QPixmap pixmap = QPixmap::fromImage(reader.read());
             if (!pixmap.isNull()) {
@@ -196,7 +203,7 @@ void CategorySuggestionWizard::load_file_preview() {
     file_info_label_->setText(
         QString("<b>File:</b> %1<br>"
                 "<b>Size:</b> %2 &nbsp;&nbsp; <b>Modified:</b> %3")
-            .arg(QString::fromStdString(file_.name))
+            .arg(QString::fromStdString(file_.file_name))
             .arg(size_str)
             .arg(modified));
 
