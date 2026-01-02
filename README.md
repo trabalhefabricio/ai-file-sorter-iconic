@@ -477,8 +477,8 @@ If you encounter errors like:
 These errors indicate a version mismatch between the application and its dependencies:
 
 **For `ggml_xielu` errors:**
-1. **Note**: As of recent versions, `ggml_xielu` is no longer checked as a required function during startup, as it's only needed for the Apertus model (a specific AI model that most users won't use). If you see this error at startup, you may be using an older version.
-2. If you encounter runtime errors mentioning `ggml_xielu` while actually using the Apertus model, your `llama.dll` is from before October 2025 and needs to be updated.
+1. **Important**: As of llama.cpp version b7130 (2025-11-22), `ggml_xielu` is a REQUIRED function. It's used by the Apertus model which is included in llama.dll even if you don't explicitly use it.
+2. The application now checks for this symbol at startup and will warn you if your DLLs are outdated.
 3. **Solution for local builds**: Rebuild the llama library:
    ```powershell
    # Delete the old build cache
@@ -486,26 +486,37 @@ These errors indicate a version mismatch between the application and its depende
    Remove-Item -Recurse -Force app\lib\precompiled\cpu
    Remove-Item -Recurse -Force app\lib\ggml
    
+   # Update submodules to latest version
+   git submodule update --init --recursive
+   
    # Rebuild llama with the current submodule version
    app\scripts\build_llama_windows.ps1 cuda=off vulkan=off vcpkgroot=C:\dev\vcpkg
    
    # Rebuild the application
    app\build_windows.ps1 -Configuration Release -VcpkgRoot C:\dev\vcpkg
    ```
-4. **Solution for downloaded binaries**: Wait for an updated release, or build from source using the instructions above
+4. **Solution for downloaded binaries**: Download the latest release which includes updated DLLs
 
 **For Qt-related errors (QTableView::dropEvent):**
-1. This usually indicates a Qt version mismatch between build and runtime
-2. **Solution**: Ensure you're using the same Qt version that was used to build the application
+1. This indicates a Qt version mismatch between build and runtime
+2. The application now checks Qt versions at startup and will warn you if there's a mismatch
+3. **Solution**: Ensure you're using the same Qt version that was used to build the application
    - For source builds: Use Qt 6.5.3+ (matching the build instructions)
-   - For downloaded binaries: Install the Microsoft Visual C++ Redistributable packages
-   - Try reinstalling or updating Qt runtime libraries
+   - For downloaded binaries: Ensure no other Qt installations interfere with the bundled Qt DLLs
+   - Check your PATH environment variable - remove conflicting Qt installations
+   - Install the Microsoft Visual C++ Redistributable packages
+
+**Automatic Version Checking:**
+- The application now performs automatic compatibility checks for both GGML and Qt DLLs at startup
+- If a version mismatch is detected, you'll see a detailed error message with specific instructions
+- You can choose to ignore the warning (not recommended) or abort and fix the issue
 
 **General troubleshooting:**
 - Update to the latest release version
 - If building from source, always run `git submodule update --init --recursive` after pulling new changes
 - After updating submodules, always rebuild the llama library before rebuilding the app
 - Check that all required DLLs are present in the application directory
+- Verify your PATH doesn't include older versions of Qt or other conflicting DLLs
 
 ---
 

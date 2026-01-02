@@ -42,6 +42,18 @@ public:
      */
     static QStringList getRequiredGgmlSymbols();
 
+    /**
+     * @brief Check Qt runtime version compatibility
+     * @return CheckResult with compatibility status and version info
+     */
+    static CheckResult checkQtRuntimeCompatibility();
+
+    /**
+     * @brief Get list of critical Qt symbols that indicate version compatibility
+     * @return List of symbol names to check
+     */
+    static QStringList getRequiredQtSymbols();
+
 private:
     static bool isDumpbinAvailable();
     static QString findDumpbinPath();

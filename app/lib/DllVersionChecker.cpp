@@ -4,19 +4,23 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QDebug>
+#include <QtGlobal>
+#include <cmath>
 
 QStringList DllVersionChecker::getRequiredGgmlSymbols() {
     // Critical symbols that must be present in ggml.dll/llama.dll
     // based on llama.cpp version b7130 (commit 3f3a4fb9c from 2025-11-22)
-    // Note: ggml_xielu is not included here as it's only required for the Apertus model,
-    // not for general llama.cpp functionality. Including it causes false alarms for older
-    // DLLs that work fine with all other models.
+    // 
+    // ggml_xielu was added for the Apertus model support. Even if the Apertus model
+    // is never used, the symbol must exist because llama.dll references it at load time.
+    // Without it, Windows will refuse to load the DLL with "entry point not found" error.
     return {
         "ggml_init",
         "ggml_free",
         "ggml_new_tensor",
         "ggml_backend_init",
-        "ggml_backend_free"
+        "ggml_backend_free",
+        "ggml_xielu"  // Required since llama.cpp b7130 (Apertus model support)
     };
 }
 
@@ -160,5 +164,77 @@ DllVersionChecker::CheckResult DllVersionChecker::checkLlamaDllCompatibility(con
                                "The application requires llama.cpp version b7130 (2025-11-22) or later.";
     }
     
+    return result;
+}
+
+QStringList DllVersionChecker::getRequiredQtSymbols() {
+    // Check for symbols that indicate Qt version compatibility
+    // QTableView::dropEvent is a virtual function that must exist
+    return {
+        "dropEvent",  // Present in QTableView and other Qt widgets
+        "dragEnterEvent",
+        "dragMoveEvent"
+    };
+}
+
+DllVersionChecker::CheckResult DllVersionChecker::checkQtRuntimeCompatibility() {
+    CheckResult result;
+    result.isCompatible = true; // Assume compatible unless proven otherwise
+    
+    // Check Qt version at runtime vs compile time
+    QString runtimeVersion = QString::fromLatin1(qVersion());
+    QString compileVersion = QString::fromLatin1(QT_VERSION_STR);
+    
+    result.dllVersion = QString("Runtime: %1, Compile-time: %2").arg(runtimeVersion).arg(compileVersion);
+    
+    // Major version must match
+    QStringList runtimeParts = runtimeVersion.split('.');
+    QStringList compileParts = compileVersion.split('.');
+    
+    if (runtimeParts.isEmpty() || compileParts.isEmpty()) {
+        result.errorMessage = QString("Unable to parse Qt versions. Runtime: %1, Compile: %2")
+            .arg(runtimeVersion).arg(compileVersion);
+        result.isCompatible = false;
+        return result;
+    }
+    
+    int runtimeMajor = runtimeParts[0].toInt();
+    int compileMajor = compileParts[0].toInt();
+    
+    if (runtimeMajor != compileMajor) {
+        result.isCompatible = false;
+        result.errorMessage = QString(
+            "Qt major version mismatch!\n\n"
+            "Application was built with Qt %1\n"
+            "But runtime is using Qt %2\n\n"
+            "This causes \"entry point not found\" errors like:\n"
+            "- QTableView::dropEvent not found\n"
+            "- Other Qt virtual function errors\n\n"
+            "Solutions:\n"
+            "1. Ensure Qt %3 runtime DLLs are in your PATH or application directory\n"
+            "2. Reinstall Qt %3 runtime libraries\n"
+            "3. Remove conflicting Qt versions from your PATH"
+        ).arg(compileVersion).arg(runtimeVersion).arg(compileMajor);
+        return result;
+    }
+    
+    // Warn if minor versions differ significantly
+    if (runtimeParts.size() >= 2 && compileParts.size() >= 2) {
+        int runtimeMinor = runtimeParts[1].toInt();
+        int compileMinor = compileParts[1].toInt();
+        
+        if (std::abs(runtimeMinor - compileMinor) > 2) {
+            result.errorMessage = QString(
+                "Qt minor version difference detected:\n"
+                "Built with Qt %1, running with Qt %2\n\n"
+                "This may cause compatibility issues with virtual functions.\n"
+                "Consider using the same minor version."
+            ).arg(compileVersion).arg(runtimeVersion);
+            // Still compatible, just a warning
+            qWarning().noquote() << "DllVersionChecker:" << result.errorMessage;
+        }
+    }
+    
+    qInfo().noquote() << "Qt version check passed:" << result.dllVersion;
     return result;
 }
