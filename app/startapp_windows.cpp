@@ -746,9 +746,10 @@ int main(int argc, char* argv[]) {
             << "Backend runtime directory missing for selection" << ggmlVariant
             << "- attempting fallback.";
 
-        // BUG FIX: Track fallback attempts to prevent infinite loop
+        // Track fallback attempts to prevent infinite loop when cycling through backends.
+        // Maximum 2 transitions allowed: e.g., Vulkan -> CUDA -> CPU or CUDA -> Vulkan -> CPU
         int fallbackAttempts = 0;
-        const int maxFallbackAttempts = 2; // Vulkan -> CUDA -> CPU (max 2 transitions)
+        const int maxFallbackAttempts = 2;
 
         while (ggmlPath.isEmpty() && fallbackAttempts < maxFallbackAttempts) {
             fallbackAttempts++;
@@ -801,8 +802,9 @@ int main(int argc, char* argv[]) {
     QStringList forwardedArgs = build_forwarded_args(argc, argv, console_log_flag);
     if (console_log_flag) {
         if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+            // Redirect stdout, stderr, and stdin to the parent console.
+            // Check return values to ensure redirection succeeds and avoid silent failures.
             FILE* f = nullptr;
-            // BUG FIX: Check return values of freopen_s to avoid silent failures
             if (freopen_s(&f, "CONOUT$", "w", stdout) != 0 || f == nullptr) {
                 qWarning() << "Failed to redirect stdout to console";
             }

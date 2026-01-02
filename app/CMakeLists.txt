@@ -249,12 +249,13 @@ if(WIN32)
             find_library(${varName} NAMES ${libName})
         endif()
 
-        # --- FIX START: Fallback to name-only linking if file isn't found ---
+        # Fallback to name-only linking if file path isn't found.
+        # For Windows system libraries, CMake and the linker can resolve these by name
+        # from standard SDK locations even without an explicit path.
         if(NOT ${varName})
-            message(STATUS "System library '${libName}' not found on disk. Configuring to link by name.")
+            message(STATUS "System library '${libName}' not found on disk via find_library(). Linking by name - the linker will search standard Windows SDK paths.")
             set(${varName} ${libName})
         endif()
-        # --- FIX END ---
         target_link_libraries(aifilesorter PRIVATE "${${varName}}")
     endforeach()
 endif()
