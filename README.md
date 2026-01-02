@@ -477,8 +477,9 @@ If you encounter errors like:
 These errors indicate a version mismatch between the application and its dependencies:
 
 **For `ggml_xielu` errors:**
-1. The llama.cpp submodule has been updated but the prebuilt `llama.dll` is from an older version
-2. **Solution for local builds**: Rebuild the llama library:
+1. **Note**: As of recent versions, `ggml_xielu` is no longer checked as a required function during startup, as it's only needed for the Apertus model (a specific AI model that most users won't use). If you see this error at startup, you may be using an older version.
+2. If you encounter runtime errors mentioning `ggml_xielu` while actually using the Apertus model, your `llama.dll` is from before October 2025 and needs to be updated.
+3. **Solution for local builds**: Rebuild the llama library:
    ```powershell
    # Delete the old build cache
    Remove-Item -Recurse -Force app\include\external\llama.cpp\build
@@ -491,7 +492,7 @@ These errors indicate a version mismatch between the application and its depende
    # Rebuild the application
    app\build_windows.ps1 -Configuration Release -VcpkgRoot C:\dev\vcpkg
    ```
-3. **Solution for downloaded binaries**: Wait for an updated release, or build from source using the instructions above
+4. **Solution for downloaded binaries**: Wait for an updated release, or build from source using the instructions above
 
 **For Qt-related errors (QTableView::dropEvent):**
 1. This usually indicates a Qt version mismatch between build and runtime

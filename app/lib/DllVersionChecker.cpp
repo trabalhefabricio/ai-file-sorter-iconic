@@ -8,11 +8,13 @@
 QStringList DllVersionChecker::getRequiredGgmlSymbols() {
     // Critical symbols that must be present in ggml.dll/llama.dll
     // based on llama.cpp version b7130 (commit 3f3a4fb9c from 2025-11-22)
+    // Note: ggml_xielu is not included here as it's only required for the Apertus model,
+    // not for general llama.cpp functionality. Including it causes false alarms for older
+    // DLLs that work fine with all other models.
     return {
         "ggml_init",
         "ggml_free",
         "ggml_new_tensor",
-        "ggml_xielu",  // Added in llama.cpp in October/November 2025 - critical for new models
         "ggml_backend_init",
         "ggml_backend_free"
     };
