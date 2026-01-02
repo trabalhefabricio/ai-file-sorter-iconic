@@ -748,21 +748,26 @@ int main(int argc, char* argv[]) {
     }
     
     // Get exe directory using Win32 API (before Qt is initialized)
-    wchar_t exePath[MAX_PATH];
-    GetModuleFileNameW(NULL, exePath, MAX_PATH);
-    std::wstring exePathStr(exePath);
-    size_t lastSlash = exePathStr.find_last_of(L"\\/");
-    std::wstring exeDirW = (lastSlash != std::wstring::npos) ? exePathStr.substr(0, lastSlash) : exePathStr;
-    
-    // Add application directory to DLL search path FIRST (before Qt loads)
-    if (secureSearchEnabled) {
-        if (AddDllDirectory(exeDirW.c_str()) == nullptr) {
-            // Failed to add directory, but continue anyway
-        }
-        // Also add bin subdirectory if it exists
-        std::wstring binDir = exeDirW + L"\\bin";
-        if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
-            AddDllDirectory(binDir.c_str());
+    wchar_t exePath[MAX_PATH * 2]; // Use larger buffer to handle long paths
+    DWORD pathLen = GetModuleFileNameW(NULL, exePath, MAX_PATH * 2);
+    if (pathLen == 0 || pathLen >= MAX_PATH * 2) {
+        // GetModuleFileNameW failed or path was truncated
+        // Continue anyway, Qt will get the path later
+    } else {
+        std::wstring exePathStr(exePath);
+        size_t lastSlash = exePathStr.find_last_of(L"\\/");
+        std::wstring exeDirW = (lastSlash != std::wstring::npos) ? exePathStr.substr(0, lastSlash) : exePathStr;
+        
+        // Add application directory to DLL search path FIRST (before Qt loads)
+        if (secureSearchEnabled && !exeDirW.empty()) {
+            if (AddDllDirectory(exeDirW.c_str()) == nullptr) {
+                // Failed to add directory, but continue anyway
+            }
+            // Also add bin subdirectory if it exists
+            std::wstring binDir = exeDirW + L"\\bin";
+            if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
+                AddDllDirectory(binDir.c_str());
+            }
         }
     }
     
