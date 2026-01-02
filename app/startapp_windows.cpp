@@ -606,6 +606,32 @@ QString llama_device_for_selection(BackendSelection selection)
 }
 
 bool check_dll_compatibility(const QString& ggmlPath, const QString& exeDir) {
+    // First, check Qt runtime version compatibility
+    qInfo() << "Checking Qt runtime version compatibility...";
+    DllVersionChecker::CheckResult qtResult = DllVersionChecker::checkQtRuntimeCompatibility();
+    
+    if (!qtResult.isCompatible) {
+        qWarning().noquote() << "Qt version mismatch detected:" << qtResult.errorMessage;
+        
+        QString qtErrorPrompt = QObject::tr(
+            "%1\n\nDo you want to continue anyway? (Not recommended)"
+        ).arg(qtResult.errorMessage);
+        
+        auto response = QMessageBox::critical(
+            nullptr,
+            QObject::tr("Qt Version Mismatch"),
+            qtErrorPrompt,
+            QMessageBox::Ignore | QMessageBox::Abort,
+            QMessageBox::Abort
+        );
+        
+        if (response == QMessageBox::Abort) {
+            return false;
+        }
+    } else {
+        qInfo().noquote() << "Qt version check passed:" << qtResult.dllVersion;
+    }
+    
     // Check llama.dll and ggml.dll for required exports
     QStringList dllsToCheck;
     
@@ -661,6 +687,9 @@ bool check_dll_compatibility(const QString& ggmlPath, const QString& exeDir) {
             "%1\n\n"
             "Missing exports: %2\n\n"
             "This will cause \"entry point not found\" errors at runtime.\n\n"
+            "Common errors caused by this mismatch:\n"
+            "- \"Could not locate the entry point for procedure ggml_xielu\"\n"
+            "- Application fails to start with DLL errors\n\n"
             "Solutions:\n"
             "1. If you built from source: Rebuild llama.dll using:\n"
             "   app\\scripts\\build_llama_windows.ps1\n\n"

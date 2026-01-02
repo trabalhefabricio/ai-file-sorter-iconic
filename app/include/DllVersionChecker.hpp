@@ -42,6 +42,12 @@ public:
      */
     static QStringList getRequiredGgmlSymbols();
 
+    /**
+     * @brief Check Qt runtime version compatibility
+     * @return CheckResult with compatibility status and version info
+     */
+    static CheckResult checkQtRuntimeCompatibility();
+
 private:
     static bool isDumpbinAvailable();
     static QString findDumpbinPath();
