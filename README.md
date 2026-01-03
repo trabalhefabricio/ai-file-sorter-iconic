@@ -520,7 +520,17 @@ The `StartAiFileSorter.exe` launcher performs critical checks and setup:
 **Automatic Version Checking:**
 - The application performs automatic compatibility checks for both GGML and Qt DLLs at startup
 - DLL search paths are configured BEFORE loading any libraries to prevent system DLL conflicts
+- The launcher now provides detailed error messages if DLL path setup fails
+- Qt plugin paths are explicitly set to prevent loading incompatible plugins
 - If you see a warning dialog about DLL versions, do not ignore it - follow the instructions to fix the issue
+
+**Enhanced DLL Loading Protection (Latest Update):**
+- Application directory is now added to DLL search paths with enhanced error checking
+- PATH environment variable is always prepended with application directory as fallback
+- Qt plugin paths (QT_PLUGIN_PATH and QT_QPA_PLATFORM_PLUGIN_PATH) are set before Qt loads
+- Detailed error messages show exactly which DLL setup step failed
+- Runtime Qt version is logged and compared to compile-time version
+- All DLL setup happens BEFORE QApplication is created to prevent loading wrong Qt DLLs
 
 **Why these errors happen:**
 - Windows loads DLLs from PATH before checking the application directory

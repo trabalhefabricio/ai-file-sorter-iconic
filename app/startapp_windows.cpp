@@ -758,6 +758,7 @@ int main(int argc, char* argv[]) {
     wchar_t exePath[MAX_PATH * 2]; // Use larger buffer to handle long paths
     DWORD pathLen = GetModuleFileNameW(NULL, exePath, MAX_PATH * 2);
     
+    bool dllPathSetupSuccessful = false;
     if (pathLen > 0 && pathLen < MAX_PATH * 2) {
         std::wstring exePathStr(exePath);
         size_t lastSlash = exePathStr.find_last_of(L"\\/");
@@ -765,17 +766,37 @@ int main(int argc, char* argv[]) {
         
         if (secureSearchEnabled && !exeDirW.empty()) {
             // Add application directory to DLL search path FIRST (before Qt loads)
+            // This is CRITICAL to prevent loading Qt DLLs from system PATH
             if (AddDllDirectory(exeDirW.c_str()) == nullptr) {
-                // Failed to add directory, but continue anyway
+                DWORD error = GetLastError();
+                // Show error but continue - we'll try PATH fallback
+                std::wstring errorMsg = L"Failed to add application directory to DLL search path (error ";
+                errorMsg += std::to_wstring(error);
+                errorMsg += L"). This may cause Qt version mismatch errors.";
+                MessageBoxW(NULL, errorMsg.c_str(), L"DLL Setup Warning", MB_ICONWARNING | MB_OK);
+            } else {
+                dllPathSetupSuccessful = true;
             }
+            
             // Also add bin subdirectory if it exists
             std::wstring binDir = exeDirW + L"\\bin";
             if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
-                AddDllDirectory(binDir.c_str());
+                if (AddDllDirectory(binDir.c_str()) == nullptr) {
+                    DWORD error = GetLastError();
+                    // Warn but continue
+                    std::wstring errorMsg = L"Failed to add bin directory to DLL search path (error ";
+                    errorMsg += std::to_wstring(error);
+                    errorMsg += L").";
+                    MessageBoxW(NULL, errorMsg.c_str(), L"DLL Setup Warning", MB_ICONWARNING | MB_OK);
+                }
             }
-        } else if (!exeDirW.empty()) {
-            // Fallback: Prepend application directory to PATH when secure search is unavailable
-            // This ensures local Qt DLLs are found before system PATH Qt DLLs
+        }
+        
+        // Always set PATH as a fallback, even if secure search is enabled
+        // This ensures maximum compatibility
+        if (!exeDirW.empty()) {
+            // Prepend application directory to PATH to ensure local Qt DLLs are found first
+            // This is CRITICAL for preventing Qt version mismatch errors
             constexpr DWORD PATH_BUFFER_SIZE = 32768;  // Maximum PATH length on Windows
             constexpr DWORD EXTRA_PATH_SPACE = 10;      // Extra space for separators
             wchar_t pathBuffer[PATH_BUFFER_SIZE];
@@ -796,7 +817,15 @@ int main(int argc, char* argv[]) {
                     newPath = exeDirW + L";" + std::wstring(pathBuffer);
                 }
                 
-                SetEnvironmentVariableW(L"PATH", newPath.c_str());
+                if (!SetEnvironmentVariableW(L"PATH", newPath.c_str())) {
+                    DWORD error = GetLastError();
+                    std::wstring errorMsg = L"Failed to set PATH environment variable (error ";
+                    errorMsg += std::to_wstring(error);
+                    errorMsg += L"). This may cause DLL loading errors.";
+                    MessageBoxW(NULL, errorMsg.c_str(), L"PATH Setup Warning", MB_ICONWARNING | MB_OK);
+                } else {
+                    dllPathSetupSuccessful = true;
+                }
             } else if (pathSize == 0) {
                 // PATH not set or empty, just set to our directory
                 std::wstring binDir = exeDirW + L"\\bin";
@@ -805,8 +834,44 @@ int main(int argc, char* argv[]) {
                 } else {
                     SetEnvironmentVariableW(L"PATH", exeDirW.c_str());
                 }
+                dllPathSetupSuccessful = true;
+            } else if (pathSize >= PATH_BUFFER_SIZE) {
+                // PATH is too large - show warning
+                MessageBoxW(NULL, 
+                    L"System PATH is too large to modify. This may cause DLL version conflicts.\n\n"
+                    L"Consider removing unnecessary entries from your system PATH.",
+                    L"PATH Setup Warning", MB_ICONWARNING | MB_OK);
             }
-            // If pathSize >= PATH_BUFFER_SIZE, PATH is too large - continue without modification
+        }
+    }
+    
+    // Show critical warning if DLL path setup failed
+    if (!dllPathSetupSuccessful && pathLen > 0) {
+        MessageBoxW(NULL,
+            L"Failed to configure DLL search paths properly.\n\n"
+            L"This may cause \"entry point not found\" errors such as:\n"
+            L"- QTableView::dropEvent not found\n"
+            L"- Other Qt virtual function errors\n\n"
+            L"The application may not start correctly.\n\n"
+            L"Try running as Administrator or check your system PATH for conflicting Qt installations.",
+            L"Critical DLL Setup Error",
+            MB_ICONERROR | MB_OK);
+    }
+    
+    // Set Qt plugin path to application directory to prevent loading plugins from wrong Qt version
+    // This must be done BEFORE creating QApplication
+    if (pathLen > 0 && pathLen < MAX_PATH * 2) {
+        std::wstring exePathStr(exePath);
+        size_t lastSlash = exePathStr.find_last_of(L"\\/");
+        std::wstring exeDirW = (lastSlash != std::wstring::npos) ? exePathStr.substr(0, lastSlash) : exePathStr;
+        
+        if (!exeDirW.empty()) {
+            // Set QT_PLUGIN_PATH to ensure Qt plugins come from application directory
+            std::wstring pluginPath = exeDirW + L"\\plugins";
+            SetEnvironmentVariableW(L"QT_PLUGIN_PATH", pluginPath.c_str());
+            
+            // Also set QT_QPA_PLATFORM_PLUGIN_PATH for platform plugins
+            SetEnvironmentVariableW(L"QT_QPA_PLATFORM_PLUGIN_PATH", pluginPath.c_str());
         }
     }
     // If GetModuleFileNameW failed or path was truncated, continue anyway
@@ -824,6 +889,13 @@ int main(int argc, char* argv[]) {
         qWarning() << "SetDefaultDllDirectories unavailable; application directory prepended to PATH for DLL resolution.";
     } else {
         qInfo() << "Secure DLL search enabled - application directory prioritized for DLL loading";
+    }
+    
+    // Log the actual Qt version being used to help diagnose version mismatch issues
+    qInfo() << "Qt Runtime Version:" << qVersion() << "| Compiled with:" << QT_VERSION_STR;
+    if (QString::fromLatin1(qVersion()) != QString::fromLatin1(QT_VERSION_STR)) {
+        qWarning() << "WARNING: Qt version mismatch detected! This may cause virtual function errors.";
+        qWarning() << "Built with Qt" << QT_VERSION_STR << "but running with Qt" << qVersion();
     }
 
     QString detectedCudaRuntime;
