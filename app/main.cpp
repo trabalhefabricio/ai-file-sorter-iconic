@@ -314,21 +314,21 @@ int main(int argc, char **argv) {
     #endif
     try {
         return run_application(parsed);
-    } catch (const AppException& ex) {
+    } catch (const ErrorCodes::AppException& ex) {
         // Application-specific exceptions with error codes
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->critical("Application Error [Code: {}]: {}", 
-                           static_cast<int>(ex.code()), ex.what());
+                           static_cast<int>(ex.get_error_code()), ex.what());
         }
 #ifdef _WIN32
         std::wstring errorMsg = L"Application Error: ";
         errorMsg += QString::fromStdString(ex.what()).toStdWString();
         errorMsg += L"\n\nError Code: ";
-        errorMsg += std::to_wstring(static_cast<int>(ex.code()));
+        errorMsg += std::to_wstring(static_cast<int>(ex.get_error_code()));
         MessageBoxW(NULL, errorMsg.c_str(), L"Application Error", MB_ICONERROR | MB_OK);
 #else
         std::fprintf(stderr, "Application Error [Code: %d]: %s\n", 
-                    static_cast<int>(ex.code()), ex.what());
+                    static_cast<int>(ex.get_error_code()), ex.what());
 #endif
         return EXIT_FAILURE;
     } catch (const std::runtime_error& ex) {
