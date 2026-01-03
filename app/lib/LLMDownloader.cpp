@@ -13,6 +13,13 @@
 
 namespace {
 
+// Custom deleter for FILE* to suppress attribute warnings
+struct FileDeleter {
+    void operator()(FILE* f) const {
+        if (f) fclose(f);
+    }
+};
+
 #ifdef AI_FILE_SORTER_TEST_BUILD
 TestHooks::LLMDownloadProbe& download_probe_slot() {
     static TestHooks::LLMDownloadProbe probe;
@@ -246,7 +253,7 @@ void LLMDownloader::perform_download()
         }
 
         // Use RAII to ensure file is closed even if an exception is thrown
-        std::unique_ptr<FILE, decltype(&fclose)> file_guard(fp, &fclose);
+        std::unique_ptr<FILE, FileDeleter> file_guard(fp);
 
         setup_download_curl_options(curl, fp, offset);
         CURLcode result = curl_easy_perform(curl);
@@ -376,7 +383,7 @@ long LLMDownloader::determine_resume_offset() const
     if (!fp) return 0;
 
     // Use RAII to ensure file is closed even if fseek/ftell fail
-    std::unique_ptr<FILE, decltype(&fclose)> file_guard(fp, &fclose);
+    std::unique_ptr<FILE, FileDeleter> file_guard(fp);
 
     if (fseek(fp, 0, SEEK_END) != 0) {
         return 0;  // fseek failed

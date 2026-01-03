@@ -137,7 +137,6 @@ std::optional<std::string> strip_prefix(const std::string& path,
     #include <netdb.h>
     #include <sys/socket.h>
 #endif
-#include <iostream>
 #include <Types.hpp>
 #include <cstddef>
 #include <stdexcept>
