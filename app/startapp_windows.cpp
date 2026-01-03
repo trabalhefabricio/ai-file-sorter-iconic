@@ -244,6 +244,9 @@ bool launchMainExecutable(const QString& executablePath,
                           const QString& llamaDevice) {
     QFileInfo exeInfo(executablePath);
     if (!exeInfo.exists()) {
+        qCritical().noquote() << "Main executable not found:" << QDir::toNativeSeparators(executablePath);
+        qCritical().noquote() << "The application cannot start without the main executable file.";
+        qCritical().noquote() << "Please verify the installation is complete and not corrupted.";
         return false;
     }
 
@@ -260,7 +263,22 @@ bool launchMainExecutable(const QString& executablePath,
     process.setArguments(arguments);
     process.setWorkingDirectory(exeInfo.absolutePath());
 
-    return process.startDetached();
+    qint64 pid = 0;
+    bool started = process.startDetached(&pid);
+    
+    if (!started) {
+        qCritical().noquote() << "Failed to start detached process for:" << QDir::toNativeSeparators(executablePath);
+        qCritical().noquote() << "Process error:" << process.errorString();
+        qCritical().noquote() << "This may be caused by:";
+        qCritical().noquote() << "  - Missing dependencies (DLLs)";
+        qCritical().noquote() << "  - Insufficient permissions";
+        qCritical().noquote() << "  - Antivirus blocking execution";
+        qCritical().noquote() << "  - Corrupted executable file";
+        return false;
+    }
+    
+    qInfo().noquote() << "Successfully launched main application process with PID:" << pid;
+    return true;
 }
 
 QString resolveExecutableName(const QString& baseDir) {
@@ -272,11 +290,20 @@ QString resolveExecutableName(const QString& baseDir) {
     for (const QString& candidate : candidates) {
         const QString fullPath = QDir(baseDir).filePath(candidate);
         if (QFileInfo::exists(fullPath)) {
+            qInfo().noquote() << "Found main executable:" << QDir::toNativeSeparators(fullPath);
             return fullPath;
         }
     }
 
-    return QDir(baseDir).filePath(candidates.front());
+    // None of the candidates exist - log error and return empty to signal failure
+    qCritical().noquote() << "Main executable not found in:" << QDir::toNativeSeparators(baseDir);
+    qCritical().noquote() << "Searched for:";
+    for (const QString& candidate : candidates) {
+        qCritical().noquote() << "  -" << candidate;
+    }
+    qCritical().noquote() << "Please verify the application installation is complete.";
+    
+    return QString(); // Return empty string to signal error
 }
 
 struct BackendOverrides {
@@ -1001,6 +1028,17 @@ int main(int argc, char* argv[]) {
     }
 
     const QString mainExecutable = resolveExecutableName(exeDir);
+    if (mainExecutable.isEmpty()) {
+        // resolveExecutableName already logged the error
+        QMessageBox::critical(nullptr,
+            QObject::tr("Missing Executable"),
+            QObject::tr("The main application executable (aifilesorter.exe) was not found.\n\n"
+                       "Installation directory: %1\n\n"
+                       "Please reinstall the application or verify the installation is complete.")
+                .arg(QDir::toNativeSeparators(exeDir)));
+        return EXIT_FAILURE;
+    }
+    
     if (!launch_main_process(mainExecutable, forwardedArgs, selection, ggmlPath)) {
         return EXIT_FAILURE;
     }

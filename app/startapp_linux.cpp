@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string>
+#include <cstring>
+#include <cerrno>
 #include <sys/stat.h>
 #include <vector>
 #include <optional>
@@ -70,8 +72,17 @@ std::vector<std::string> collect_environment_variables()
 
 void ensure_executable(const std::string& exePath)
 {
+    if (!fileExists(exePath)) {
+        std::fprintf(stderr, "CRITICAL ERROR: Main executable not found: %s\n", exePath.c_str());
+        std::fprintf(stderr, "The application cannot start without the main executable file.\n");
+        std::fprintf(stderr, "Please verify the installation is complete and not corrupted.\n");
+        exit(EXIT_FAILURE);
+    }
+    
     if (access(exePath.c_str(), X_OK) != 0) {
-        std::fprintf(stderr, "App is not executable: %s\n", exePath.c_str());
+        std::fprintf(stderr, "CRITICAL ERROR: Main executable is not executable: %s\n", exePath.c_str());
+        std::fprintf(stderr, "Permission denied. The file exists but cannot be executed.\n");
+        std::fprintf(stderr, "Try running: chmod +x %s\n", exePath.c_str());
         perror("access");
         exit(EXIT_FAILURE);
     }
@@ -124,9 +135,34 @@ void launch_with_env(const std::string& exePath,
                      std::vector<char*>& argv_ptrs,
                      std::vector<char*>& envp)
 {
+    std::cout << "Launching main application: " << exePath << std::endl;
     execve(exePath.c_str(), argv_ptrs.data(), envp.data());
-    std::fprintf(stderr, "execve failed\n");
-    perror("execve failed");
+    
+    // If execve returns, it failed
+    int error_num = errno;
+    std::fprintf(stderr, "\nCRITICAL ERROR: Failed to launch main application\n");
+    std::fprintf(stderr, "Executable: %s\n", exePath.c_str());
+    std::fprintf(stderr, "Error: %s (errno: %d)\n", strerror(error_num), error_num);
+    
+    switch (error_num) {
+        case EACCES:
+            std::fprintf(stderr, "\nPermission denied. Check file permissions and executable bit.\n");
+            std::fprintf(stderr, "Try: chmod +x %s\n", exePath.c_str());
+            break;
+        case ENOENT:
+            std::fprintf(stderr, "\nFile not found. Verify the installation is complete.\n");
+            break;
+        case ENOEXEC:
+            std::fprintf(stderr, "\nInvalid executable format. File may be corrupted.\n");
+            break;
+        case ENOMEM:
+            std::fprintf(stderr, "\nInsufficient memory to launch application.\n");
+            break;
+        default:
+            std::fprintf(stderr, "\nUnexpected error. Check system logs for details.\n");
+            break;
+    }
+    
     exit(EXIT_FAILURE);
 }
 
