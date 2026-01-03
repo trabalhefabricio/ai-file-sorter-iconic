@@ -3,6 +3,7 @@
 #include "MainApp.hpp"
 #include "Utils.hpp"
 #include "LLMSelectionDialog.hpp"
+#include "AppException.hpp"
 #include <app_version.hpp>
 
 #include <QApplication>
@@ -42,10 +43,16 @@ bool initialize_loggers()
         Logger::setup_loggers();
         return true;
     } catch (const std::exception &e) {
+        // Try to log the error if possible
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->critical("Failed to initialize loggers: {}", e.what());
         } else {
-            std::fprintf(stderr, "Failed to initialize loggers: %s\n", e.what());
+            std::fprintf(stderr, "CRITICAL ERROR: Failed to initialize loggers: %s\n", e.what());
+            std::fprintf(stderr, "The application cannot start without logging.\n");
+            std::fprintf(stderr, "Please check:\n");
+            std::fprintf(stderr, "  - Disk space availability\n");
+            std::fprintf(stderr, "  - Write permissions in application directory\n");
+            std::fprintf(stderr, "  - Logs directory exists and is writable\n");
         }
         return false;
     }
@@ -283,6 +290,18 @@ int main(int argc, char **argv) {
 #endif
 
     if (!initialize_loggers()) {
+#ifdef _WIN32
+        MessageBoxW(NULL,
+            L"Failed to initialize logging system.\n\n"
+            L"The application cannot start without logging.\n\n"
+            L"Please check:\n"
+            L"  - Disk space availability\n"
+            L"  - Write permissions in application directory\n"
+            L"  - Logs directory exists and is writable\n\n"
+            L"See console output for details.",
+            L"Initialization Error",
+            MB_ICONERROR | MB_OK);
+#endif
         return EXIT_FAILURE;
     }
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -295,12 +314,67 @@ int main(int argc, char **argv) {
     #endif
     try {
         return run_application(parsed);
-    } catch (const std::exception& ex) {
+    } catch (const AppException& ex) {
+        // Application-specific exceptions with error codes
         if (auto logger = Logger::get_logger("core_logger")) {
-            logger->critical("Error: {}", ex.what());
-        } else {
-            std::fprintf(stderr, "Error: %s\n", ex.what());
+            logger->critical("Application Error [Code: {}]: {}", 
+                           static_cast<int>(ex.code()), ex.what());
         }
+#ifdef _WIN32
+        std::wstring errorMsg = L"Application Error: ";
+        errorMsg += QString::fromStdString(ex.what()).toStdWString();
+        errorMsg += L"\n\nError Code: ";
+        errorMsg += std::to_wstring(static_cast<int>(ex.code()));
+        MessageBoxW(NULL, errorMsg.c_str(), L"Application Error", MB_ICONERROR | MB_OK);
+#else
+        std::fprintf(stderr, "Application Error [Code: %d]: %s\n", 
+                    static_cast<int>(ex.code()), ex.what());
+#endif
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& ex) {
+        // Runtime errors (file I/O, network, etc.)
+        if (auto logger = Logger::get_logger("core_logger")) {
+            logger->critical("Runtime Error: {}", ex.what());
+        }
+#ifdef _WIN32
+        std::wstring errorMsg = L"Runtime Error: ";
+        errorMsg += QString::fromStdString(ex.what()).toStdWString();
+        errorMsg += L"\n\nThe application encountered an unexpected error and must exit.";
+        MessageBoxW(NULL, errorMsg.c_str(), L"Runtime Error", MB_ICONERROR | MB_OK);
+#else
+        std::fprintf(stderr, "Runtime Error: %s\n", ex.what());
+#endif
+        return EXIT_FAILURE;
+    } catch (const std::exception& ex) {
+        // Generic standard exceptions
+        if (auto logger = Logger::get_logger("core_logger")) {
+            logger->critical("Unexpected Error: {}", ex.what());
+        }
+#ifdef _WIN32
+        std::wstring errorMsg = L"Unexpected Error: ";
+        errorMsg += QString::fromStdString(ex.what()).toStdWString();
+        errorMsg += L"\n\nThe application encountered a critical error and must exit.\n";
+        errorMsg += L"Please check the log files for details.";
+        MessageBoxW(NULL, errorMsg.c_str(), L"Critical Error", MB_ICONERROR | MB_OK);
+#else
+        std::fprintf(stderr, "Unexpected Error: %s\n", ex.what());
+#endif
+        return EXIT_FAILURE;
+    } catch (...) {
+        // Unknown exceptions
+        if (auto logger = Logger::get_logger("core_logger")) {
+            logger->critical("Unknown critical error occurred during application startup");
+        }
+#ifdef _WIN32
+        MessageBoxW(NULL,
+            L"An unknown critical error occurred.\n\n"
+            L"The application must exit.\n"
+            L"Please check the log files for details.",
+            L"Critical Error",
+            MB_ICONERROR | MB_OK);
+#else
+        std::fprintf(stderr, "Unknown critical error occurred\n");
+#endif
         return EXIT_FAILURE;
     }
 }
