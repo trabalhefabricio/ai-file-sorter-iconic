@@ -776,18 +776,19 @@ int main(int argc, char* argv[]) {
         } else if (!exeDirW.empty()) {
             // Fallback: Prepend application directory to PATH when secure search is unavailable
             // This ensures local Qt DLLs are found before system PATH Qt DLLs
-            constexpr DWORD PATH_BUFFER_SIZE = 32768;
+            constexpr DWORD PATH_BUFFER_SIZE = 32768;  // Maximum PATH length on Windows
+            constexpr DWORD EXTRA_PATH_SPACE = 10;      // Extra space for separators
             wchar_t pathBuffer[PATH_BUFFER_SIZE];
             DWORD pathSize = GetEnvironmentVariableW(L"PATH", pathBuffer, PATH_BUFFER_SIZE);
             
-            if (pathSize > 0 && pathSize < PATH_BUFFER_SIZE - 1) {
+            if (pathSize > 0 && pathSize < PATH_BUFFER_SIZE) {
                 // Build new PATH with application directories prepended
                 std::wstring binDir = exeDirW + L"\\bin";
                 bool hasBinDir = (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES);
                 
                 // Reserve space for efficiency
                 std::wstring newPath;
-                newPath.reserve(pathSize + exeDirW.length() + (hasBinDir ? binDir.length() + 2 : 1) + 10);
+                newPath.reserve(pathSize + exeDirW.length() + (hasBinDir ? binDir.length() + 2 : 1) + EXTRA_PATH_SPACE);
                 
                 if (hasBinDir) {
                     newPath = binDir + L";" + exeDirW + L";" + std::wstring(pathBuffer);
@@ -805,7 +806,7 @@ int main(int argc, char* argv[]) {
                     SetEnvironmentVariableW(L"PATH", exeDirW.c_str());
                 }
             }
-            // If pathSize >= PATH_BUFFER_SIZE - 1, PATH is too large - continue without modification
+            // If pathSize >= PATH_BUFFER_SIZE, PATH is too large - continue without modification
         }
     }
     // If GetModuleFileNameW failed or path was truncated, continue anyway
