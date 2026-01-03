@@ -6,9 +6,7 @@
 
 #include <spdlog/spdlog.h>
 
-#ifdef _WIN32
-#include <json/json.h>
-#elif __APPLE__
+#if defined(_WIN32) || defined(__APPLE__)
 #include <json/json.h>
 #else
 #include <jsoncpp/json/json.h>
