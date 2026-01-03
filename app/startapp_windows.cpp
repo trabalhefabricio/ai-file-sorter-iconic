@@ -22,6 +22,13 @@
 #ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
 #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((HANDLE)-4)
 #endif
+// DLL search order flags for SetDefaultDllDirectories
+#ifndef LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+#define LOAD_LIBRARY_SEARCH_APPLICATION_DIR 0x00000200
+#endif
+#ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
+#endif
 using SetProcessDpiAwarenessContextFn = BOOL (WINAPI *)(HANDLE);
 using SetProcessDpiAwarenessFn = HRESULT (WINAPI *)(int); // 2 = PROCESS_PER_MONITOR_DPI_AWARE
 
@@ -52,15 +59,19 @@ BackendOverride parseBackendOverride(QString value) {
 
 bool enableSecureDllSearch()
 {
+    // Use LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+    // to ensure application directory is prioritized over system PATH
+    const DWORD searchFlags = LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_APPLICATION_DIR;
+    
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0602
-    return SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) != 0;
+    return SetDefaultDllDirectories(searchFlags) != 0;
 #else
     // Only available on Windows 7+ with KB2533623. Try to enable if present.
     typedef BOOL (WINAPI *SetDefaultDllDirectoriesFunc)(DWORD);
     if (const HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll")) {
         if (const auto fn = reinterpret_cast<SetDefaultDllDirectoriesFunc>(
                 GetProcAddress(kernel32, "SetDefaultDllDirectories"))) {
-            return fn(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) != 0;
+            return fn(searchFlags) != 0;
         }
     }
     return false;
@@ -742,24 +753,18 @@ int main(int argc, char* argv[]) {
     // CRITICAL: Set up DLL search paths BEFORE creating QApplication
     // This prevents loading incompatible Qt DLLs from system PATH
     const bool secureSearchEnabled = enableSecureDllSearch();
-    if (!secureSearchEnabled) {
-        // If secure search is not available, we must still try to add our directories
-        // Note: logging not available yet, will be logged later
-    }
     
     // Get exe directory using Win32 API (before Qt is initialized)
     wchar_t exePath[MAX_PATH * 2]; // Use larger buffer to handle long paths
     DWORD pathLen = GetModuleFileNameW(NULL, exePath, MAX_PATH * 2);
-    if (pathLen == 0 || pathLen >= MAX_PATH * 2) {
-        // GetModuleFileNameW failed or path was truncated
-        // Continue anyway, Qt will get the path later
-    } else {
+    
+    if (pathLen > 0 && pathLen < MAX_PATH * 2) {
         std::wstring exePathStr(exePath);
         size_t lastSlash = exePathStr.find_last_of(L"\\/");
         std::wstring exeDirW = (lastSlash != std::wstring::npos) ? exePathStr.substr(0, lastSlash) : exePathStr;
         
-        // Add application directory to DLL search path FIRST (before Qt loads)
         if (secureSearchEnabled && !exeDirW.empty()) {
+            // Add application directory to DLL search path FIRST (before Qt loads)
             if (AddDllDirectory(exeDirW.c_str()) == nullptr) {
                 // Failed to add directory, but continue anyway
             }
@@ -768,8 +773,44 @@ int main(int argc, char* argv[]) {
             if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
                 AddDllDirectory(binDir.c_str());
             }
+        } else if (!exeDirW.empty()) {
+            // Fallback: Prepend application directory to PATH when secure search is unavailable
+            // This ensures local Qt DLLs are found before system PATH Qt DLLs
+            constexpr DWORD PATH_BUFFER_SIZE = 32768;  // Maximum PATH length on Windows
+            constexpr DWORD EXTRA_PATH_SPACE = 10;      // Extra space for separators
+            wchar_t pathBuffer[PATH_BUFFER_SIZE];
+            DWORD pathSize = GetEnvironmentVariableW(L"PATH", pathBuffer, PATH_BUFFER_SIZE);
+            
+            if (pathSize > 0 && pathSize < PATH_BUFFER_SIZE) {
+                // Build new PATH with application directories prepended
+                std::wstring binDir = exeDirW + L"\\bin";
+                bool hasBinDir = (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES);
+                
+                // Reserve space for efficiency
+                std::wstring newPath;
+                newPath.reserve(pathSize + exeDirW.length() + (hasBinDir ? binDir.length() + 2 : 1) + EXTRA_PATH_SPACE);
+                
+                if (hasBinDir) {
+                    newPath = binDir + L";" + exeDirW + L";" + std::wstring(pathBuffer);
+                } else {
+                    newPath = exeDirW + L";" + std::wstring(pathBuffer);
+                }
+                
+                SetEnvironmentVariableW(L"PATH", newPath.c_str());
+            } else if (pathSize == 0) {
+                // PATH not set or empty, just set to our directory
+                std::wstring binDir = exeDirW + L"\\bin";
+                if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
+                    SetEnvironmentVariableW(L"PATH", (binDir + L";" + exeDirW).c_str());
+                } else {
+                    SetEnvironmentVariableW(L"PATH", exeDirW.c_str());
+                }
+            }
+            // If pathSize >= PATH_BUFFER_SIZE, PATH is too large - continue without modification
         }
     }
+    // If GetModuleFileNameW failed or path was truncated, continue anyway
+    // Qt will get the path later
     
     // NOW it's safe to create QApplication
     QApplication app(argc, argv);
@@ -780,7 +821,7 @@ int main(int argc, char* argv[]) {
     
     // Log DLL search setup status
     if (!secureSearchEnabled) {
-        qWarning() << "SetDefaultDllDirectories unavailable; relying on PATH order for DLL resolution.";
+        qWarning() << "SetDefaultDllDirectories unavailable; application directory prepended to PATH for DLL resolution.";
     } else {
         qInfo() << "Secure DLL search enabled - application directory prioritized for DLL loading";
     }
