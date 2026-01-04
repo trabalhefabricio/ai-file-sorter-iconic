@@ -102,7 +102,11 @@ std::string ErrorReporter::report_quick(Category category,
     
     if (QCoreApplication::instance()) {
         context.working_directory = QDir::currentPath().toStdString();
-        context.command_line_args = QCoreApplication::arguments().join(" ").toStdString();
+        QStringList args = QCoreApplication::arguments();
+        context.command_line_args.clear();
+        for (const QString& arg : args) {
+            context.command_line_args.push_back(arg.toStdString());
+        }
     }
     
     // NEW: Generate code snippet for context
@@ -172,7 +176,8 @@ std::string ErrorReporter::get_system_path_preview() {
         QString pathStr = QString::fromWCharArray(pathBuffer);
         QStringList paths = pathStr.split(';', Qt::SkipEmptyParts);
         // Return first 5 directories
-        QStringList preview = paths.mid(0, std::min(5, paths.size()));
+        int count = std::min(5, paths.size());
+        QStringList preview = paths.mid(0, count);
         return preview.join("; ").toStdString();
     }
 #else
@@ -180,7 +185,8 @@ std::string ErrorReporter::get_system_path_preview() {
     if (path) {
         QString pathStr = QString::fromUtf8(path);
         QStringList paths = pathStr.split(':', Qt::SkipEmptyParts);
-        QStringList preview = paths.mid(0, std::min(5, paths.size()));
+        int count = std::min(5, paths.size());
+        QStringList preview = paths.mid(0, count);
         return preview.join(":").toStdString();
     }
 #endif
@@ -323,7 +329,15 @@ void ErrorReporter::log_to_structured_db(const ErrorContext& context, const std:
         system_ctx["qt_compile_version"] = QString::fromStdString(context.qt_compile_version);
         system_ctx["qt_runtime_version"] = QString::fromStdString(context.qt_runtime_version);
         system_ctx["working_directory"] = QString::fromStdString(context.working_directory);
-        system_ctx["command_line_args"] = QString::fromStdString(context.command_line_args);
+        
+        // Join command line args into a single string
+        std::string joined_args;
+        for (size_t i = 0; i < context.command_line_args.size(); ++i) {
+            if (i > 0) joined_args += " ";
+            joined_args += context.command_line_args[i];
+        }
+        system_ctx["command_line_args"] = QString::fromStdString(joined_args);
+        
         system_ctx["system_path_preview"] = QString::fromStdString(context.system_path_dirs);
         json["system_context"] = system_ctx;
         

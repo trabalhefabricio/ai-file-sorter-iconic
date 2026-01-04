@@ -45,7 +45,7 @@ bool initialize_loggers()
         
         // Initialize ErrorReporter with structured error tracking
         std::string log_dir = Logger::get_log_directory();
-        ErrorReporter::initialize(APP_VERSION, log_dir);
+        ErrorReporter::initialize(APP_VERSION.to_string(), log_dir);
         
         return true;
     } catch (const std::exception &e) {
