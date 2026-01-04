@@ -176,7 +176,7 @@ std::string ErrorReporter::get_system_path_preview() {
         QString pathStr = QString::fromWCharArray(pathBuffer);
         QStringList paths = pathStr.split(';', Qt::SkipEmptyParts);
         // Return first 5 directories
-        int count = std::min(5, paths.size());
+        int count = std::min(5, static_cast<int>(paths.size()));
         QStringList preview = paths.mid(0, count);
         return preview.join("; ").toStdString();
     }
@@ -185,7 +185,7 @@ std::string ErrorReporter::get_system_path_preview() {
     if (path) {
         QString pathStr = QString::fromUtf8(path);
         QStringList paths = pathStr.split(':', Qt::SkipEmptyParts);
-        int count = std::min(5, paths.size());
+        int count = std::min(5, static_cast<int>(paths.size()));
         QStringList preview = paths.mid(0, count);
         return preview.join(":").toStdString();
     }
