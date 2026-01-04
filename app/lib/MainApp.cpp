@@ -240,6 +240,13 @@ void MainApp::setup_file_explorer_view()
 
     file_explorer_view = new QTreeView(file_explorer_dock);
     file_explorer_view->setModel(file_system_model);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeView::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    file_explorer_view->setDragEnabled(false);
+    file_explorer_view->setAcceptDrops(false);
+    file_explorer_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     const QString root_path = file_system_model->rootPath();
     file_explorer_view->setRootIndex(file_system_model->index(root_path));
 

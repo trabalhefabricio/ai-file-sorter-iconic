@@ -118,6 +118,13 @@ WhitelistManagerDialog::WhitelistManagerDialog(WhitelistStore& store, QWidget* p
     auto* layout = new QVBoxLayout(this);
 
     list_widget_ = new QListWidget(this);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QListWidget::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    list_widget_->setDragEnabled(false);
+    list_widget_->setAcceptDrops(false);
+    list_widget_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     layout->addWidget(list_widget_);
 
     auto* button_row = new QHBoxLayout();

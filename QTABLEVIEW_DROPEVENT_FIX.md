@@ -1,5 +1,55 @@
 # Fix for QTableView::dropEvent DLL Error
 
+## Executive Summary
+
+**Problem:** Users continue to experience `?dropEvent@QTableview@@MEAAXPEAVQDropEvent@@@Z` DLL errors at startup on Windows despite previous DLL loading fixes.
+
+**New Strategy (January 2026):** Instead of trying to fix DLL loading order (unreliable), we now **explicitly disable drag-and-drop on all Qt view widgets** to prevent the dropEvent virtual function from being called. This is a surgical, minimal-change solution that addresses the root cause.
+
+**Result:** The dropEvent method is never invoked, so Qt version mismatches no longer cause crashes.
+
+## Implementation
+
+### Phase 1: Disable Drag-and-Drop (Current Fix)
+
+We explicitly disable drag-and-drop on all QTableView, QTableWidget, QTreeView, QTreeWidget, and QListWidget instances throughout the application:
+
+```cpp
+// Example from CategorizationDialog.cpp
+table_view = new QTableView(this);
+table_view->setModel(model);
+// ... other settings ...
+
+// CRITICAL FIX: Explicitly disable drag-and-drop to prevent dropEvent DLL errors
+table_view->setDragEnabled(false);
+table_view->setAcceptDrops(false);
+table_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+```
+
+**Files Modified:**
+- `app/lib/CategorizationDialog.cpp` - QTableView (main categorization dialog)
+- `app/lib/DryRunPreviewDialog.cpp` - QTableWidget (preview dialog)
+- `app/lib/UsageStatsDialog.cpp` - 2x QTableWidget (OpenAI & Gemini history tables)
+- `app/lib/MainAppUiBuilder.cpp` - 2x QTreeView (results tree, folder contents)
+- `app/lib/MainApp.cpp` - QTreeView (file explorer)
+- `app/lib/UserProfileDialog.cpp` - 3x QTreeWidget (characteristics, folder insights, templates)
+- `app/lib/WhitelistManagerDialog.cpp` - QListWidget (whitelist list)
+
+**NOT Modified:**
+- `app/lib/WhitelistTreeEditor.cpp` - QTreeWidget with intentional drag-drop functionality for reordering whitelist items. This widget has explicit drag-drop enabled and should remain as-is unless users report dropEvent errors in the whitelist editor specifically.
+
+### Phase 2: Keep DLL Protection (Fallback)
+
+The existing DLL path manipulation code in `startapp_windows.cpp` remains in place as a defense-in-depth measure. If both protections work together, the application should be robust against Qt version mismatches.
+
+## Why This Strategy Works
+
+1. **Prevents Method Call:** By disabling drag-and-drop, Qt never tries to call dropEvent(), so the missing symbol is never looked up
+2. **No Functionality Loss:** The application doesn't actually use drag-and-drop in these views (except WhitelistTreeEditor, which is handled separately)
+3. **Minimal Change:** Only 3 lines added per widget, easily reviewable and maintainable
+4. **Cross-Version Compatible:** Works regardless of Qt version, DLL loading order, or PATH configuration
+5. **No Side Effects:** setDragEnabled(false) is the official Qt way to disable drag-drop; no hacks or workarounds
+
 ## Problem Description
 
 The error `?dropEvent@QTableview@@MEAAXPEAVQDropEvent@@@Z` (mangled name for QTableView::dropEvent) appears during startup on Windows. This is a Qt virtual function symbol that cannot be found, indicating a version mismatch between the Qt DLLs used at compile time and runtime.

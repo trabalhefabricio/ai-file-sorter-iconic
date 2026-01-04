@@ -153,6 +153,13 @@ void MainAppUiBuilder::build_central_panel(MainApp& app) {
     app.tree_view->setModel(app.tree_model);
     app.tree_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     app.tree_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeView::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    app.tree_view->setDragEnabled(false);
+    app.tree_view->setAcceptDrops(false);
+    app.tree_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     app.tree_view->header()->setSectionResizeMode(QHeaderView::Stretch);
     app.tree_view->setUniformRowHeights(true);
     app.tree_view_page_index_ = app.results_stack->addWidget(app.tree_view);
@@ -166,6 +173,13 @@ void MainAppUiBuilder::build_central_panel(MainApp& app) {
     app.folder_contents_view->setRootIndex(app.folder_contents_model->index(QDir::homePath()));
     app.folder_contents_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     app.folder_contents_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeView::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    app.folder_contents_view->setDragEnabled(false);
+    app.folder_contents_view->setAcceptDrops(false);
+    app.folder_contents_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     app.folder_contents_view->setRootIsDecorated(false);
     app.folder_contents_view->setUniformRowHeights(true);
     app.folder_contents_view->setSortingEnabled(true);

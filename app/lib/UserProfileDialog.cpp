@@ -159,6 +159,13 @@ void UserProfileDialog::setup_characteristics_tab() {
     characteristics_tree_ = new QTreeWidget();
     characteristics_tree_->setHeaderLabels({"Trait / Value", "Confidence", "Evidence", "Updated"});
     characteristics_tree_->setAlternatingRowColors(true);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeWidget::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    characteristics_tree_->setDragEnabled(false);
+    characteristics_tree_->setAcceptDrops(false);
+    characteristics_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     characteristics_tree_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     characteristics_tree_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     characteristics_tree_->header()->setSectionResizeMode(2, QHeaderView::Stretch);
@@ -180,6 +187,13 @@ void UserProfileDialog::setup_folder_insights_tab() {
     folder_insights_tree_ = new QTreeWidget();
     folder_insights_tree_->setHeaderLabels({"Folder Path", "Files", "Pattern", "Last Analyzed"});
     folder_insights_tree_->setAlternatingRowColors(true);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeWidget::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    folder_insights_tree_->setDragEnabled(false);
+    folder_insights_tree_->setAcceptDrops(false);
+    folder_insights_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     folder_insights_tree_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     folder_insights_tree_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     folder_insights_tree_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
@@ -277,6 +291,13 @@ void UserProfileDialog::setup_templates_tab() {
     templates_tree_->setHeaderLabels({"Template Name", "Confidence", "Usage Count", "Categories"});
     templates_tree_->setAlternatingRowColors(true);
     templates_tree_->setSelectionMode(QAbstractItemView::SingleSelection);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTreeWidget::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur. We don't use drag-drop in this view.
+    templates_tree_->setDragEnabled(false);
+    templates_tree_->setAcceptDrops(false);
+    templates_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     templates_tree_->header()->setStretchLastSection(true);
     templates_tree_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     templates_tree_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);

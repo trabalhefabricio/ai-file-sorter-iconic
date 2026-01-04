@@ -224,6 +224,15 @@ void CategorizationDialog::setup_ui()
     table_view->setModel(model);
     table_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     table_view->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed);
+    
+    // CRITICAL FIX: Explicitly disable drag-and-drop to prevent QTableView::dropEvent DLL errors
+    // on Windows when Qt version mismatches occur between compile-time and runtime.
+    // The dropEvent virtual function can cause "entry point not found" errors if system PATH
+    // contains a different Qt version. We don't use drag-drop in this dialog anyway.
+    table_view->setDragEnabled(false);
+    table_view->setAcceptDrops(false);
+    table_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     table_view->horizontalHeader()->setStretchLastSection(true);
     table_view->verticalHeader()->setVisible(false);
     table_view->horizontalHeader()->setSectionsClickable(true);
