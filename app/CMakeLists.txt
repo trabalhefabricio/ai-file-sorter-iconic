@@ -201,6 +201,7 @@ if(WIN32)
     )
     target_link_libraries(${STARTER_TARGET} PRIVATE
         Qt6::Widgets Qt6::Gui Qt6::Core
+        spdlog::spdlog
     )
     target_compile_definitions(${STARTER_TARGET} PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
