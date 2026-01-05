@@ -682,34 +682,24 @@ Follow the steps in [How to Use](#how-to-use), but modify **step 2** as follows:
 
 ## Contributing
 
-We welcome contributions! Here's how to get involved:
+### 🐛 Bug Tracking (Personal Use)
 
-### 🐛 Reporting Bugs
+This fork includes simple tools for tracking bugs:
 
-Found a bug? We have a streamlined reporting process:
+- **bugs.md** - Your personal bug log (track what you find, fixes applied, status)
+- **QUICK_BUG_REPORT.md** - Template to report bugs to AI assistants without dismissal
 
-1. **Use our bug report template**: Go to [Issues](../../issues) → "New Issue" → "🐛 Bug Report"
-2. **Include error logs**: Check `%APPDATA%\aifilesorter\logs\` (Windows), `~/.cache/aifilesorter/logs/` (Linux), or `~/Library/Application Support/aifilesorter/logs/` (macOS)
-3. **For Copilot users**: If you have a `COPILOT_ERROR_*.md` file, paste its contents in your report
+**How to use:**
+1. Find bug → Fill QUICK_BUG_REPORT.md template
+2. Include error logs from `%APPDATA%\aifilesorter\logs\` or `COPILOT_ERROR_*.md` files
+3. Paste to Copilot Chat/AI assistant → Forces proper analysis
+4. Log in bugs.md for your reference
 
-Our AI-assisted triage system will analyze your report and provide immediate guidance. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-### ✨ Requesting Features
-
-Have an idea? Use our [feature request template](../../issues/new?template=feature_request.yml) to share it!
-
-### 💻 Contributing Code
-
-1. Read our [Contributing Guide](CONTRIBUTING.md)
-2. Check [BUGFIXING_GUIDE.md](BUGFIXING_GUIDE.md) for code quality standards
-3. Fork, code, test, and submit a pull request!
+See [ERROR_REPORTING_FOR_COPILOT_USERS.md](ERROR_REPORTING_FOR_COPILOT_USERS.md) for details on COPILOT_ERROR files.
 
 ### 📚 Documentation
 
-See our comprehensive guides:
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Full contributing guidelines
 - [BUGFIXING_GUIDE.md](BUGFIXING_GUIDE.md) - Bug prevention and fixing
-- [ISSUE_TRIAGE_GUIDE.md](ISSUE_TRIAGE_GUIDE.md) - How issues are processed
 - [ERROR_REPORTING_FOR_COPILOT_USERS.md](ERROR_REPORTING_FOR_COPILOT_USERS.md) - Copilot-friendly error reporting
 
 ---
