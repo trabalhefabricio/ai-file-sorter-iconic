@@ -28,6 +28,11 @@ void DryRunPreviewDialog::setup_ui(const std::vector<Entry>& entries)
     table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table_->setSelectionMode(QAbstractItemView::NoSelection);
     table_->setAlternatingRowColors(true);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    table_->setDragEnabled(false);
+    table_->setAcceptDrops(false);
+    table_->setDragDropMode(QAbstractItemView::NoDragDrop);
 
     table_->setRowCount(static_cast<int>(entries.size()));
     int row = 0;

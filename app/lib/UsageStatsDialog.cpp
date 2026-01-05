@@ -67,6 +67,12 @@ void UsageStatsDialog::setup_ui() {
     openai_history_table_->horizontalHeader()->setStretchLastSection(true);
     openai_history_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     openai_history_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    openai_history_table_->setDragEnabled(false);
+    openai_history_table_->setAcceptDrops(false);
+    openai_history_table_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     openai_history_layout->addWidget(openai_history_table_);
     
     openai_layout->addWidget(openai_history_group);
@@ -120,6 +126,12 @@ void UsageStatsDialog::setup_ui() {
     gemini_history_table_->horizontalHeader()->setStretchLastSection(true);
     gemini_history_table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     gemini_history_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    gemini_history_table_->setDragEnabled(false);
+    gemini_history_table_->setAcceptDrops(false);
+    gemini_history_table_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     gemini_history_layout->addWidget(gemini_history_table_);
     
     gemini_layout->addWidget(gemini_history_group);
