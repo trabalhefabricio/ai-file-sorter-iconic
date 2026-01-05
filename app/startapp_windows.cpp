@@ -1048,8 +1048,8 @@ int main(int argc, char* argv[]) {
             qCritical() << "User aborted due to DLL setup failure";
             return EXIT_FAILURE;
         }
-        // User clicked Ignore - log this but we'll check Qt version below
-        qWarning() << "User chose to ignore DLL setup failure - checking Qt version compatibility";
+        // User clicked Ignore - will perform critical Qt version check below
+        qWarning() << "User chose to ignore DLL setup failure - performing Qt version validation";
     }
     
     // Log DLL search setup status
@@ -1076,9 +1076,17 @@ int main(int argc, char* argv[]) {
         
         bool majorVersionMismatch = false;
         if (runtimeParts.size() >= 1 && compileParts.size() >= 1) {
-            int runtimeMajor = runtimeParts[0].toInt();
-            int compileMajor = compileParts[0].toInt();
-            majorVersionMismatch = (runtimeMajor != compileMajor);
+            bool runtimeOk = false;
+            bool compileOk = false;
+            int runtimeMajor = runtimeParts[0].toInt(&runtimeOk);
+            int compileMajor = compileParts[0].toInt(&compileOk);
+            if (runtimeOk && compileOk) {
+                majorVersionMismatch = (runtimeMajor != compileMajor);
+            } else {
+                // If version parsing fails, assume mismatch to be safe
+                qWarning() << "Failed to parse Qt version numbers - treating as mismatch";
+                majorVersionMismatch = true;
+            }
         }
         
         // If DLL setup failed AND we have a major version mismatch, abort immediately
