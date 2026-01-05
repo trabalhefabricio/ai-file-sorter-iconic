@@ -442,12 +442,45 @@ jobs:
             }
           }
 
+          # Copy lib directory structure for self-contained deployment
+          Write-Host "`n=== Copying lib directory structure for standalone deployment ==="
+          
+          # Copy lib/ggml directory (contains runtime GGML DLLs organized by variant)
+          if (Test-Path "app\lib\ggml") {
+            New-Item -ItemType Directory -Force -Path "output\lib\ggml" | Out-Null
+            Copy-Item "app\lib\ggml\*" "output\lib\ggml\" -Recurse -Force
+            Write-Host "[OK] Copied lib/ggml directory structure"
+          } else {
+            Write-Warning "app\lib\ggml not found"
+          }
+          
+          # Copy lib/precompiled directory (contains static libraries and DLLs)
+          if (Test-Path "app\lib\precompiled") {
+            New-Item -ItemType Directory -Force -Path "output\lib\precompiled" | Out-Null
+            Copy-Item "app\lib\precompiled\*" "output\lib\precompiled\" -Recurse -Force
+            Write-Host "[OK] Copied lib/precompiled directory structure"
+          } else {
+            Write-Warning "app\lib\precompiled not found"
+          }
+          
+          # Verify lib directory structure was copied
+          $libDirs = @("output\lib\ggml", "output\lib\precompiled\cpu\bin")
+          foreach ($dir in $libDirs) {
+            if (Test-Path $dir) {
+              $fileCount = (Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue).Count
+              Write-Host "[OK] Verified $dir ($fileCount files)"
+            } else {
+              Write-Warning "Directory not found: $dir"
+            }
+          }
+
       - name: Verify Bundle
         shell: powershell
         run: |
           $outputDir = "$env:GITHUB_WORKSPACE\output"
           $criticalFiles = @("aifilesorter.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll")
 
+          Write-Host "=== Verifying critical files ==="
           $missingFiles = @()
           foreach ($file in $criticalFiles) {
             $filePath = Join-Path $outputDir $file
@@ -466,11 +499,37 @@ jobs:
             exit 1
           }
 
-          $fileCount = (Get-ChildItem $outputDir -File).Count
-          Write-Host "[OK] Bundle verified successfully! Total files: $fileCount"
+          # Verify lib directory structure
+          Write-Host "`n=== Verifying lib directory structure ==="
+          $criticalDirs = @(
+            "output\lib\ggml",
+            "output\lib\precompiled\cpu"
+          )
+          
+          $missingDirs = @()
+          foreach ($dir in $criticalDirs) {
+            $fullPath = Join-Path $env:GITHUB_WORKSPACE $dir
+            if (Test-Path $fullPath) {
+              $fileCount = (Get-ChildItem $fullPath -Recurse -File -ErrorAction SilentlyContinue).Count
+              Write-Host "[OK] Found: $dir ($fileCount files)"
+            } else {
+              $missingDirs += $dir
+              Write-Warning "Missing directory: $dir"
+            }
+          }
+          
+          if ($missingDirs.Count -gt 0) {
+            Write-Error ("Bundle verification failed: Missing $($missingDirs.Count) critical directories. " + `
+                        "The application requires lib/ggml and lib/precompiled directories to run independently. " + `
+                        "Check the 'Bundle Files' step logs.")
+            exit 1
+          }
+
+          $fileCount = (Get-ChildItem $outputDir -Recurse -File).Count
+          Write-Host "`n[OK] Bundle verified successfully! Total files (including subdirectories): $fileCount"
 
       - name: Upload Finished App
         uses: actions/upload-artifact@v4
         with:
           name: AI-File-Sorter-newstuff-${{ github.sha }}
-          path: output/*
+          path: output/**/*

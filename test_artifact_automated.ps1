@@ -259,6 +259,27 @@ foreach ($file in $criticalFiles) {
     Test-FileExists -Path $fullPath -Description $file.Description | Out-Null
 }
 
+# Check for critical directory structure
+Write-TestLog "`n--- Checking directory structure for standalone operation ---" -Level INFO
+
+$criticalDirs = @(
+    @{Path = "lib\ggml\wocuda"; Description = "GGML runtime DLLs (CPU variant)"},
+    @{Path = "lib\precompiled\cpu\bin"; Description = "Precompiled binaries directory"}
+)
+
+foreach ($dir in $criticalDirs) {
+    $fullPath = Join-Path $ArtifactPath $dir.Path
+    if (Test-Path $fullPath) {
+        $fileCount = (Get-ChildItem $fullPath -File -ErrorAction SilentlyContinue).Count
+        Write-TestLog "[✓] $($dir.Description): Found ($fileCount files)" -Level PASS
+        $script:testsPassed++
+    } else {
+        Write-TestLog "[✗] $($dir.Description): Directory not found at $($dir.Path)" -Level FAIL
+        Write-TestLog "    This directory is REQUIRED for standalone operation!" -Level FAIL
+        $script:testsFailed++
+    }
+}
+
 # ============================================================================
 # TEST SUITE 2: DLL Version Verification
 # ============================================================================

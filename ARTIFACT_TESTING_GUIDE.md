@@ -27,7 +27,7 @@ This guide documents the testing procedure for the most recent successful Window
 
 ## File Inventory
 
-The artifact should contain the following files:
+The artifact should contain the following files and directories:
 
 ### Core Application Files
 - `aifilesorter.exe` - Main application executable
@@ -58,6 +58,19 @@ The artifact should contain the following files:
 - `libgfortran*.dll`
 - `libgcc*.dll`
 - `libwinpthread*.dll`
+
+### Runtime Directory Structure (Critical for Standalone Operation)
+- `lib/ggml/wocuda/` - GGML runtime DLLs for CPU-only execution
+  - `llama.dll`, `ggml.dll`, `ggml-base.dll`, `ggml-cpu.dll`
+- `lib/ggml/wcuda/` - GGML runtime DLLs for CUDA execution (if included)
+- `lib/ggml/wvulkan/` - GGML runtime DLLs for Vulkan execution (if included)
+- `lib/precompiled/cpu/` - Static libraries and precompiled binaries
+  - `bin/` subdirectory with DLL files
+  - `lib/` subdirectory with .lib files
+- `lib/precompiled/cuda/` - CUDA variant libraries (if included)
+- `lib/precompiled/vulkan/` - Vulkan variant libraries (if included)
+
+**Note:** The `lib/` directory structure is essential for the application to run independently without requiring installation of the original hyperfield fork.
 
 ## Testing Procedure
 
