@@ -74,11 +74,10 @@ void WhitelistTreeEditor::setup_ui()
     tree_widget_->setSelectionMode(QAbstractItemView::SingleSelection);
     tree_widget_->setAlternatingRowColors(true);
     
-    // Enable drag and drop for reordering
-    tree_widget_->setDragEnabled(true);
-    tree_widget_->setAcceptDrops(true);
-    tree_widget_->setDragDropMode(QAbstractItemView::InternalMove);
-    tree_widget_->setDefaultDropAction(Qt::MoveAction);
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    tree_widget_->setDragEnabled(false);
+    tree_widget_->setAcceptDrops(false);
+    tree_widget_->setDragDropMode(QAbstractItemView::NoDragDrop);
     
     main_layout->addWidget(tree_widget_);
     

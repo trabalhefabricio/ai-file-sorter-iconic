@@ -256,6 +256,11 @@ void MainApp::setup_file_explorer_view()
     file_explorer_view->setColumnHidden(2, true);
     file_explorer_view->setColumnHidden(3, true);
     file_explorer_view->setExpandsOnDoubleClick(true);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    file_explorer_view->setDragEnabled(false);
+    file_explorer_view->setAcceptDrops(false);
+    file_explorer_view->setDragDropMode(QAbstractItemView::NoDragDrop);
 
     file_explorer_dock->setWidget(file_explorer_view);
 }
