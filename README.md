@@ -682,9 +682,25 @@ Follow the steps in [How to Use](#how-to-use), but modify **step 2** as follows:
 
 ## Contributing
 
-- Fork the repository and submit pull requests.
-- Report issues or suggest features on the GitHub issue tracker.
-- Follow the existing code style and documentation format.
+### 🐛 Bug Tracking (Personal Use)
+
+This fork includes simple tools for tracking bugs:
+
+- **bugs.md** - Your personal bug log (track what you find, fixes applied, status)
+- **QUICK_BUG_REPORT.md** - Template to report bugs to AI assistants without dismissal
+
+**How to use:**
+1. Find bug → Fill QUICK_BUG_REPORT.md template
+2. Include error logs from `%APPDATA%\aifilesorter\logs\` or `COPILOT_ERROR_*.md` files
+3. Paste to Copilot Chat/AI assistant → Forces proper analysis
+4. Log in bugs.md for your reference
+
+See [ERROR_REPORTING_FOR_COPILOT_USERS.md](ERROR_REPORTING_FOR_COPILOT_USERS.md) for details on COPILOT_ERROR files.
+
+### 📚 Documentation
+
+- [BUGFIXING_GUIDE.md](BUGFIXING_GUIDE.md) - Bug prevention and fixing
+- [ERROR_REPORTING_FOR_COPILOT_USERS.md](ERROR_REPORTING_FOR_COPILOT_USERS.md) - Copilot-friendly error reporting
 
 ---
 
