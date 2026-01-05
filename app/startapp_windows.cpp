@@ -1048,8 +1048,8 @@ int main(int argc, char* argv[]) {
             qCritical() << "User aborted due to DLL setup failure";
             return EXIT_FAILURE;
         }
-        // User clicked Ignore, continue at their own risk
-        qWarning() << "User chose to ignore DLL setup failure - application may crash";
+        // User clicked Ignore - log this but we'll check Qt version below
+        qWarning() << "User chose to ignore DLL setup failure - checking Qt version compatibility";
     }
     
     // Log DLL search setup status
@@ -1061,9 +1061,54 @@ int main(int argc, char* argv[]) {
     
     // Log the actual Qt version being used to help diagnose version mismatch issues
     qInfo() << "Qt Runtime Version:" << qVersion() << "| Compiled with:" << QT_VERSION_STR;
-    if (QString::fromLatin1(qVersion()) != QString::fromLatin1(QT_VERSION_STR)) {
-        qWarning() << "WARNING: Qt version mismatch detected! This may cause virtual function errors.";
-        qWarning() << "Built with Qt" << QT_VERSION_STR << "but running with Qt" << qVersion();
+    
+    // CRITICAL: Check for Qt version mismatch - this WILL cause crashes
+    QString runtimeVersion = QString::fromLatin1(qVersion());
+    QString compileVersion = QString::fromLatin1(QT_VERSION_STR);
+    
+    if (runtimeVersion != compileVersion) {
+        qCritical() << "CRITICAL: Qt version mismatch detected!";
+        qCritical() << "Built with Qt" << QT_VERSION_STR << "but running with Qt" << qVersion();
+        
+        // Extract major version numbers
+        QStringList runtimeParts = runtimeVersion.split('.');
+        QStringList compileParts = compileVersion.split('.');
+        
+        bool majorVersionMismatch = false;
+        if (runtimeParts.size() >= 1 && compileParts.size() >= 1) {
+            int runtimeMajor = runtimeParts[0].toInt();
+            int compileMajor = compileParts[0].toInt();
+            majorVersionMismatch = (runtimeMajor != compileMajor);
+        }
+        
+        // If DLL setup failed AND we have a major version mismatch, abort immediately
+        // This prevents the dropEvent crash
+        if (needsDllSetupWarning && majorVersionMismatch) {
+            QMessageBox::critical(nullptr,
+                QObject::tr("Fatal Qt Version Mismatch"),
+                QObject::tr(
+                    "Cannot continue: Qt major version mismatch detected.\n\n"
+                    "Application was built with Qt %1\n"
+                    "But system is loading Qt %2\n\n"
+                    "This WILL cause crashes with errors like:\n"
+                    "  - QTableView::dropEvent not found\n"
+                    "  - QWidget virtual function errors\n\n"
+                    "The application cannot run safely and will now exit.\n\n"
+                    "To fix this issue:\n"
+                    "1. Run as Administrator to allow proper DLL loading\n"
+                    "2. Remove other Qt installations from system PATH\n"
+                    "3. Reinstall this application")
+                    .arg(compileVersion)
+                    .arg(runtimeVersion));
+            
+            qCritical() << "ABORTING: Cannot run with Qt major version mismatch and failed DLL setup";
+            return EXIT_FAILURE;
+        }
+        
+        // If only minor version mismatch, warn but allow continuing
+        if (!majorVersionMismatch) {
+            qWarning() << "WARNING: Qt minor version mismatch detected - may cause issues";
+        }
     }
 
     QString detectedCudaRuntime;
