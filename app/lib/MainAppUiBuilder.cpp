@@ -155,6 +155,12 @@ void MainAppUiBuilder::build_central_panel(MainApp& app) {
     app.tree_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
     app.tree_view->header()->setSectionResizeMode(QHeaderView::Stretch);
     app.tree_view->setUniformRowHeights(true);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    app.tree_view->setDragEnabled(false);
+    app.tree_view->setAcceptDrops(false);
+    app.tree_view->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     app.tree_view_page_index_ = app.results_stack->addWidget(app.tree_view);
 
     app.folder_contents_model = new QFileSystemModel(app.results_stack);
@@ -170,6 +176,11 @@ void MainAppUiBuilder::build_central_panel(MainApp& app) {
     app.folder_contents_view->setUniformRowHeights(true);
     app.folder_contents_view->setSortingEnabled(true);
     app.folder_contents_view->sortByColumn(0, Qt::AscendingOrder);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    app.folder_contents_view->setDragEnabled(false);
+    app.folder_contents_view->setAcceptDrops(false);
+    app.folder_contents_view->setDragDropMode(QAbstractItemView::NoDragDrop);
     app.folder_contents_view->setAlternatingRowColors(true);
     app.folder_view_page_index_ = app.results_stack->addWidget(app.folder_contents_view);
 

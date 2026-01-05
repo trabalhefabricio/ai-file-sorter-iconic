@@ -164,6 +164,11 @@ void UserProfileDialog::setup_characteristics_tab() {
     characteristics_tree_->header()->setSectionResizeMode(2, QHeaderView::Stretch);
     characteristics_tree_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    characteristics_tree_->setDragEnabled(false);
+    characteristics_tree_->setAcceptDrops(false);
+    characteristics_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
+    
     populate_characteristics();
     
     layout->addWidget(characteristics_tree_);
@@ -184,6 +189,11 @@ void UserProfileDialog::setup_folder_insights_tab() {
     folder_insights_tree_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     folder_insights_tree_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     folder_insights_tree_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    folder_insights_tree_->setDragEnabled(false);
+    folder_insights_tree_->setAcceptDrops(false);
+    folder_insights_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
     
     populate_folder_insights();
     
@@ -281,6 +291,11 @@ void UserProfileDialog::setup_templates_tab() {
     templates_tree_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     templates_tree_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     templates_tree_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    
+    // Explicitly disable drag-drop to prevent dropEvent crashes on Qt version mismatch
+    templates_tree_->setDragEnabled(false);
+    templates_tree_->setAcceptDrops(false);
+    templates_tree_->setDragDropMode(QAbstractItemView::NoDragDrop);
     
     templates_layout->addWidget(templates_tree_);
     
