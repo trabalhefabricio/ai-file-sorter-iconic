@@ -19,6 +19,9 @@
 
 #include <cstdlib>
 #include <string>
+#include <fstream>
+#include <chrono>
+#include <filesystem>
 
 #include <windows.h>
 #ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
@@ -840,12 +843,46 @@ QString getPathDiagnostics() {
 
 } // namespace
 
+/**
+ * @brief Simple startup logging that works before Qt is initialized
+ */
+void log_startup_message(const std::string& msg) {
+    // Log to a simple text file that can be checked if startup fails
+    std::string exe_dir;
+#ifdef _WIN32
+    wchar_t path[MAX_PATH];
+    if (GetModuleFileNameW(NULL, path, MAX_PATH) > 0) {
+        std::wstring ws(path);
+        std::filesystem::path p(ws);
+        exe_dir = p.parent_path().string();
+    }
+#endif
+    
+    if (!exe_dir.empty()) {
+        std::string log_file = exe_dir + "\\startup_log.txt";
+        std::ofstream ofs(log_file, std::ios::app);
+        if (ofs.is_open()) {
+            auto now = std::chrono::system_clock::now();
+            auto time_t = std::chrono::system_clock::to_time_t(now);
+            char time_buf[100];
+            std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&time_t));
+            ofs << "[" << time_buf << "] " << msg << std::endl;
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
+    log_startup_message("=== StartAiFileSorter.exe started ===");
+    log_startup_message("Enabling DPI awareness...");
+    
     enable_per_monitor_dpi_awareness();
+    
+    log_startup_message("Setting up DLL search paths...");
     
     // CRITICAL: Set up DLL search paths BEFORE creating QApplication
     // This prevents loading incompatible Qt DLLs from system PATH
     const bool secureSearchEnabled = enableSecureDllSearch();
+    log_startup_message(secureSearchEnabled ? "Secure DLL search enabled" : "Secure DLL search NOT enabled");
     
     // Get exe directory using Win32 API (before Qt is initialized)
     wchar_t exePath[MAX_PATH * 2]; // Use larger buffer to handle long paths
@@ -1040,19 +1077,23 @@ int main(int argc, char* argv[]) {
         dllSetupDiagnostics += "When errors occur, look for COPILOT_ERROR_*.md files in your logs directory.\n";
         dllSetupDiagnostics += "Copy the file contents and paste into Copilot Chat for step-by-step help.";
         
+        log_startup_message("WARNING: DLL setup failed - showing user dialog");
+        
         QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setWindowTitle(QObject::tr("Critical DLL Setup Error"));
+        msgBox.setIcon(QMessageBox::Warning);  // Changed from Critical to Warning
+        msgBox.setWindowTitle(QObject::tr("DLL Setup Warning"));
         msgBox.setText(QObject::tr(
-            "Failed to configure DLL search paths properly.\n\n"
-            "This WILL cause \"entry point not found\" errors when UI widgets are created.\n\n"
-            "The application will likely crash during startup.\n\n"
+            "Warning: DLL search path configuration had issues.\n\n"
+            "The application will attempt to start, but may encounter errors.\n\n"
+            "If you experience crashes or \"entry point not found\" errors:\n"
+            "- Try running as Administrator\n"
+            "- Check the detailed information below\n\n"
             "Click 'Show Details' to see full diagnostic information (copyable).\n\n"
             "📋 Copilot Users: Error reports are saved to logs/COPILOT_ERROR_*.md\n"
             "   Copy that file and paste into Copilot Chat for help!"));
         msgBox.setDetailedText(dllSetupDiagnostics);
-        msgBox.setStandardButtons(QMessageBox::Abort | QMessageBox::Ignore);
-        msgBox.setDefaultButton(QMessageBox::Abort);
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Abort);
+        msgBox.setDefaultButton(QMessageBox::Ok);  // Changed default to Ok (continue)
         
         // Make text copyable
         msgBox.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
@@ -1066,11 +1107,13 @@ int main(int argc, char* argv[]) {
         
         int result = msgBox.exec();
         if (result == QMessageBox::Abort) {
+            log_startup_message("User chose to abort startup");
             qCritical() << "User aborted due to DLL setup failure";
             return EXIT_FAILURE;
         }
-        // User clicked Ignore - log this but we'll check Qt version below
-        qWarning() << "User chose to ignore DLL setup failure - checking Qt version compatibility";
+        // User clicked Ok - log this and continue with startup
+        log_startup_message("User chose to continue despite DLL setup warning");
+        qWarning() << "User chose to continue despite DLL setup failure - will attempt to start anyway";
     }
     
     // Log DLL search setup status
@@ -1081,30 +1124,38 @@ int main(int argc, char* argv[]) {
     }
     
     // Log the actual Qt version being used to help diagnose version mismatch issues
+    log_startup_message(std::string("Qt Runtime: ") + qVersion() + " | Compiled: " + QT_VERSION_STR);
     qInfo() << "Qt Runtime Version:" << qVersion() << "| Compiled with:" << QT_VERSION_STR;
     
-    // CRITICAL: Check for Qt version mismatch - this WILL cause crashes
+    // Check for Qt version mismatch - but only abort on major version mismatch
     QString runtimeVersion = QString::fromLatin1(qVersion());
     QString compileVersion = QString::fromLatin1(QT_VERSION_STR);
     
     if (runtimeVersion != compileVersion) {
-        qCritical() << "CRITICAL: Qt version mismatch detected!";
-        qCritical() << "Built with Qt" << QT_VERSION_STR << "but running with Qt" << qVersion();
+        qWarning() << "Qt version mismatch detected - Built with Qt" << QT_VERSION_STR << "but running with Qt" << qVersion();
+        log_startup_message("WARNING: Qt version mismatch detected");
         
-        // Extract major version numbers
+        // Extract major.minor version numbers
         QStringList runtimeParts = runtimeVersion.split('.');
         QStringList compileParts = compileVersion.split('.');
         
         bool majorVersionMismatch = false;
-        if (runtimeParts.size() >= 1 && compileParts.size() >= 1) {
+        bool minorVersionMismatch = false;
+        
+        if (runtimeParts.size() >= 2 && compileParts.size() >= 2) {
             int runtimeMajor = runtimeParts[0].toInt();
             int compileMajor = compileParts[0].toInt();
+            int runtimeMinor = runtimeParts[1].toInt();
+            int compileMinor = compileParts[1].toInt();
+            
             majorVersionMismatch = (runtimeMajor != compileMajor);
+            minorVersionMismatch = (runtimeMinor != compileMinor);
         }
         
-        // If DLL setup failed AND we have a major version mismatch, abort immediately
-        // This prevents the dropEvent crash
-        if (needsDllSetupWarning && majorVersionMismatch) {
+        // Only abort if major version mismatch AND DLL setup failed
+        // Minor version differences are usually OK
+        if (majorVersionMismatch && needsDllSetupWarning) {
+            log_startup_message("FATAL: Major Qt version mismatch with DLL setup failure - aborting");
             QMessageBox::critical(nullptr,
                 QObject::tr("Fatal Qt Version Mismatch"),
                 QObject::tr(
@@ -1126,10 +1177,16 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
         
-        // If only minor version mismatch, warn but allow continuing
-        if (!majorVersionMismatch) {
-            qWarning() << "WARNING: Qt minor version mismatch detected - may cause issues";
+        // If only minor version mismatch or DLL setup succeeded, just warn
+        if (minorVersionMismatch && !majorVersionMismatch) {
+            log_startup_message("INFO: Qt minor version mismatch detected - should be OK");
+            qInfo() << "Qt minor version mismatch detected but should be compatible";
+        } else if (majorVersionMismatch && !needsDllSetupWarning) {
+            log_startup_message("WARNING: Major Qt version mismatch but DLL setup succeeded - continuing");
+            qWarning() << "Major Qt version mismatch detected but DLL setup succeeded - will attempt to continue";
         }
+    } else {
+        log_startup_message("OK: Qt versions match");
     }
 
     QString detectedCudaRuntime;
@@ -1154,7 +1211,9 @@ int main(int argc, char* argv[]) {
 
     QString ggmlVariant = ggml_variant_for_selection(selection);
     QString ggmlPath = resolve_ggml_directory(exeDir, ggmlVariant, /*showError=*/false);
+    
     if (ggmlPath.isEmpty()) {
+        log_startup_message("WARNING: GGML directory not found for " + ggmlVariant.toStdString());
         qWarning().noquote()
             << "Backend runtime directory missing for selection" << ggmlVariant
             << "- attempting fallback.";
@@ -1175,6 +1234,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (fallbackSelection != selection) {
+                log_startup_message("Falling back to " + backend_tag_for_selection(fallbackSelection).toStdString());
                 qInfo().noquote()
                     << "Falling back to backend"
                     << backend_tag_for_selection(fallbackSelection)
@@ -1182,6 +1242,7 @@ int main(int argc, char* argv[]) {
                 selection = fallbackSelection;
                 ggmlVariant = ggml_variant_for_selection(selection);
             } else {
+                log_startup_message("Falling back to CPU backend");
                 qInfo().noquote() << "Falling back to CPU backend.";
                 selection = BackendSelection::Cpu;
                 ggmlVariant = ggml_variant_for_selection(selection);
@@ -1191,11 +1252,30 @@ int main(int argc, char* argv[]) {
         }
 
         if (ggmlPath.isEmpty()) {
-            // Final attempt with error message
-            ggmlPath = resolve_ggml_directory(exeDir, ggmlVariant, /*showError=*/true);
+            log_startup_message("ERROR: All GGML backend fallbacks failed - will attempt without GGML");
+            // Final attempt with error message - but if this fails, continue anyway
+            ggmlPath = resolve_ggml_directory(exeDir, ggmlVariant, /*showError=*/false);
             if (ggmlPath.isEmpty()) {
-                return EXIT_FAILURE;
+                // Critical issue - no GGML directories found at all
+                // Show a warning but try to continue - maybe the app can work without local LLM
+                log_startup_message("CRITICAL: No GGML directories found - continuing without local LLM support");
+                QMessageBox::warning(nullptr,
+                    QObject::tr("Missing LLM Backend"),
+                    QObject::tr(
+                        "Could not find LLM backend libraries (GGML).\n\n"
+                        "The application will start but local AI features may not work.\n\n"
+                        "You can still use:\n"
+                        "- Remote API (OpenAI, Gemini)\n"
+                        "- Manual file organization\n\n"
+                        "To fix this:\n"
+                        "- Reinstall the application\n"
+                        "- Check that lib/ggml directories exist\n"
+                        "- Run the diagnose_startup.exe tool for details"));
+                // Continue anyway - set ggmlPath to exe directory as fallback
+                ggmlPath = exeDir;
             }
+        } else {
+            log_startup_message("OK: Found GGML directory at " + ggmlPath.toStdString());
         }
     }
 
@@ -1205,11 +1285,17 @@ int main(int argc, char* argv[]) {
     const bool useVulkan = (selection == BackendSelection::Vulkan);
     configure_runtime_paths(exeDir, ggmlPath, secureSearchEnabled, useCuda, useVulkan);
 
-    // NEW: Check DLL compatibility before launching
+    // Check DLL compatibility but don't abort - just warn user
+    log_startup_message("Checking DLL compatibility...");
     if (!check_dll_compatibility(ggmlPath, exeDir)) {
-        qInfo() << "User aborted due to DLL version mismatch";
+        log_startup_message("WARNING: DLL compatibility check failed or user aborted");
+        qWarning() << "DLL compatibility check failed - user may have aborted";
+        // Note: check_dll_compatibility returns false if user clicks Abort
+        // If user clicks Ignore, it returns true
+        // So if we get here, user explicitly chose to abort
         return EXIT_FAILURE;
     }
+    log_startup_message("DLL compatibility check passed or user chose to continue");
 
     bool console_log_flag = false;
     QStringList forwardedArgs = build_forwarded_args(argc, argv, console_log_flag);

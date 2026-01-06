@@ -298,21 +298,20 @@ int main(int argc, char **argv) {
     // which performs critical DLL compatibility checks and sets up the environment.
     // Running aifilesorter.exe directly may result in DLL loading errors.
     if (!allow_direct_launch(argc, argv)) {
-        // Show a warning but allow execution for backward compatibility
-        // Users who understand the risks can use --force-direct-run flag
+        // Show a informational message but allow execution for flexibility
+        // Changed to be less scary - just inform the user of best practices
         const wchar_t* message = 
-            L"Warning: AI File Sorter should be launched via StartAiFileSorter.exe\n\n"
-            L"Running aifilesorter.exe directly may cause DLL compatibility errors like:\n"
-            L"- \"ggml_xielu entry point not found\"\n"
-            L"- \"QTableView::dropEvent not found\"\n\n"
-            L"To fix these errors:\n"
-            L"1. Use StartAiFileSorter.exe instead\n"
-            L"2. Ensure all DLLs are up to date\n"
-            L"3. Check that no conflicting Qt installations are in your PATH\n\n"
-            L"Continue anyway?";
+            L"ℹ️ Best Practice: Launch via StartAiFileSorter.exe\n\n"
+            L"You're running aifilesorter.exe directly.\n"
+            L"For best results, use StartAiFileSorter.exe instead.\n\n"
+            L"Why?\n"
+            L"- Automatic DLL compatibility checking\n"
+            L"- Better error handling\n"
+            L"- GPU backend detection\n\n"
+            L"Continue running aifilesorter.exe directly?";
         
-        int result = MessageBoxW(NULL, message, L"AI File Sorter - Warning", 
-                                MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
+        int result = MessageBoxW(NULL, message, L"AI File Sorter", 
+                                MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON1);
         if (result != IDYES) {
             return EXIT_SUCCESS;
         }
