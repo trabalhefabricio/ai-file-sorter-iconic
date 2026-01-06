@@ -922,12 +922,21 @@ int main(int argc, char* argv[]) {
             } else if (pathSize == 0) {
                 // PATH not set or empty, just set to our directory
                 std::wstring binDir = exeDirW + L"\\bin";
+                BOOL success;
                 if (GetFileAttributesW(binDir.c_str()) != INVALID_FILE_ATTRIBUTES) {
-                    SetEnvironmentVariableW(L"PATH", (binDir + L";" + exeDirW).c_str());
+                    success = SetEnvironmentVariableW(L"PATH", (binDir + L";" + exeDirW).c_str());
                 } else {
-                    SetEnvironmentVariableW(L"PATH", exeDirW.c_str());
+                    success = SetEnvironmentVariableW(L"PATH", exeDirW.c_str());
                 }
-                dllPathSetupSuccessful = true;
+                if (!success) {
+                    DWORD error = GetLastError();
+                    std::wstring errorMsg = L"Failed to set PATH environment variable (error ";
+                    errorMsg += std::to_wstring(error);
+                    errorMsg += L"). This may cause DLL loading errors.";
+                    MessageBoxW(NULL, errorMsg.c_str(), L"PATH Setup Warning", MB_ICONWARNING | MB_OK);
+                } else {
+                    dllPathSetupSuccessful = true;
+                }
             } else if (pathSize >= PATH_BUFFER_SIZE) {
                 // PATH is too large - show warning
                 MessageBoxW(NULL, 
@@ -986,10 +995,22 @@ int main(int argc, char* argv[]) {
         if (!exeDirW.empty()) {
             // Set QT_PLUGIN_PATH to ensure Qt plugins come from application directory
             std::wstring pluginPath = exeDirW + L"\\plugins";
-            SetEnvironmentVariableW(L"QT_PLUGIN_PATH", pluginPath.c_str());
+            if (!SetEnvironmentVariableW(L"QT_PLUGIN_PATH", pluginPath.c_str())) {
+                DWORD error = GetLastError();
+                std::wstring errorMsg = L"Failed to set QT_PLUGIN_PATH environment variable (error ";
+                errorMsg += std::to_wstring(error);
+                errorMsg += L"). Qt may load plugins from wrong location.";
+                MessageBoxW(NULL, errorMsg.c_str(), L"Qt Plugin Path Warning", MB_ICONWARNING | MB_OK);
+            }
             
             // Also set QT_QPA_PLATFORM_PLUGIN_PATH for platform plugins
-            SetEnvironmentVariableW(L"QT_QPA_PLATFORM_PLUGIN_PATH", pluginPath.c_str());
+            if (!SetEnvironmentVariableW(L"QT_QPA_PLATFORM_PLUGIN_PATH", pluginPath.c_str())) {
+                DWORD error = GetLastError();
+                std::wstring errorMsg = L"Failed to set QT_QPA_PLATFORM_PLUGIN_PATH environment variable (error ";
+                errorMsg += std::to_wstring(error);
+                errorMsg += L"). Qt platform plugins may fail to load.";
+                MessageBoxW(NULL, errorMsg.c_str(), L"Qt Platform Plugin Path Warning", MB_ICONWARNING | MB_OK);
+            }
         }
     }
     // If GetModuleFileNameW failed or path was truncated, continue anyway

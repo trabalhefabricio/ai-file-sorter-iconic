@@ -153,11 +153,30 @@ void attach_console_if_requested(bool enable)
         return;
     }
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        // Redirect stdout, stderr, and stdin to the parent console.
+        // Check return values to ensure redirection succeeds and avoid silent failures.
+        // Note: If freopen_s fails, the original stream remains unchanged (per MSDN docs),
+        // so we can safely use stderr for error reporting even if stdout redirection fails.
         FILE* f = nullptr;
-        freopen_s(&f, "CONOUT$", "w", stdout);
-        freopen_s(&f, "CONOUT$", "w", stderr);
-        freopen_s(&f, "CONIN$", "r", stdin);
+        if (freopen_s(&f, "CONOUT$", "w", stdout) != 0 || f == nullptr) {
+            // stderr is still original at this point, so this message will work
+            std::fprintf(stderr, "Warning: Failed to redirect stdout to console\n");
+        }
+        f = nullptr;
+        if (freopen_s(&f, "CONOUT$", "w", stderr) != 0 || f == nullptr) {
+            // If this fails, stderr remains the original, so message goes to original stderr
+            std::fprintf(stderr, "Warning: Failed to redirect stderr to console\n");
+        }
+        f = nullptr;
+        if (freopen_s(&f, "CONIN$", "r", stdin) != 0 || f == nullptr) {
+            // By this point, stderr is redirected (if successful above), so message goes to console
+            std::fprintf(stderr, "Warning: Failed to redirect stdin from console\n");
+        }
     }
+    // Note: If AttachConsole fails, we silently continue as the console attachment
+    // is optional. The user may not have launched from a console, or may be running
+    // as a GUI application. Errors are only reported if attachment succeeds but
+    // redirection fails, which would indicate a more serious problem.
 }
 #endif
 
