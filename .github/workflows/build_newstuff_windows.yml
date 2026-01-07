@@ -43,6 +43,77 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+      # Verify Windows SDK installation
+      - name: Verify Windows SDK
+        shell: powershell
+        run: |
+          Write-Host "Checking for Windows SDK installation..."
+          
+          # Check for Windows SDK via registry or environment variables
+          $sdkDir = $env:WindowsSdkDir
+          $sdkVersion = $env:WindowsSDKLibVersion
+          
+          if ($sdkDir -and $sdkVersion) {
+            Write-Host "[OK] Windows SDK found:"
+            Write-Host "  Directory: $sdkDir"
+            Write-Host "  Version: $sdkVersion"
+            
+            # Verify wininet.lib exists
+            $wininetPath = Join-Path $sdkDir "Lib\$sdkVersion\um\x64\wininet.lib"
+            if (Test-Path $wininetPath) {
+              Write-Host "[OK] wininet.lib found at: $wininetPath"
+            } else {
+              Write-Warning "wininet.lib not found at expected path: $wininetPath"
+              Write-Host "Searching for wininet.lib in SDK directory..."
+              $found = Get-ChildItem -Path $sdkDir -Filter "wininet.lib" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($found) {
+                Write-Host "[OK] Found wininet.lib at: $($found.FullName)"
+              } else {
+                Write-Error "wininet.lib not found in Windows SDK. This will cause build failures."
+                exit 1
+              }
+            }
+          } else {
+            Write-Warning "Windows SDK environment variables not set. Checking Visual Studio installation..."
+            
+            # Try to find Windows SDK through Visual Studio
+            $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            if (Test-Path $vsWhere) {
+              $vsPath = & $vsWhere -latest -property installationPath
+              if ($vsPath) {
+                Write-Host "[OK] Visual Studio found at: $vsPath"
+                
+                # Check for Windows SDK in common locations
+                $commonSdkPaths = @(
+                  "C:\Program Files (x86)\Windows Kits\10",
+                  "C:\Program Files\Windows Kits\10"
+                )
+                
+                $sdkFound = $false
+                foreach ($path in $commonSdkPaths) {
+                  if (Test-Path $path) {
+                    Write-Host "[OK] Windows SDK directory found at: $path"
+                    $sdkFound = $true
+                    
+                    # Find wininet.lib
+                    $wininetLib = Get-ChildItem -Path $path -Filter "wininet.lib" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                    if ($wininetLib) {
+                      Write-Host "[OK] wininet.lib found at: $($wininetLib.FullName)"
+                    }
+                    break
+                  }
+                }
+                
+                if (-not $sdkFound) {
+                  Write-Error "Windows SDK not found. Please ensure Windows 10 SDK (version 10.0.26100.0 or compatible) is installed."
+                  exit 1
+                }
+              }
+            }
+          }
+          
+          Write-Host "`n[OK] Windows SDK verification completed successfully"
+
       # Install Qt with built-in caching support
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -157,6 +228,8 @@ jobs:
       # Building llama.cpp from source can take 15-30 minutes
       # Cache key includes the llama.cpp submodule commit hash to ensure cache is invalidated
       # when the submodule is updated to a different commit
+      # NOTE: If you get warnings about missing exports like ggml_xielu, clear this cache and rebuild
+      # to ensure you have the latest DLL version with all required exports
       - name: Cache Llama Build
         id: cache-llama
         uses: actions/cache@v4

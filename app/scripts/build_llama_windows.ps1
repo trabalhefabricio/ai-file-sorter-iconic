@@ -268,7 +268,7 @@ $cmakeArgs = @(
     "-DGGML_KLEIDIAI=OFF",
     "-DGGML_NATIVE=OFF",
     "-DCMAKE_C_FLAGS=/arch:AVX2",
-    "-DCMAKE_CXX_FLAGS=/arch:AVX2"
+    "-DCMAKE_CXX_FLAGS=/arch:AVX2 /EHsc"
 )
 
 if ($enableBlas) {

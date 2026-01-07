@@ -12,6 +12,8 @@ option(AI_FILE_SORTER_BUILD_TESTS "Build unit tests (requires Catch2 submodule)"
 # Prefer MSVC on Windows if available
 if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    # Enable C++ exception handling to avoid C4530 warnings
+    add_compile_options(/EHsc)
 endif()
 
 # Qt6
@@ -237,7 +239,7 @@ if(WIN32)
             find_library(${varName} NAMES ${libName})
         endif()
         if(NOT ${varName})
-            message(FATAL_ERROR "Required system library '${libName}' not found. Ensure the Windows SDK is installed.")
+            message(FATAL_ERROR "Required system library '${libName}' not found. Ensure the Windows SDK is installed (version 10.0.26100.0 or compatible). On GitHub Actions, ensure the runner image contains the required SDK. If self-hosted, use the Visual Studio Installer to add the Windows 10 SDK.")
         endif()
         target_link_libraries(aifilesorter PRIVATE "${${varName}}")
     endforeach()
