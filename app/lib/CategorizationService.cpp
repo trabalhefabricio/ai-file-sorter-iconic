@@ -666,22 +666,13 @@ std::future<std::string> CategorizationService::start_llm_future(
     FileType file_type,
     const std::string& consistency_context) const
 {
-    auto promise = std::make_shared<std::promise<std::string>>();
-    std::future<std::string> future = promise->get_future();
-
-    std::thread([&llm, promise, item_name, item_path, file_type, consistency_context]() mutable {
-        try {
-            promise->set_value(llm.categorize_file(item_name, item_path, file_type, consistency_context));
-        } catch (...) {
-            try {
-                promise->set_exception(std::current_exception());
-            } catch (...) {
-                // no-op
-            }
-        }
-    }).detach();
-
-    return future;
+    // Use std::async instead of detached thread to avoid dangling reference issues
+    // std::async properly manages the thread lifetime and ensures the task completes
+    // before the future is destroyed or the llm reference becomes invalid
+    return std::async(std::launch::async, 
+        [&llm, item_name, item_path, file_type, consistency_context]() -> std::string {
+            return llm.categorize_file(item_name, item_path, file_type, consistency_context);
+        });
 }
 
 std::vector<CategorizationService::CategoryPair> CategorizationService::collect_consistency_hints(

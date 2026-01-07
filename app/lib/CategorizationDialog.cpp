@@ -98,6 +98,16 @@ bool looks_like_extension_label(const std::string& value) {
     return std::all_of(ext.begin(), ext.end(), [](unsigned char ch) { return std::isalpha(ch); });
 }
 
+bool has_leading_or_trailing_space_or_dot(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+    const unsigned char first = static_cast<unsigned char>(value.front());
+    const unsigned char last = static_cast<unsigned char>(value.back());
+    // Only guard leading/trailing whitespace; dots are allowed.
+    return std::isspace(first) || std::isspace(last);
+}
+
 bool validate_labels(const std::string& category,
                      const std::string& subcategory,
                      std::string& error,
@@ -121,6 +131,10 @@ bool validate_labels(const std::string& category,
     }
     if (is_reserved_windows_name(category) || is_reserved_windows_name(subcategory)) {
         error = "Category or subcategory is a reserved name";
+        return false;
+    }
+    if (has_leading_or_trailing_space_or_dot(category) || has_leading_or_trailing_space_or_dot(subcategory)) {
+        error = "Category or subcategory has leading/trailing space or dot";
         return false;
     }
     if (!allow_identical && to_lower_copy_str(category) == to_lower_copy_str(subcategory)) {

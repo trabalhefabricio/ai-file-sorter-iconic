@@ -400,9 +400,6 @@ std::vector<unsigned char> Utils::hex_to_vector(const std::string& hex) {
 }
 
 
-const char* Utils::to_cstr(const std::u8string& u8str) {
-    return reinterpret_cast<const char*>(u8str.c_str());
-}
 
 
 void Utils::ensure_directory_exists(const std::string &dir)
