@@ -1121,7 +1121,7 @@ bool apply_ngl_override(int override_layers,
         logger->info("Using explicit CUDA n_gpu_layers override {}",
                      gpu_layers_to_string(override_layers));
     }
-    std::cout << "ngl override: " << params.n_gpu_layers << std::endl;
+    std::cout << "ngl override: " << params.n_gpu_layers << '\n';
     return true;
 }
 
@@ -1206,7 +1206,7 @@ bool configure_cuda_backend(const std::string& model_path,
 
     if (ngl > 0) {
         params.n_gpu_layers = ngl;
-        std::cout << "ngl: " << params.n_gpu_layers << std::endl;
+        std::cout << "ngl: " << params.n_gpu_layers << '\n';
     } else {
         disable_cuda_backend(params, logger, "CUDA not usable after estimation; falling back to CPU.");
         std::cout << "CUDA not usable, falling back to CPU.\n";

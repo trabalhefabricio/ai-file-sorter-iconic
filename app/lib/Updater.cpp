@@ -19,6 +19,7 @@
 #include <future>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 #include <QApplication>
 #include <QDesktopServices>
 #include <QMessageBox>
@@ -232,7 +233,7 @@ void Updater::show_optional_update_dialog(const UpdateInfo& info, QWidget* paren
         if (!settings.save()) {
             updater_log(spdlog::level::err, "Failed to save skipped version to settings.");
         } else {
-            std::cout << "User chose to skip version " << info.current_version << "." << std::endl;
+            std::cout << "User chose to skip version " << info.current_version << ".\n";
         }
     } else if (box.clickedButton() == cancel_button) {
         // No action needed; user dismissed the dialog.
@@ -261,7 +262,7 @@ std::string Updater::fetch_update_metadata() const {
         configure_tls(curl);
     } catch (const std::exception& ex) {
         curl_easy_cleanup(curl);
-        throw std::runtime_error(std::string("Failed to stage CA bundle: ") + ex.what());
+        throw std::runtime_error(fmt::format("Failed to stage CA bundle: {}", ex.what()));
     }
 
     curl_easy_setopt(curl, CURLOPT_URL, update_spec_file_url.c_str());

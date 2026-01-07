@@ -9,6 +9,7 @@
 #include <iostream>
 #include <system_error>
 #include <stdexcept>
+#include <fmt/format.h>
 
 namespace {
 
@@ -108,8 +109,9 @@ int LLMDownloader::progress_func(void* clientp, curl_off_t dltotal, curl_off_t d
     }
 
     if (dltotal > 0 && self->on_status_text) {
-        std::string msg = "Downloaded " + Utils::format_size(self->resume_offset + dlnow) +
-            " / " + Utils::format_size(self->real_content_length);
+        std::string msg = fmt::format("Downloaded {} / {}",
+                                      Utils::format_size(self->resume_offset + dlnow),
+                                      Utils::format_size(self->real_content_length));
         self->on_status_text(msg);
     }
 
@@ -318,7 +320,7 @@ void LLMDownloader::setup_common_curl_options(CURL* curl)
         const auto cert_path = Utils::ensure_ca_bundle();
         curl_easy_setopt(curl, CURLOPT_CAINFO, cert_path.string().c_str());
     } catch (const std::exception& ex) {
-        throw std::runtime_error(std::string("Failed to stage CA bundle: ") + ex.what());
+        throw std::runtime_error(fmt::format("Failed to stage CA bundle: {}", ex.what()));
     }
 #endif
 

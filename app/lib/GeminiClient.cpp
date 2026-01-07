@@ -14,6 +14,7 @@
 #endif
 
 #include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 #include <cmath>
 #include <iostream>
@@ -111,7 +112,7 @@ CurlRequest create_curl_request(const std::shared_ptr<spdlog::logger>& logger)
         const auto cert_path = Utils::ensure_ca_bundle();
         curl_easy_setopt(request.handle, CURLOPT_CAINFO, cert_path.string().c_str());
     } catch (const std::exception& ex) {
-        throw std::runtime_error(std::string("Failed to stage CA bundle: ") + ex.what());
+        throw std::runtime_error(fmt::format("Failed to stage CA bundle: {}", ex.what()));
     }
 #endif
     return request;
@@ -247,12 +248,9 @@ std::string GeminiClient::send_api_request(const std::string& json_payload)
 
     for (size_t i = 0; i < api_versions.size(); ++i) {
         std::string response_string;
-        const std::string base_url = "https://generativelanguage.googleapis.com/"
-            + api_versions[i]
-            + "/"
-            + model_path
-            + ":generateContent";
-        const std::string api_url = base_url + "?key=" + api_key_;
+        const std::string base_url = fmt::format("https://generativelanguage.googleapis.com/{}/{}:generateContent",
+                                                  api_versions[i], model_path);
+        const std::string api_url = fmt::format("{}?key={}", base_url, api_key_);
         auto logger = Logger::get_logger("core_logger");
 
         if (logger) {
@@ -350,7 +348,7 @@ std::string GeminiClient::make_categorization_payload(const std::string& file_na
         "must be specific, relevant, and must not repeat the main category.";
 
     std::ostringstream payload;
-    const std::string merged_prompt = system_prompt + "\n\n" + prompt;
+    const std::string merged_prompt = fmt::format("{}\n\n{}", system_prompt, prompt);
 
     payload << "{";
     payload << "\"contents\":[";
@@ -365,7 +363,7 @@ std::string GeminiClient::make_generic_payload(const std::string& system_prompt,
                                                const std::string& user_prompt,
                                                int max_tokens) const
 {
-    const std::string merged_prompt = system_prompt + "\n\n" + user_prompt;
+    const std::string merged_prompt = fmt::format("{}\n\n{}", system_prompt, user_prompt);
 
     std::ostringstream payload;
     payload << "{";

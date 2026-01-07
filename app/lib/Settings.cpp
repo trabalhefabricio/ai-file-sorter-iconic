@@ -312,12 +312,12 @@ std::string Settings::define_config_path()
 #ifdef _WIN32
     char appDataPath[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, appDataPath))) {
-        return std::string(appDataPath) + "\\" + AppName + "\\config.ini";
+        return (std::filesystem::path(appDataPath) / AppName / "config.ini").string();
     }
 #elif defined(__APPLE__)
-    return std::string(getenv("HOME")) + "/Library/Application Support/" + AppName + "/config.ini";
+    return (std::filesystem::path(getenv("HOME")) / "Library" / "Application Support" / AppName / "config.ini").string();
 #else
-    return std::string(getenv("HOME")) + "/.config/" + AppName + "/config.ini";
+    return (std::filesystem::path(getenv("HOME")) / ".config" / AppName / "config.ini").string();
 #endif
     return "config.ini";
 }

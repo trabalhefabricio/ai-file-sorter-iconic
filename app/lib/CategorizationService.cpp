@@ -6,6 +6,7 @@
 #include "ILLMClient.hpp"
 #include "LLMErrors.hpp"
 #include "Utils.hpp"
+#include "StringUtils.hpp"
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -39,59 +40,6 @@ std::pair<std::string, std::string> split_category_subcategory(const std::string
     return {Utils::sanitize_path_label(category), Utils::sanitize_path_label(subcategory)};
 }
 
-std::string to_lower_copy_str(std::string value) {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
-    return value;
-}
-
-bool contains_only_allowed_chars(const std::string& value) {
-    for (unsigned char ch : value) {
-        if (std::iscntrl(ch)) {
-            return false;
-        }
-        static const std::string forbidden = R"(<>:"/\|?*)";
-        if (forbidden.find(static_cast<char>(ch)) != std::string::npos) {
-            return false;
-        }
-        // Everything else is allowed (including non-ASCII letters and punctuation).
-    }
-    return true;
-}
-
-bool has_leading_or_trailing_space_or_dot(const std::string& value) {
-    if (value.empty()) {
-        return false;
-    }
-    const unsigned char first = static_cast<unsigned char>(value.front());
-    const unsigned char last = static_cast<unsigned char>(value.back());
-    // Only guard leading/trailing whitespace; dots are allowed.
-    return std::isspace(first) || std::isspace(last);
-}
-
-bool is_reserved_windows_name(const std::string& value) {
-    static const std::vector<std::string> reserved = {
-        "con","prn","aux","nul",
-        "com1","com2","com3","com4","com5","com6","com7","com8","com9",
-        "lpt1","lpt2","lpt3","lpt4","lpt5","lpt6","lpt7","lpt8","lpt9"
-    };
-    const std::string lower = to_lower_copy_str(value);
-    return std::find(reserved.begin(), reserved.end(), lower) != reserved.end();
-}
-
-bool looks_like_extension_label(const std::string& value) {
-    const auto dot_pos = value.rfind('.');
-    if (dot_pos == std::string::npos || dot_pos == value.size() - 1) {
-        return false;
-    }
-    const std::string ext = value.substr(dot_pos + 1);
-    if (ext.empty() || ext.size() > 5) {
-        return false;
-    }
-    return std::all_of(ext.begin(), ext.end(), [](unsigned char ch) { return std::isalpha(ch); });
-}
-
 struct LabelValidationResult {
     bool valid{false};
     std::string error;
@@ -104,19 +52,19 @@ LabelValidationResult validate_labels(const std::string& category, const std::st
     if (category.size() > kMaxLabelLength || subcategory.size() > kMaxLabelLength) {
         return {false, "Category or subcategory exceeds max length"};
     }
-    if (!contains_only_allowed_chars(category) || !contains_only_allowed_chars(subcategory)) {
+    if (!StringUtils::contains_only_allowed_chars(category) || !StringUtils::contains_only_allowed_chars(subcategory)) {
         return {false, "Category or subcategory contains disallowed characters"};
     }
-    if (looks_like_extension_label(category) || looks_like_extension_label(subcategory)) {
+    if (StringUtils::looks_like_extension_label(category) || StringUtils::looks_like_extension_label(subcategory)) {
         return {false, "Category or subcategory looks like a file extension"};
     }
-    if (is_reserved_windows_name(category) || is_reserved_windows_name(subcategory)) {
+    if (StringUtils::is_reserved_windows_name(category) || StringUtils::is_reserved_windows_name(subcategory)) {
         return {false, "Category or subcategory is a reserved name"};
     }
-    if (has_leading_or_trailing_space_or_dot(category) || has_leading_or_trailing_space_or_dot(subcategory)) {
-        return {false, "Category or subcategory has leading/trailing space or dot"};
+    if (StringUtils::has_leading_or_trailing_space(category) || StringUtils::has_leading_or_trailing_space(subcategory)) {
+        return {false, "Category or subcategory has leading/trailing whitespace"};
     }
-    if (to_lower_copy_str(category) == to_lower_copy_str(subcategory)) {
+    if (StringUtils::to_lower_copy(category) == StringUtils::to_lower_copy(subcategory)) {
         return {false, "Category and subcategory are identical"};
     }
     return {true, {}};
@@ -247,9 +195,9 @@ bool is_allowed(const std::string& value, const std::vector<std::string>& allowe
     if (allowed.empty()) {
         return true;
     }
-    const std::string norm = to_lower_copy_str(value);
+    const std::string norm = StringUtils::to_lower_copy(value);
     for (const auto& item : allowed) {
-        if (to_lower_copy_str(item) == norm) {
+        if (StringUtils::to_lower_copy(item) == norm) {
             return true;
         }
     }
@@ -666,22 +614,15 @@ std::future<std::string> CategorizationService::start_llm_future(
     FileType file_type,
     const std::string& consistency_context) const
 {
-    auto promise = std::make_shared<std::promise<std::string>>();
-    std::future<std::string> future = promise->get_future();
-
-    std::thread([&llm, promise, item_name, item_path, file_type, consistency_context]() mutable {
-        try {
-            promise->set_value(llm.categorize_file(item_name, item_path, file_type, consistency_context));
-        } catch (...) {
-            try {
-                promise->set_exception(std::current_exception());
-            } catch (...) {
-                // no-op
-            }
-        }
-    }).detach();
-
-    return future;
+    // Use std::async instead of detached thread to avoid dangling reference issues.
+    // std::async properly manages the thread lifetime - the returned future will block
+    // in its destructor if not already retrieved, ensuring the task completes before
+    // the llm reference can become invalid. The caller (run_llm_with_timeout) immediately
+    // waits for the future, so the llm reference remains valid throughout the task.
+    return std::async(std::launch::async, 
+        [&llm, item_name, item_path, file_type, consistency_context]() -> std::string {
+            return llm.categorize_file(item_name, item_path, file_type, consistency_context);
+        });
 }
 
 std::vector<CategorizationService::CategoryPair> CategorizationService::collect_consistency_hints(

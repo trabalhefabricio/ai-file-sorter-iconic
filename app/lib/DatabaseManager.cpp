@@ -313,12 +313,18 @@ std::string DatabaseManager::normalize_label(const std::string &input) const {
         }
     }
 
-    // Trim leading/trailing space if any
-    while (!result.empty() && result.front() == ' ') {
-        result.erase(result.begin());
+    // Trim leading/trailing space if any - O(n) instead of O(n²)
+    size_t start = 0;
+    while (start < result.size() && result[start] == ' ') {
+        ++start;
     }
-    while (!result.empty() && result.back() == ' ') {
-        result.pop_back();
+    size_t end = result.size();
+    while (end > start && result[end - 1] == ' ') {
+        --end;
+    }
+    
+    if (start > 0 || end < result.size()) {
+        return result.substr(start, end - start);
     }
     return result;
 }

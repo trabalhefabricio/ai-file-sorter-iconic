@@ -21,12 +21,12 @@ std::string Logger::get_xdg_cache_home()
 {
     const char* xdg_cache_home = std::getenv("XDG_CACHE_HOME");
     if (xdg_cache_home && *xdg_cache_home) {
-        return std::string(xdg_cache_home) + "/" + APP_NAME_DIR + "/my_app/logs";
+        return (std::filesystem::path(xdg_cache_home) / APP_NAME_DIR / "my_app" / "logs").string();
     }
 
     const char* home = std::getenv("HOME");
     if (home && *home) {
-        return std::string(home) + "/.cache/" + APP_NAME_DIR + "/logs";
+        return (std::filesystem::path(home) / ".cache" / APP_NAME_DIR / "logs").string();
     }
     throw std::runtime_error("Failed to determine XDG_CACHE_HOME or HOME environment variable.");
 }
@@ -35,7 +35,7 @@ std::string Logger::get_xdg_cache_home()
 std::string Logger::get_windows_log_directory() {
     const char* appdata = std::getenv("APPDATA");
     if (appdata && *appdata) {
-        return std::string(appdata) + "\\" + APP_NAME_DIR + "\\logs";
+        return (std::filesystem::path(appdata) / APP_NAME_DIR / "logs").string();
     }
     throw std::runtime_error("Failed to determine APPDATA environment variable.");
 }
