@@ -1,0 +1,550 @@
+name: Build Windows on newstuff
+
+# This workflow can be triggered both manually (via workflow_dispatch) and automatically
+# - Manual trigger: for agent-initiated builds where iterative fixing is needed
+# - Auto trigger: builds automatically on every commit to newstuff, main, or dev branches
+on:
+  push:
+    branches: ["newstuff", "main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 120  # 2 hours max to prevent runaway builds
+    
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Get the llama.cpp submodule commit hash for cache invalidation
+      - name: Get Llama.cpp Submodule Commit
+        id: llama-commit
+        shell: powershell
+        run: |
+          $commitHash = git rev-parse HEAD:app/include/external/llama.cpp
+          echo "hash=$commitHash" >> $env:GITHUB_OUTPUT
+          Write-Host "Llama.cpp submodule commit: $commitHash"
+
+      # Enable GitHub Actions cache for vcpkg binary caching
+      # This allows vcpkg to use GitHub's cache as a binary cache backend
+      - name: Enable GitHub Cache
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      # Install Qt with built-in caching support
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.3'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          cache: true
+
+      # 1. Install OpenBLAS (Required for Llama CPU build)
+      - name: Install OpenBLAS & Add to Path
+        shell: powershell
+        run: |
+          Write-Host "Installing OpenBLAS via MSYS2..."
+          cmd /c "C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-x86_64-openblas"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "OpenBLAS installation failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+
+          # Verify OpenBLAS was installed
+          $openblasPath = "C:\msys64\mingw64\bin\libopenblas.dll"
+          if (-not (Test-Path $openblasPath)) {
+            Write-Error "OpenBLAS DLL not found at $openblasPath after installation"
+            exit 1
+          }
+
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "[OK] OpenBLAS installed successfully"
+
+      # Cache vcpkg installation to avoid cloning and bootstrapping on every build
+      # Invalidates when vcpkg.json changes
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}\vcpkg
+          key: vcpkg-newstuff-${{ runner.os }}-${{ hashFiles('app/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-newstuff-${{ runner.os }}-
+
+      - name: Setup Local vcpkg
+        shell: powershell
+        run: |
+          if (-not (Test-Path "$env:GITHUB_WORKSPACE\vcpkg\vcpkg.exe")) {
+            Write-Host "vcpkg not found in cache, cloning and bootstrapping..."
+            git clone https://github.com/microsoft/vcpkg.git $env:GITHUB_WORKSPACE\vcpkg
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to clone vcpkg repository"
+              exit $LASTEXITCODE
+            }
+
+            cd $env:GITHUB_WORKSPACE\vcpkg
+            .\bootstrap-vcpkg.bat
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to bootstrap vcpkg"
+              exit $LASTEXITCODE
+            }
+          } else {
+            Write-Host "vcpkg found in cache, validating installation..."
+            cd $env:GITHUB_WORKSPACE\vcpkg
+            # Verify vcpkg is functional
+            $vcpkgVersion = & .\vcpkg.exe --version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "vcpkg is functional: $vcpkgVersion"
+            } else {
+              Write-Host "Cached vcpkg is not functional, re-bootstrapping..."
+              .\bootstrap-vcpkg.bat
+
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to re-bootstrap vcpkg"
+                exit $LASTEXITCODE
+              }
+            }
+          }
+
+      # Cache vcpkg binary packages (pre-built binaries)
+      # This is the most important cache as it avoids rebuilding all dependencies
+      # Each package can take 5-30 minutes to build from source
+      - name: Cache vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}\vcpkg_binary_cache
+          key: vcpkg-binary-newstuff-${{ runner.os }}-${{ hashFiles('app/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-binary-newstuff-${{ runner.os }}-
+
+      - name: Install Support Libraries
+        shell: powershell
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}\vcpkg_binary_cache,readwrite"
+        run: |
+          # Create binary cache directory if it doesn't exist
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\vcpkg_binary_cache" | Out-Null
+          cd $env:VCPKG_ROOT
+          .\vcpkg install curl[ssl] fmt spdlog jsoncpp sqlite3 --triplet x64-windows
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "vcpkg install failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "All support libraries installed successfully."
+
+      # Cache Llama.cpp build artifacts (most time-consuming build step)
+      # Building llama.cpp from source can take 15-30 minutes
+      # Cache key includes the llama.cpp submodule commit hash to ensure cache is invalidated
+      # when the submodule is updated to a different commit
+      - name: Cache Llama Build
+        id: cache-llama
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/include/external/llama.cpp/build
+            app/lib/precompiled/cpu
+            app/lib/ggml
+            app/include/llama
+          key: llama-build-newstuff-${{ runner.os }}-${{ steps.llama-commit.outputs.hash }}
+          restore-keys: |
+            llama-build-newstuff-${{ runner.os }}-
+
+      - name: Build Llama Engine
+        if: steps.cache-llama.outputs.cache-hit != 'true'
+        shell: powershell
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          # Build Llama (CPU Only)
+          & app/scripts/build_llama_windows.ps1 `
+            -cuda off `
+            -vcpkgroot "$env:VCPKG_ROOT" `
+            -openblasroot "C:\msys64\mingw64"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Llama build script failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+
+      # Verify Llama Build Output
+      - name: Verify Llama Build Artifacts
+        shell: powershell
+        run: |
+          $precompiledDir = "$env:GITHUB_WORKSPACE\app\lib\precompiled\cpu"
+          $requiredLibs = @("llama.lib", "ggml.lib", "ggml-base.lib", "ggml-cpu.lib")
+          $requiredDlls = @("llama.dll", "ggml.dll", "ggml-base.dll", "ggml-cpu.dll")
+
+          $missingFiles = @()
+
+          foreach ($lib in $requiredLibs) {
+            $libPath = Join-Path "$precompiledDir\lib" $lib
+            if (-not (Test-Path $libPath)) {
+              $missingFiles += $libPath
+              Write-Warning "Missing required library: $libPath"
+            } else {
+              Write-Host "[OK] Found: $libPath"
+            }
+          }
+
+          foreach ($dll in $requiredDlls) {
+            $dllPath = Join-Path "$precompiledDir\bin" $dll
+            if (-not (Test-Path $dllPath)) {
+              $missingFiles += $dllPath
+              Write-Warning "Missing required DLL: $dllPath"
+            } else {
+              Write-Host "[OK] Found: $dllPath"
+            }
+          }
+
+          if ($missingFiles.Count -gt 0) {
+            if ("${{ steps.cache-llama.outputs.cache-hit }}" -eq "true") {
+              Write-Error ("Llama build verification failed: Missing $($missingFiles.Count) required files. " + `
+                          "Cache was restored but files are missing - this may indicate a corrupted cache. " + `
+                          "You may need to clear the cache and rebuild from scratch.")
+            } else {
+              Write-Error ("Llama build verification failed: Missing $($missingFiles.Count) required files. " + `
+                          "This usually means the build_llama_windows.ps1 script failed silently. " + `
+                          "Check the 'Build Llama Engine' step logs for errors.")
+            }
+            exit 1
+          }
+
+          # Verify that the DLL exports the required symbols (like ggml_xielu)
+          # This helps catch version mismatches early
+          $dumpbinPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe"
+          $dumpbin = Get-Item $dumpbinPath -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $dumpbin) {
+            # Try Community edition path
+            $dumpbinPath = "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe"
+            $dumpbin = Get-Item $dumpbinPath -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          
+          if ($dumpbin) {
+            Write-Host "`nVerifying DLL exports..."
+            $ggmlDllPath = Join-Path "$precompiledDir\bin" "ggml.dll"
+            $exports = & $dumpbin.FullName /EXPORTS $ggmlDllPath 2>&1 | Out-String
+            
+            # Check for ggml_xielu which was added in recent versions
+            if ($exports -match "ggml_xielu") {
+              Write-Host "[OK] ggml.dll exports ggml_xielu (version check passed)"
+            } else {
+              Write-Warning "ggml.dll does not export ggml_xielu - this may indicate an old version"
+              Write-Warning "The application may fail at runtime with 'entry point not found' errors"
+            }
+          } else {
+            Write-Host "[SKIP] Could not find dumpbin.exe - skipping DLL export verification"
+          }
+
+          if ("${{ steps.cache-llama.outputs.cache-hit }}" -eq "true") {
+            Write-Host "[OK] All required Llama build artifacts verified from cache."
+          } else {
+            Write-Host "[OK] All required Llama build artifacts verified from fresh build."
+          }
+
+      # 2. FIND AND STAGE LLAMA.DLL (Prevents 'missing file' errors)
+      - name: Locate and Stage Llama DLL
+        shell: powershell
+        run: |
+          $dll = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "llama.dll" -Recurse | Select-Object -First 1
+          if ($dll) {
+              $destDir = "$env:GITHUB_WORKSPACE\build\Release"
+              New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+              Copy-Item -Path $dll.FullName -Destination $destDir -Force
+              Write-Host "Staged llama.dll to $destDir"
+          } else {
+              Write-Warning "llama.dll not found. The app might fail to run, but we will try to finish the build."
+          }
+
+      # 3. CREATE EMPTY VARIANT FOLDERS (Fixes MSB3073 Error)
+      - name: Create Empty Variant Folders
+        shell: powershell
+        run: |
+          # The CMake script tries to copy these folders even if they don't exist.
+          # We create them as empty folders so the copy command succeeds.
+          #
+          # Note: The 'cpu' variant is NOT included here because:
+          # - It's created by build_llama_windows.ps1 in the "Build Llama Engine" step
+          # - It contains actual build artifacts (.lib and .dll files)
+          # - It's verified by the "Verify Llama Build Artifacts" step
+          # - Creating an empty 'cpu' folder here would cause the verification to fail
+          #
+          # Only CUDA and Vulkan variants need empty folders since we're not building those.
+          $paths = @(
+            "app\lib\precompiled\cuda",
+            "app\lib\precompiled\vulkan"
+          )
+          foreach ($p in $paths) {
+            $fullPath = Join-Path $env:GITHUB_WORKSPACE $p
+            if (-not (Test-Path $fullPath)) {
+              Write-Host "Creating missing directory: $fullPath"
+              New-Item -Path $fullPath -ItemType Directory -Force
+            }
+          }
+
+      # Cache CMake build directory for incremental builds
+      # Key includes git SHA for exact versioning, with fallback to CMakeLists.txt hash
+      - name: Cache CMake Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+          key: cmake-build-newstuff-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/CMakeLists.txt') }}-${{ github.sha }}
+          restore-keys: |
+            cmake-build-newstuff-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/CMakeLists.txt') }}-
+            cmake-build-newstuff-${{ runner.os }}-
+
+      - name: Configure CMake
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: >
+          cmake -B build -S app
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DWININET_LIB=wininet
+
+      - name: Build App
+        run: cmake --build build --config Release
+
+      - name: Verify Build Output
+        shell: powershell
+        run: |
+          $exePath = "$env:GITHUB_WORKSPACE\build\Release\aifilesorter.exe"
+          if (-not (Test-Path $exePath)) {
+            Write-Error ("Build verification failed: Expected executable not found at $exePath. " + `
+                        "Check the 'Build App' step logs for compilation errors.")
+            exit 1
+          }
+
+          $exeSize = (Get-Item $exePath).Length
+          Write-Host "[OK] Build successful! aifilesorter.exe created ($([math]::Round($exeSize/1MB, 2)) MB)"
+
+      - name: Bundle Files
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          # Create output directory
+          New-Item -ItemType Directory -Force -Path "output" | Out-Null
+
+          # Copy Main App
+          if (Test-Path "build\Release\*.exe") {
+            Copy-Item "build\Release\*.exe" "output\" -Force
+            Write-Host "[OK] Copied executable(s)"
+          }
+
+          # Copy Llama DLL
+          if (Test-Path "build\Release\llama.dll") {
+            Copy-Item "build\Release\llama.dll" "output\" -Force
+            Write-Host "[OK] Copied llama.dll"
+          }
+
+          # Deploy Qt DLLs using windeployqt
+          # Ensure Qt bin directory is in PATH
+          $qtBinPath = "$env:Qt6_DIR\bin"
+          if (-not (Test-Path $qtBinPath)) {
+            # Fallback: try to find Qt installation
+            $windeployqtCmd = Get-Command windeployqt -ErrorAction SilentlyContinue
+            if ($windeployqtCmd -and $windeployqtCmd.Source) {
+              $qtBinPath = Split-Path $windeployqtCmd.Source -Parent
+            } else {
+              $qtBinPath = $null
+            }
+          }
+
+          if ($qtBinPath -and (Test-Path $qtBinPath)) {
+            Write-Host "Adding Qt bin directory to PATH: $qtBinPath"
+            $env:PATH = "$qtBinPath;$env:PATH"
+          }
+
+          # Run windeployqt
+          $exeFiles = Get-ChildItem -Path "output" -Filter "*.exe" -ErrorAction SilentlyContinue
+          $exePath = $exeFiles | Select-Object -First 1
+          if ($exePath) {
+            Write-Host "Running windeployqt for: $($exePath.FullName)"
+            & windeployqt --release --dir output $exePath.FullName
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "windeployqt failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
+
+            # Verify Qt DLLs were copied
+            $qtDlls = Get-ChildItem -Path "output" -Filter "Qt6*.dll" -ErrorAction SilentlyContinue
+            if ($qtDlls) {
+              Write-Host "[OK] windeployqt succeeded. Found $($qtDlls.Count) Qt DLLs:"
+              foreach ($dll in $qtDlls) {
+                Write-Host "  - $($dll.Name)"
+              }
+            } else {
+              Write-Error "windeployqt appeared to succeed but no Qt DLLs were copied to output directory"
+              exit 1
+            }
+
+            # Verify critical Qt DLLs are present
+            $criticalQtDlls = @("Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll")
+            $missingQtDlls = @()
+            foreach ($dll in $criticalQtDlls) {
+              if (-not (Test-Path "output\$dll")) {
+                $missingQtDlls += $dll
+              }
+            }
+
+            if ($missingQtDlls.Count -gt 0) {
+              Write-Error "Missing critical Qt DLLs after windeployqt: $($missingQtDlls -join ', ')"
+              exit 1
+            }
+
+            Write-Host "[OK] All critical Qt DLLs verified"
+          } else {
+            Write-Error "No executable found in output directory for windeployqt"
+            exit 1
+          }
+
+          # Copy Support Libs
+          if (Test-Path "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll") {
+            Copy-Item "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll" "output\" -Force
+            Write-Host "[OK] Copied vcpkg support libraries"
+          }
+
+          # Copy OpenBLAS Dependencies
+          $openblasFiles = @(
+            "C:\msys64\mingw64\bin\libopenblas*.dll",
+            "C:\msys64\mingw64\bin\libgfortran*.dll",
+            "C:\msys64\mingw64\bin\libgcc*.dll",
+            "C:\msys64\mingw64\bin\libwinpthread*.dll"
+          )
+
+          foreach ($pattern in $openblasFiles) {
+            $files = Get-ChildItem -Path (Split-Path $pattern -Parent) -Filter (Split-Path $pattern -Leaf) -ErrorAction SilentlyContinue
+            if ($files) {
+              Copy-Item $files.FullName "output\" -Force
+              Write-Host "[OK] Copied OpenBLAS dependency: $pattern"
+            }
+          }
+
+          # Copy lib directory structure for self-contained deployment
+          Write-Host "`n=== Copying lib directory structure for standalone deployment ==="
+          
+          # Copy lib/ggml directory (contains runtime GGML DLLs organized by variant)
+          if (Test-Path "app\lib\ggml") {
+            New-Item -ItemType Directory -Force -Path "output\lib\ggml" | Out-Null
+            Copy-Item "app\lib\ggml\*" "output\lib\ggml\" -Recurse -Force
+            Write-Host "[OK] Copied lib/ggml directory structure"
+          } else {
+            Write-Warning "app\lib\ggml not found"
+          }
+          
+          # Copy lib/precompiled directory (contains static libraries and DLLs)
+          if (Test-Path "app\lib\precompiled") {
+            New-Item -ItemType Directory -Force -Path "output\lib\precompiled" | Out-Null
+            Copy-Item "app\lib\precompiled\*" "output\lib\precompiled\" -Recurse -Force
+            Write-Host "[OK] Copied lib/precompiled directory structure"
+          } else {
+            Write-Warning "app\lib\precompiled not found"
+          }
+          
+          # Verify lib directory structure was copied
+          $libDirs = @("output\lib\ggml", "output\lib\precompiled\cpu\bin")
+          foreach ($dir in $libDirs) {
+            if (Test-Path $dir) {
+              $fileCount = (Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue).Count
+              Write-Host "[OK] Verified $dir ($fileCount files)"
+            } else {
+              Write-Warning "Directory not found: $dir"
+            }
+          }
+
+      - name: Verify Bundle
+        shell: powershell
+        run: |
+          $outputDir = "$env:GITHUB_WORKSPACE\output"
+          $criticalFiles = @("aifilesorter.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll")
+
+          Write-Host "=== Verifying critical files ==="
+          $missingFiles = @()
+          foreach ($file in $criticalFiles) {
+            $filePath = Join-Path $outputDir $file
+            if (-not (Test-Path $filePath)) {
+              $missingFiles += $file
+              Write-Warning "Missing critical file in bundle: $file"
+            } else {
+              Write-Host "[OK] Found: $file"
+            }
+          }
+
+          if ($missingFiles.Count -gt 0) {
+            Write-Error ("Bundle verification failed: Missing $($missingFiles.Count) critical files. " + `
+                        "This usually means windeployqt or dependency copying failed. " + `
+                        "Check the 'Bundle Files' step logs for errors.")
+            exit 1
+          }
+
+          # Verify lib directory structure
+          Write-Host "`n=== Verifying lib directory structure ==="
+          
+          # Check for base directories that must exist
+          $criticalDirs = @(
+            "output\lib\ggml",
+            "output\lib\precompiled\cpu"
+          )
+          
+          $missingDirs = @()
+          foreach ($dir in $criticalDirs) {
+            $fullPath = Join-Path $env:GITHUB_WORKSPACE $dir
+            if (Test-Path $fullPath) {
+              $fileCount = (Get-ChildItem $fullPath -Recurse -File -ErrorAction SilentlyContinue).Count
+              Write-Host "[OK] Found: $dir ($fileCount files)"
+            } else {
+              $missingDirs += $dir
+              Write-Warning "Missing directory: $dir"
+            }
+          }
+          
+          # Check for optional variant directories (cuda, vulkan) and report if present
+          $optionalDirs = @("output\lib\ggml\wcuda", "output\lib\ggml\wvulkan", "output\lib\precompiled\cuda", "output\lib\precompiled\vulkan")
+          foreach ($dir in $optionalDirs) {
+            $fullPath = Join-Path $env:GITHUB_WORKSPACE $dir
+            if (Test-Path $fullPath) {
+              $fileCount = (Get-ChildItem $fullPath -Recurse -File -ErrorAction SilentlyContinue).Count
+              Write-Host "[OK] Found optional: $dir ($fileCount files)"
+            }
+          }
+          
+          if ($missingDirs.Count -gt 0) {
+            $errorMsg = "Bundle verification failed: Missing $($missingDirs.Count) critical directories. " +
+                        "The application requires lib/ggml and lib/precompiled directories to run independently. " +
+                        "Check the 'Bundle Files' step logs."
+            Write-Error $errorMsg
+            exit 1
+          }
+
+          $fileCount = (Get-ChildItem $outputDir -Recurse -File).Count
+          Write-Host "`n[OK] Bundle verified successfully! Total files (including subdirectories): $fileCount"
+
+      - name: Upload Finished App
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-File-Sorter-newstuff-${{ github.sha }}
+          path: output/**/*
