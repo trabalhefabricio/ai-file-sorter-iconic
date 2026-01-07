@@ -315,8 +315,27 @@ if ($useVulkan -eq "ON") {
     }
 }
 
+Write-Host "`n=== Starting llama.cpp build ==="
+Write-Host "Build configuration:"
+Write-Host "  CUDA: $useCuda"
+Write-Host "  Vulkan: $useVulkan"
+Write-Host "  BLAS: $enableBlas"
+Write-Host "  CMake executable: $cmakeExe"
+Write-Host "`nCMake arguments:"
+foreach ($arg in $cmakeArgs) {
+    Write-Host "  $arg"
+}
+Write-Host ""
+
 & $cmakeExe -S . -B build @cmakeArgs
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake configuration failed with exit code $LASTEXITCODE"
+}
+
 & $cmakeExe --build build --config Release -- /m
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake build failed with exit code $LASTEXITCODE"
+}
 
 Pop-Location
 
