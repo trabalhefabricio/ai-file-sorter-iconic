@@ -227,7 +227,7 @@ jobs:
           # Create binary cache directory if it doesn't exist
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\vcpkg_binary_cache" | Out-Null
           cd $env:VCPKG_ROOT
-          .\vcpkg install curl[ssl] fmt spdlog jsoncpp sqlite3 --triplet x64-windows
+          .\vcpkg install curl[ssl] fmt spdlog jsoncpp sqlite3 icu --triplet x64-windows
 
           if ($LASTEXITCODE -ne 0) {
             Write-Error "vcpkg install failed with exit code $LASTEXITCODE"
@@ -508,29 +508,61 @@ jobs:
           }
 
           # Copy intl-8.dll manually (not always deployed by windeployqt)
+          # This file is part of ICU (International Components for Unicode) and is required by Qt
           Write-Host "`n=== Copying intl-8.dll ==="
-          if ($qtBinPath) {
+          
+          $intlDllFound = $false
+          $searchPaths = @()
+          
+          # Priority 1: Check vcpkg ICU installation (most reliable)
+          if ($env:VCPKG_ROOT) {
+            $vcpkgIcuPath = Join-Path $env:VCPKG_ROOT "installed\x64-windows\bin\intl-8.dll"
+            $searchPaths += $vcpkgIcuPath
+            if (Test-Path $vcpkgIcuPath) {
+              Copy-Item $vcpkgIcuPath "output\" -Force
+              Write-Host "[OK] Copied intl-8.dll from vcpkg ICU: $vcpkgIcuPath"
+              $intlDllFound = $true
+            }
+          }
+          
+          # Priority 2: Check Qt bin directory
+          if (-not $intlDllFound -and $qtBinPath) {
             $intlDllPath = Join-Path $qtBinPath "intl-8.dll"
+            $searchPaths += $intlDllPath
             if (Test-Path $intlDllPath) {
               Copy-Item $intlDllPath "output\" -Force
-              Write-Host "[OK] Copied intl-8.dll from Qt bin directory"
-            } else {
-              Write-Warning "intl-8.dll not found in Qt bin directory: $qtBinPath"
-              Write-Warning "Searching for intl-8.dll in Qt installation..."
-              
-              # Try to find intl-8.dll in Qt root directory
-              $qtRootPath = Split-Path $qtBinPath -Parent
-              $intlDll = Get-ChildItem -Path $qtRootPath -Filter "intl-8.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-              
-              if ($intlDll) {
-                Copy-Item $intlDll.FullName "output\" -Force
-                Write-Host "[OK] Found and copied intl-8.dll from: $($intlDll.FullName)"
-              } else {
-                Write-Warning "intl-8.dll not found in Qt installation. The application may fail to start."
-              }
+              Write-Host "[OK] Copied intl-8.dll from Qt bin directory: $intlDllPath"
+              $intlDllFound = $true
             }
-          } else {
-            Write-Warning "Qt bin path not found. Cannot copy intl-8.dll. The application may fail to start."
+          }
+          
+          # Priority 3: Search Qt installation recursively
+          if (-not $intlDllFound -and $qtBinPath) {
+            Write-Host "Searching for intl-8.dll in Qt installation..."
+            $qtRootPath = Split-Path $qtBinPath -Parent
+            $intlDll = Get-ChildItem -Path $qtRootPath -Filter "intl-8.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            
+            if ($intlDll) {
+              Copy-Item $intlDll.FullName "output\" -Force
+              Write-Host "[OK] Found and copied intl-8.dll from: $($intlDll.FullName)"
+              $intlDllFound = $true
+            }
+          }
+          
+          # Fail if not found in any location
+          if (-not $intlDllFound) {
+            Write-Error "intl-8.dll is missing from all expected locations."
+            Write-Error "Searched paths:"
+            foreach ($path in $searchPaths) {
+              Write-Error "  - $path"
+            }
+            Write-Error ""
+            Write-Error "This usually means:"
+            Write-Error "1. ICU was not installed via vcpkg (check 'Install Support Libraries' step)"
+            Write-Error "2. Qt installation does not include ICU components"
+            Write-Error ""
+            Write-Error "The application will fail to start without intl-8.dll."
+            exit 1
           }
 
           # Copy Support Libs
