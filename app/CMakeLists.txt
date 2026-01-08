@@ -188,65 +188,11 @@ if(WIN32)
     target_compile_definitions(aifilesorter PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
     set(WIN_SYSTEM_LIBS wininet d3d11 dxgi dxguid d3d12 mpr userenv)
 
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(_win_sdk_arch "x64")
-    else()
-        set(_win_sdk_arch "x86")
-    endif()
-
-    set(_win_sdk_lib_paths "")
-    if(DEFINED ENV{WindowsSdkDir} AND DEFINED ENV{WindowsSDKLibVersion})
-        file(TO_CMAKE_PATH "$ENV{WindowsSdkDir}" _sdk_dir)
-        file(TO_CMAKE_PATH "$ENV{WindowsSDKLibVersion}" _sdk_version_raw)
-        string(REGEX REPLACE "/$" "" _sdk_version "${_sdk_version_raw}")
-        set(_sdk_root "${_sdk_dir}Lib/${_sdk_version}")
-        foreach(_subdir IN ITEMS um ucrt)
-            set(_candidate "${_sdk_root}/${_subdir}/${_win_sdk_arch}")
-            if(EXISTS "${_candidate}")
-                list(APPEND _win_sdk_lib_paths "${_candidate}")
-            endif()
-        endforeach()
-    endif()
-
-    if(NOT _win_sdk_lib_paths AND DEFINED CMAKE_RC_COMPILER AND CMAKE_RC_COMPILER)
-        get_filename_component(_rc_dir "${CMAKE_RC_COMPILER}" DIRECTORY)
-        get_filename_component(_bin_version_dir "${_rc_dir}" DIRECTORY)
-        get_filename_component(_bin_dir "${_bin_version_dir}" DIRECTORY)
-        get_filename_component(_kits_root "${_bin_dir}" DIRECTORY)
-        get_filename_component(_sdk_version "${_bin_version_dir}" NAME)
-        if(_kits_root AND EXISTS "${_kits_root}/Lib/${_sdk_version}")
-            set(_sdk_root "${_kits_root}/Lib/${_sdk_version}")
-            foreach(_subdir IN ITEMS um ucrt)
-                set(_candidate "${_sdk_root}/${_subdir}/${_win_sdk_arch}")
-                if(EXISTS "${_candidate}")
-                    list(APPEND _win_sdk_lib_paths "${_candidate}")
-                endif()
-            endforeach()
-        endif()
-    endif()
-
+    # Link Windows system libraries
+    # The MSVC toolchain knows where to find these system libraries,
+    # so we can link them directly by name without explicit find_library calls.
     foreach(libName IN LISTS WIN_SYSTEM_LIBS)
-        string(TOUPPER "${libName}" upperLib)
-        set(varName "${upperLib}_LIBRARY")
-        unset(${varName})
-        if(_win_sdk_lib_paths)
-            find_library(${varName} NAMES ${libName}
-                PATHS ${_win_sdk_lib_paths}
-                NO_DEFAULT_PATH
-            )
-        endif()
-        if(NOT ${varName})
-            find_library(${varName} NAMES ${libName})
-        endif()
-        if(NOT ${varName})
-            message(FATAL_ERROR 
-                "Required system library '${libName}' not found.\n"
-                "Ensure the Windows SDK is installed (version 10.0.26100.0 or compatible).\n"
-                "- On GitHub Actions: Ensure the runner image contains the required SDK.\n"
-                "- If self-hosted: Use the Visual Studio Installer to add the Windows 10 SDK."
-            )
-        endif()
-        target_link_libraries(aifilesorter PRIVATE "${${varName}}")
+        target_link_libraries(aifilesorter PRIVATE ${libName})
     endforeach()
 endif()
 
@@ -393,14 +339,9 @@ if(AI_FILE_SORTER_BUILD_TESTS)
 
     if(WIN32)
         target_link_libraries(ai_file_sorter_tests PRIVATE ggml ggml_base ggml_cpu)
+        # Link Windows system libraries directly by name
         foreach(libName IN LISTS WIN_SYSTEM_LIBS)
-            string(TOUPPER "${libName}" upperLib)
-            set(varName "${upperLib}_LIBRARY")
-            if(DEFINED ${varName} AND ${varName})
-                target_link_libraries(ai_file_sorter_tests PRIVATE "${${varName}}")
-            else()
-                target_link_libraries(ai_file_sorter_tests PRIVATE ${libName})
-            endif()
+            target_link_libraries(ai_file_sorter_tests PRIVATE ${libName})
         endforeach()
     endif()
 
