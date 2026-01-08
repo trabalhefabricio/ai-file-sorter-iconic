@@ -512,12 +512,11 @@ jobs:
           # vcpkg provides ICU DLLs with different names than the old intl-8.dll
           Write-Host "`n=== Copying ICU DLLs from vcpkg ==="
           
-          # Define vcpkg paths where ICU DLLs should be
+          # Define vcpkg path where ICU DLLs should be
           $vcpkgBinPath = "$env:VCPKG_ROOT\installed\x64-windows\bin"
-          $vcpkgDebugBinPath = "$env:VCPKG_ROOT\installed\x64-windows\debug\bin"
           
-          # List of required ICU DLLs (vcpkg uses these names)
-          $icuDlls = @(
+          # List of required ICU DLL patterns (vcpkg uses these names)
+          $icuDllPatterns = @(
               "icudt*.dll",  # ICU Data
               "icuin*.dll",  # ICU I18N
               "icuuc*.dll"   # ICU Common (this provides intl functionality)
@@ -529,7 +528,7 @@ jobs:
           if (Test-Path $vcpkgBinPath) {
               Write-Host "Searching for ICU DLLs in: $vcpkgBinPath"
               
-              foreach ($pattern in $icuDlls) {
+              foreach ($pattern in $icuDllPatterns) {
                   $dlls = Get-ChildItem -Path $vcpkgBinPath -Filter $pattern -ErrorAction SilentlyContinue
                   foreach ($dll in $dlls) {
                       Copy-Item -Path $dll.FullName -Destination "output" -Force
