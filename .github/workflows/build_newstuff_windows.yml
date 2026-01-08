@@ -507,6 +507,28 @@ jobs:
             exit 1
           }
 
+          # Copy intl-8.dll manually (not always deployed by windeployqt)
+          Write-Host "`n=== Copying intl-8.dll ==="
+          $intlDllPath = Join-Path $qtBinPath "intl-8.dll"
+          if (Test-Path $intlDllPath) {
+            Copy-Item $intlDllPath "output\" -Force
+            Write-Host "[OK] Copied intl-8.dll from Qt bin directory"
+          } else {
+            Write-Warning "intl-8.dll not found in Qt bin directory: $qtBinPath"
+            Write-Warning "Searching for intl-8.dll in Qt installation..."
+            
+            # Try to find intl-8.dll in Qt root directory
+            $qtRootPath = Split-Path $qtBinPath -Parent
+            $intlDll = Get-ChildItem -Path $qtRootPath -Filter "intl-8.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            
+            if ($intlDll) {
+              Copy-Item $intlDll.FullName "output\" -Force
+              Write-Host "[OK] Found and copied intl-8.dll from: $($intlDll.FullName)"
+            } else {
+              Write-Warning "intl-8.dll not found in Qt installation. The application may fail to start."
+            }
+          }
+
           # Copy Support Libs
           if (Test-Path "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll") {
             Copy-Item "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll" "output\" -Force
