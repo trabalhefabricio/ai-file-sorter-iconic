@@ -512,8 +512,9 @@ jobs:
           # vcpkg provides ICU DLLs with different names than the old intl-8.dll
           Write-Host "`n=== Copying ICU DLLs from vcpkg ==="
           
-          # Define vcpkg path where ICU DLLs should be
+          # Define vcpkg paths where ICU DLLs should be
           $vcpkgBinPath = "$env:VCPKG_ROOT\installed\x64-windows\bin"
+          $vcpkgDebugBinPath = "$env:VCPKG_ROOT\installed\x64-windows\debug\bin"
           
           # List of required ICU DLL patterns (vcpkg uses these names)
           $icuDllPatterns = @(
