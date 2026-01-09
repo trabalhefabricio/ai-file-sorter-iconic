@@ -507,63 +507,48 @@ jobs:
             exit 1
           }
 
-          # Copy intl-8.dll manually (not always deployed by windeployqt)
-          # This file is part of ICU (International Components for Unicode) and is required by Qt
-          Write-Host "`n=== Copying intl-8.dll ==="
+          # Copy ICU DLLs from vcpkg installation
+          # ICU (International Components for Unicode) is required by Qt
+          # vcpkg provides ICU DLLs with different names than the old intl-8.dll
+          Write-Host "`n=== Copying ICU DLLs from vcpkg ==="
           
-          $intlDllFound = $false
-          $searchPaths = @()
+          # Define vcpkg path where ICU DLLs should be
+          $vcpkgBinPath = "$env:VCPKG_ROOT\installed\x64-windows\bin"
           
-          # Priority 1: Check vcpkg ICU installation (most reliable)
-          if ($env:VCPKG_ROOT) {
-            $vcpkgIcuPath = Join-Path $env:VCPKG_ROOT "installed\x64-windows\bin\intl-8.dll"
-            $searchPaths += $vcpkgIcuPath
-            if (Test-Path $vcpkgIcuPath) {
-              Copy-Item $vcpkgIcuPath "output\" -Force
-              Write-Host "[OK] Copied intl-8.dll from vcpkg ICU: $vcpkgIcuPath"
-              $intlDllFound = $true
-            }
+          # List of required ICU DLL patterns (vcpkg uses these names)
+          $icuDllPatterns = @(
+              "icudt*.dll",  # ICU Data
+              "icuin*.dll",  # ICU I18N
+              "icuuc*.dll"   # ICU Common (this provides intl functionality)
+          )
+          
+          $icuDllsFound = $false
+          
+          # Copy ICU DLLs from vcpkg
+          if (Test-Path $vcpkgBinPath) {
+              Write-Host "Searching for ICU DLLs in: $vcpkgBinPath"
+              
+              foreach ($pattern in $icuDllPatterns) {
+                  $dlls = Get-ChildItem -Path $vcpkgBinPath -Filter $pattern -ErrorAction SilentlyContinue
+                  foreach ($dll in $dlls) {
+                      Copy-Item -Path $dll.FullName -Destination "output\" -Force
+                      Write-Host "[OK] Copied: $($dll.Name)"
+                      $icuDllsFound = $true
+                  }
+              }
+          } else {
+              Write-Warning "vcpkg bin path not found: $vcpkgBinPath"
           }
           
-          # Priority 2: Check Qt bin directory
-          if (-not $intlDllFound -and $qtBinPath) {
-            $intlDllPath = Join-Path $qtBinPath "intl-8.dll"
-            $searchPaths += $intlDllPath
-            if (Test-Path $intlDllPath) {
-              Copy-Item $intlDllPath "output\" -Force
-              Write-Host "[OK] Copied intl-8.dll from Qt bin directory: $intlDllPath"
-              $intlDllFound = $true
-            }
+          if (-not $icuDllsFound) {
+              Write-Error "Failed to find ICU DLLs in vcpkg installation"
+              Write-Error "Expected path: $vcpkgBinPath"
+              Write-Error "This usually means ICU was not installed via vcpkg (check 'Install Support Libraries' step)"
+              Write-Error "The application will fail to start without ICU DLLs."
+              exit 1
           }
           
-          # Priority 3: Search Qt installation recursively
-          if (-not $intlDllFound -and $qtBinPath) {
-            Write-Host "Searching for intl-8.dll in Qt installation..."
-            $qtRootPath = Split-Path $qtBinPath -Parent
-            $intlDll = Get-ChildItem -Path $qtRootPath -Filter "intl-8.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            
-            if ($intlDll) {
-              Copy-Item $intlDll.FullName "output\" -Force
-              Write-Host "[OK] Found and copied intl-8.dll from: $($intlDll.FullName)"
-              $intlDllFound = $true
-            }
-          }
-          
-          # Fail if not found in any location
-          if (-not $intlDllFound) {
-            Write-Error "intl-8.dll is missing from all expected locations."
-            Write-Error "Searched paths:"
-            foreach ($path in $searchPaths) {
-              Write-Error "  - $path"
-            }
-            Write-Error ""
-            Write-Error "This usually means:"
-            Write-Error "1. ICU was not installed via vcpkg (check 'Install Support Libraries' step)"
-            Write-Error "2. Qt installation does not include ICU components"
-            Write-Error ""
-            Write-Error "The application will fail to start without intl-8.dll."
-            exit 1
-          }
+          Write-Host "[OK] ICU DLLs copied successfully from vcpkg"
 
           # Copy Support Libs
           if (Test-Path "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll") {
@@ -653,8 +638,7 @@ jobs:
             "ggml.dll",
             "ggml-base.dll",
             "ggml-cpu.dll",
-            "llama.dll",
-            "intl-8.dll"
+            "llama.dll"
           )
 
           Write-Host "=== Verifying critical files ==="
@@ -676,6 +660,31 @@ jobs:
                         "Check the 'Bundle Files' step logs for errors.")
             exit 1
           }
+          
+          # Verify ICU DLLs are present
+          Write-Host "`n=== Verifying ICU DLLs ==="
+          $icuDllPatterns = @("icudt*.dll", "icuin*.dll", "icuuc*.dll")
+          $icuDllsPresent = $false
+          
+          foreach ($pattern in $icuDllPatterns) {
+              $dlls = Get-ChildItem -Path $outputDir -Filter $pattern -ErrorAction SilentlyContinue
+              if ($dlls) {
+                  foreach ($dll in $dlls) {
+                      $fileSize = (Get-Item $dll.FullName).Length
+                      Write-Host "[OK] Found ICU DLL: $($dll.Name) ($([math]::Round($fileSize/1KB, 2)) KB)"
+                      $icuDllsPresent = $true
+                  }
+              }
+          }
+          
+          if (-not $icuDllsPresent) {
+              Write-Error "Bundle verification failed: No ICU DLLs found in output directory."
+              Write-Error "Expected to find files matching patterns: icudt*.dll, icuin*.dll, icuuc*.dll"
+              Write-Error "The application will fail to start without ICU DLLs."
+              exit 1
+          }
+          
+          Write-Host "[OK] ICU DLLs verified successfully"
 
           # Verify lib directory structure
           Write-Host "`n=== Verifying lib directory structure ==="
