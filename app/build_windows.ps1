@@ -282,12 +282,15 @@ if (Test-Path $precompiledCpuBin) {
 }
 
 # Ensure MinGW/OpenBLAS runtime deps land in the CPU-only (wocuda) bundle.
-$mingwRuntimeNames = @("libgomp-1.dll", "libgcc_s_seh-1.dll", "libgfortran-5.dll", "libwinpthread-1.dll", "libquadmath-0.dll")
+$mingwRuntimeNames = @("libgomp-1.dll", "libgcc_s_seh-1.dll", "libgfortran-5.dll", "libwinpthread-1.dll", "libquadmath-0.dll", "intl-8.dll")
 $runtimeSearchPaths = @()
 if ($env:OPENBLAS_ROOT) {
     $runtimeSearchPaths += (Join-Path $env:OPENBLAS_ROOT "bin")
 }
 $runtimeSearchPaths += "C:\msys64\mingw64\bin"
+# Also search vcpkg directories for runtime DLLs
+$runtimeSearchPaths += (Join-Path $buildDir "vcpkg_installed/x64-windows/bin")
+$runtimeSearchPaths += (Join-Path $VcpkgRoot "installed/x64-windows/bin")
 
 foreach ($dllName in $mingwRuntimeNames) {
     $found = $false
