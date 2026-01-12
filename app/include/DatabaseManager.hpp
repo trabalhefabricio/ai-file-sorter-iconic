@@ -135,6 +135,22 @@ public:
     std::vector<UserProfileInfo> get_all_profiles();
     bool delete_profile(int profile_id);
     
+    // Profile characteristics methods (for multi-profile support)
+    struct ProfileCharacteristic {
+        int profile_id;
+        std::string trait_name;
+        std::string value;
+        float confidence;
+        std::string evidence;
+        std::string timestamp;
+    };
+    bool save_profile_characteristic(int profile_id,
+                                     const std::string& trait_name,
+                                     const std::string& value,
+                                     float confidence,
+                                     const std::string& evidence = "");
+    std::vector<ProfileCharacteristic> load_profile_characteristics(int profile_id);
+    
     // User corrections methods
     struct UserCorrection {
         std::string file_path;
