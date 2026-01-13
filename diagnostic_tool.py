@@ -147,20 +147,28 @@ class DiagnosticTool:
             ]
         
         for exe in executables:
-            exe_path = Path(exe)
-            if exe_path.exists():
-                self.add_result(
-                    f"Executable: {exe}",
-                    "OK",
-                    "Found",
-                    f"Path: {exe_path.absolute()}"
-                )
-            else:
+            try:
+                exe_path = Path(exe)
+                if exe_path.exists():
+                    self.add_result(
+                        f"Executable: {exe}",
+                        "OK",
+                        "Found",
+                        f"Path: {exe_path.absolute()}"
+                    )
+                else:
+                    self.add_result(
+                        f"Executable: {exe}",
+                        "FAIL",
+                        "Not found",
+                        f"Expected at: {exe_path.absolute()}"
+                    )
+            except Exception as e:
                 self.add_result(
                     f"Executable: {exe}",
                     "FAIL",
-                    "Not found",
-                    f"Expected at: {exe_path.absolute()}"
+                    f"Error checking executable: {str(e)}",
+                    None
                 )
         
         # Required directories
@@ -171,21 +179,29 @@ class DiagnosticTool:
         ]
         
         for dir_path in required_dirs:
-            dir_path = Path(dir_path)
-            if dir_path.exists() and dir_path.is_dir():
-                file_count = sum(1 for _ in dir_path.rglob('*') if _.is_file())
+            try:
+                dir_path = Path(dir_path)
+                if dir_path.exists() and dir_path.is_dir():
+                    file_count = sum(1 for _ in dir_path.rglob('*') if _.is_file())
+                    self.add_result(
+                        f"Directory: {dir_path}",
+                        "OK",
+                        f"Found ({file_count} files)",
+                        f"Path: {dir_path.absolute()}"
+                    )
+                else:
+                    self.add_result(
+                        f"Directory: {dir_path}",
+                        "WARNING",
+                        "Not found",
+                        f"Expected at: {dir_path.absolute()}"
+                    )
+            except Exception as e:
                 self.add_result(
                     f"Directory: {dir_path}",
-                    "OK",
-                    f"Found ({file_count} files)",
-                    f"Path: {dir_path.absolute()}"
-                )
-            else:
-                self.add_result(
-                    f"Directory: {dir_path}",
-                    "WARNING",
-                    "Not found",
-                    f"Expected at: {dir_path.absolute()}"
+                    "FAIL",
+                    f"Error checking directory: {str(e)}",
+                    None
                 )
     
     # ==================== Dependencies ====================
@@ -229,33 +245,55 @@ class DiagnosticTool:
                         "Not found via pkg-config",
                         "May still be available via system paths"
                     )
-            except (subprocess.TimeoutExpired, FileNotFoundError):
+            except subprocess.TimeoutExpired:
+                self.add_result(
+                    "Qt6",
+                    "WARNING",
+                    "pkg-config timeout",
+                    "Command took too long to execute"
+                )
+            except FileNotFoundError:
                 self.add_result(
                     "Qt6",
                     "WARNING",
                     "pkg-config not available",
                     "Cannot verify Qt installation"
                 )
+            except Exception as e:
+                self.add_result(
+                    "Qt6",
+                    "FAIL",
+                    f"Error checking Qt: {str(e)}",
+                    None
+                )
             return
         
         # Check Windows Qt DLLs
         for lib in qt_libs:
-            lib_path = lib_dir / lib
-            if lib_path.exists():
-                size = lib_path.stat().st_size
-                size_kb = max(1, size // 1024)  # At least 1 KB for display
-                self.add_result(
-                    f"Library: {lib}",
-                    "OK",
-                    f"Found ({size_kb} KB)",
-                    f"Path: {lib_path}"
-                )
-            else:
+            try:
+                lib_path = lib_dir / lib
+                if lib_path.exists():
+                    size = lib_path.stat().st_size
+                    size_kb = max(1, size // 1024)  # At least 1 KB for display
+                    self.add_result(
+                        f"Library: {lib}",
+                        "OK",
+                        f"Found ({size_kb} KB)",
+                        f"Path: {lib_path}"
+                    )
+                else:
+                    self.add_result(
+                        f"Library: {lib}",
+                        "FAIL",
+                        "Not found",
+                        f"Expected at: {lib_path}"
+                    )
+            except Exception as e:
                 self.add_result(
                     f"Library: {lib}",
                     "FAIL",
-                    "Not found",
-                    f"Expected at: {lib_path}"
+                    f"Error checking library: {str(e)}",
+                    None
                 )
     
     # ==================== LLM Backends ====================
@@ -334,9 +372,17 @@ class DiagnosticTool:
         
         db_path = None
         for path in db_paths:
-            if path.exists():
-                db_path = path
-                break
+            try:
+                if path.exists():
+                    db_path = path
+                    break
+            except Exception as e:
+                self.add_result(
+                    f"Database Path Check: {path}",
+                    "WARNING",
+                    f"Error checking path: {str(e)}",
+                    None
+                )
         
         if not db_path:
             self.add_result(
@@ -347,12 +393,22 @@ class DiagnosticTool:
             )
             return
         
-        self.add_result(
-            "Database File",
-            "OK",
-            f"Found ({db_path.stat().st_size // 1024} KB)",
-            f"Path: {db_path}"
-        )
+        try:
+            file_size = db_path.stat().st_size
+            self.add_result(
+                "Database File",
+                "OK",
+                f"Found ({file_size // 1024} KB)",
+                f"Path: {db_path}"
+            )
+        except Exception as e:
+            self.add_result(
+                "Database File",
+                "FAIL",
+                f"Error reading database file: {str(e)}",
+                f"Path: {db_path}"
+            )
+            return
         
         # Check database integrity
         try:
@@ -360,70 +416,101 @@ class DiagnosticTool:
             cursor = conn.cursor()
             
             # Check tables
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = [row[0] for row in cursor.fetchall()]
-            
-            expected_tables = [
-                "categorization_cache",
-                "taxonomy",
-                "confidence_scores",
-                "content_analysis_cache",
-                "api_usage_tracking",
-                "user_profiles",
-                "user_corrections",
-                "categorization_sessions",
-                "undo_history",
-                "file_tinder_state"
-            ]
-            
-            found_tables = [t for t in expected_tables if t in tables]
-            missing_tables = [t for t in expected_tables if t not in tables]
-            
-            if len(found_tables) == len(expected_tables):
+            try:
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                tables = [row[0] for row in cursor.fetchall()]
+                
+                expected_tables = [
+                    "categorization_cache",
+                    "taxonomy",
+                    "confidence_scores",
+                    "content_analysis_cache",
+                    "api_usage_tracking",
+                    "user_profiles",
+                    "user_corrections",
+                    "categorization_sessions",
+                    "undo_history",
+                    "file_tinder_state"
+                ]
+                
+                found_tables = [t for t in expected_tables if t in tables]
+                missing_tables = [t for t in expected_tables if t not in tables]
+                
+                if len(found_tables) == len(expected_tables):
+                    self.add_result(
+                        "Database Tables",
+                        "OK",
+                        f"All {len(expected_tables)} tables found",
+                        f"Tables: {', '.join(found_tables)}"
+                    )
+                else:
+                    self.add_result(
+                        "Database Tables",
+                        "WARNING",
+                        f"Found {len(found_tables)}/{len(expected_tables)} tables",
+                        f"Missing: {', '.join(missing_tables)}"
+                    )
+            except sqlite3.Error as e:
                 self.add_result(
                     "Database Tables",
-                    "OK",
-                    f"All {len(expected_tables)} tables found",
-                    f"Tables: {', '.join(found_tables)}"
-                )
-            else:
-                self.add_result(
-                    "Database Tables",
-                    "WARNING",
-                    f"Found {len(found_tables)}/{len(expected_tables)} tables",
-                    f"Missing: {', '.join(missing_tables)}"
+                    "FAIL",
+                    f"Error querying tables: {str(e)}",
+                    None
                 )
             
             # Check cache statistics
-            cursor.execute("SELECT COUNT(*) FROM categorization_cache")
-            cache_count = cursor.fetchone()[0]
-            
-            self.add_result(
-                "Cache Entries",
-                "INFO",
-                f"{cache_count} cached categorizations",
-                None
-            )
+            try:
+                cursor.execute("SELECT COUNT(*) FROM categorization_cache")
+                cache_count = cursor.fetchone()[0]
+                
+                self.add_result(
+                    "Cache Entries",
+                    "INFO",
+                    f"{cache_count} cached categorizations",
+                    None
+                )
+            except sqlite3.Error as e:
+                self.add_result(
+                    "Cache Entries",
+                    "WARNING",
+                    f"Could not query cache: {str(e)}",
+                    "Cache table may not exist yet"
+                )
             
             # Check API usage tracking
-            cursor.execute("SELECT COUNT(*) FROM api_usage_tracking")
-            api_usage_count = cursor.fetchone()[0]
-            
-            self.add_result(
-                "API Usage Records",
-                "INFO",
-                f"{api_usage_count} API calls tracked",
-                None
-            )
+            try:
+                cursor.execute("SELECT COUNT(*) FROM api_usage_tracking")
+                api_usage_count = cursor.fetchone()[0]
+                
+                self.add_result(
+                    "API Usage Records",
+                    "INFO",
+                    f"{api_usage_count} API calls tracked",
+                    None
+                )
+            except sqlite3.Error as e:
+                self.add_result(
+                    "API Usage Records",
+                    "WARNING",
+                    f"Could not query API usage: {str(e)}",
+                    "API usage table may not exist yet"
+                )
             
             conn.close()
             
         except sqlite3.Error as e:
             self.add_result(
+                "Database Connection",
+                "FAIL",
+                f"Database error: {str(e)}",
+                f"Could not connect to or query database at {db_path}"
+            )
+        except Exception as e:
+            self.add_result(
                 "Database Integrity",
                 "FAIL",
-                "Database error",
-                str(e)
+                f"Unexpected error: {str(e)}",
+                "Error during database checks"
             )
     
     # ==================== Configuration ====================
@@ -791,7 +878,7 @@ class DiagnosticTool:
     # ==================== Main Execution ====================
     
     def run_all_checks(self):
-        """Run all diagnostic checks"""
+        """Run all diagnostic checks with comprehensive error handling"""
         self.log(f"{Colors.HEADER}{Colors.BOLD}")
         self.log("╔════════════════════════════════════════════════════════════════════════════╗")
         self.log("║                  AI FILE SORTER - DIAGNOSTIC TOOL                          ║")
@@ -799,23 +886,49 @@ class DiagnosticTool:
         self.log("╚════════════════════════════════════════════════════════════════════════════╝")
         self.log(Colors.ENDC)
         
-        try:
-            self.check_system_info()
-            self.check_file_structure()
-            self.check_dependencies()
-            self.check_llm_backends()
-            self.check_database()
-            self.check_configuration()
-            self.check_logs()
-            self.check_features()
-            self.check_performance()
-        except KeyboardInterrupt:
-            self.log(f"\n{Colors.WARNING}Diagnostic interrupted by user{Colors.ENDC}")
-            sys.exit(1)
-        except Exception as e:
-            self.log(f"\n{Colors.FAIL}Unexpected error during diagnostic: {e}{Colors.ENDC}")
-            import traceback
-            traceback.print_exc()
+        # List of all check methods
+        check_methods = [
+            ('System Information', self.check_system_info),
+            ('File Structure', self.check_file_structure),
+            ('Dependencies', self.check_dependencies),
+            ('LLM Backends', self.check_llm_backends),
+            ('Database', self.check_database),
+            ('Configuration', self.check_configuration),
+            ('Logs', self.check_logs),
+            ('Features', self.check_features),
+            ('Performance', self.check_performance),
+        ]
+        
+        # Run all checks, logging errors but continuing
+        for check_name, check_method in check_methods:
+            try:
+                check_method()
+            except KeyboardInterrupt:
+                self.log(f"\n{Colors.WARNING}Diagnostic interrupted by user{Colors.ENDC}")
+                self.add_result(
+                    f"{check_name} Check",
+                    "FAIL",
+                    "Interrupted by user",
+                    "Diagnostic was cancelled before completion"
+                )
+                sys.exit(1)
+            except Exception as e:
+                self.log(f"\n{Colors.FAIL}Error in {check_name} check: {e}{Colors.ENDC}")
+                
+                # Log the error but continue with other checks
+                import traceback
+                error_details = traceback.format_exc()
+                
+                self.add_result(
+                    f"{check_name} Check",
+                    "FAIL",
+                    f"Check failed with error: {str(e)}",
+                    error_details
+                )
+                
+                if self.verbose:
+                    self.log(f"{Colors.FAIL}Traceback:{Colors.ENDC}", Colors.FAIL)
+                    self.log(error_details)
 
 
 def main():
