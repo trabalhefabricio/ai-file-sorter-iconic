@@ -1,0 +1,201 @@
+{
+  "timestamp": "2026-01-13T19:31:45.252857",
+  "duration_seconds": 0.018029,
+  "platform": {
+    "system": "Linux",
+    "release": "6.11.0-1018-azure",
+    "machine": "x86_64"
+  },
+  "summary": {
+    "total": 26,
+    "ok": 13,
+    "warning": 2,
+    "fail": 2,
+    "info": 9,
+    "health": "CRITICAL"
+  },
+  "results": [
+    {
+      "name": "Platform",
+      "status": "INFO",
+      "message": "Linux 6.11.0-1018-azure",
+      "details": "Linux-6.11.0-1018-azure-x86_64-with-glibc2.39",
+      "timestamp": "2026-01-13T19:31:45.254176"
+    },
+    {
+      "name": "Architecture",
+      "status": "INFO",
+      "message": "x86_64",
+      "details": "Processor: x86_64",
+      "timestamp": "2026-01-13T19:31:45.254194"
+    },
+    {
+      "name": "Python Version",
+      "status": "INFO",
+      "message": "3.12.3",
+      "details": "3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]",
+      "timestamp": "2026-01-13T19:31:45.254200"
+    },
+    {
+      "name": "Executable: app/bin/aifilesorter",
+      "status": "FAIL",
+      "message": "Not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/aifilesorter",
+      "timestamp": "2026-01-13T19:31:45.254261"
+    },
+    {
+      "name": "Executable: app/bin/run_aifilesorter.sh",
+      "status": "FAIL",
+      "message": "Not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/run_aifilesorter.sh",
+      "timestamp": "2026-01-13T19:31:45.254293"
+    },
+    {
+      "name": "Directory: app/include",
+      "status": "OK",
+      "message": "Found (59 files)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include",
+      "timestamp": "2026-01-13T19:31:45.254817"
+    },
+    {
+      "name": "Directory: app/lib",
+      "status": "OK",
+      "message": "Found (56 files)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib",
+      "timestamp": "2026-01-13T19:31:45.255195"
+    },
+    {
+      "name": "Directory: app/resources",
+      "status": "OK",
+      "message": "Found (47 files)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources",
+      "timestamp": "2026-01-13T19:31:45.255540"
+    },
+    {
+      "name": "Qt6",
+      "status": "INFO",
+      "message": "System-wide installation (checking via pkg-config)",
+      "details": null,
+      "timestamp": "2026-01-13T19:31:45.255550"
+    },
+    {
+      "name": "Qt6Widgets",
+      "status": "WARNING",
+      "message": "Not found via pkg-config",
+      "details": "May still be available via system paths",
+      "timestamp": "2026-01-13T19:31:45.270123"
+    },
+    {
+      "name": "Backend: CPU (OpenBLAS)",
+      "status": "OK",
+      "message": "Available (0 libraries)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wocuda",
+      "timestamp": "2026-01-13T19:31:45.270351"
+    },
+    {
+      "name": "Backend: wcuda",
+      "status": "INFO",
+      "message": "Not found (optional)",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wcuda",
+      "timestamp": "2026-01-13T19:31:45.270397"
+    },
+    {
+      "name": "Backend: wvulkan",
+      "status": "INFO",
+      "message": "Not found (optional)",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wvulkan",
+      "timestamp": "2026-01-13T19:31:45.270425"
+    },
+    {
+      "name": "Precompiled Libraries",
+      "status": "WARNING",
+      "message": "Directory not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/precompiled",
+      "timestamp": "2026-01-13T19:31:45.270453"
+    },
+    {
+      "name": "Database File",
+      "status": "INFO",
+      "message": "Not found (will be created on first run)",
+      "details": "Expected locations: /home/runner/.local/share/aifilesorter/aifilesorter.db, aifilesorter.db",
+      "timestamp": "2026-01-13T19:31:45.270524"
+    },
+    {
+      "name": "Configuration File",
+      "status": "INFO",
+      "message": "Not found (will be created on first run)",
+      "details": "Expected locations: /home/runner/.config/aifilesorter/config.ini",
+      "timestamp": "2026-01-13T19:31:45.270571"
+    },
+    {
+      "name": "Log Directory",
+      "status": "INFO",
+      "message": "Not found (will be created on first run)",
+      "details": "Expected locations: /home/runner/.local/share/aifilesorter/logs, logs",
+      "timestamp": "2026-01-13T19:31:45.270617"
+    },
+    {
+      "name": "Feature: File Tinder",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/FileTinderDialog.cpp",
+      "timestamp": "2026-01-13T19:31:45.270640"
+    },
+    {
+      "name": "Feature: Cache Manager",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/CacheManagerDialog.cpp",
+      "timestamp": "2026-01-13T19:31:45.270654"
+    },
+    {
+      "name": "Feature: User Profile",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/UserProfileManager.cpp",
+      "timestamp": "2026-01-13T19:31:45.270666"
+    },
+    {
+      "name": "Feature: Dry Run",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/DryRunPreviewDialog.cpp",
+      "timestamp": "2026-01-13T19:31:45.270678"
+    },
+    {
+      "name": "Feature: Undo Manager",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/UndoManager.cpp",
+      "timestamp": "2026-01-13T19:31:45.270689"
+    },
+    {
+      "name": "Feature: Gemini Client",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/GeminiClient.cpp",
+      "timestamp": "2026-01-13T19:31:45.270701"
+    },
+    {
+      "name": "Feature: Local LLM",
+      "status": "OK",
+      "message": "Implementation found",
+      "details": "Source: app/lib/LocalLLMClient.cpp",
+      "timestamp": "2026-01-13T19:31:45.270712"
+    },
+    {
+      "name": "Disk Space",
+      "status": "OK",
+      "message": "16.0 GB free (71.6 GB total, 77.7% used)",
+      "details": null,
+      "timestamp": "2026-01-13T19:31:45.270753"
+    },
+    {
+      "name": "System Memory",
+      "status": "OK",
+      "message": "15.6 GB total",
+      "details": null,
+      "timestamp": "2026-01-13T19:31:45.270835"
+    }
+  ]
+}

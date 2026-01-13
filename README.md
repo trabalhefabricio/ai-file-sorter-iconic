@@ -469,7 +469,26 @@ The command removes the executable and the staged precompiled libraries. You can
 
 ### Quick Diagnostic Tools
 
-**If the application won't start at all:**
+**Comprehensive Diagnostic Tool (Recommended):**
+
+```bash
+# Run full diagnostic with detailed report
+python3 diagnostic_tool.py --verbose --output diagnostic_report.json
+
+# Quick validation
+./feature_validator.sh
+```
+
+This comprehensive diagnostic tool checks:
+- System configuration and dependencies
+- File structure and executables
+- Database integrity
+- LLM backend availability
+- Configuration files
+- Feature implementations
+- Performance metrics
+
+**Platform-Specific Emergency Diagnostics:**
 
 1. **Run the emergency diagnostic script** (Windows):
    ```cmd
@@ -493,7 +512,11 @@ The command removes the executable and the staged precompiled libraries. You can
    - `logs/errors.log` - Detailed error information
    - `logs/COPILOT_ERROR_*.md` - User-friendly error reports for Copilot users
 
-4. **See the detailed troubleshooting guide**: [TROUBLESHOOTING_STARTUP.md](TROUBLESHOOTING_STARTUP.md)
+4. **See the comprehensive testing guides**:
+   - [TESTING_TOOLS_README.md](TESTING_TOOLS_README.md) - Testing tools documentation
+   - [MANUAL_TESTING_GUIDE.md](MANUAL_TESTING_GUIDE.md) - Complete testing procedures
+   - [QUICK_TESTING_CHECKLIST.md](QUICK_TESTING_CHECKLIST.md) - Rapid testing reference
+   - [TROUBLESHOOTING_STARTUP.md](TROUBLESHOOTING_STARTUP.md) - Startup troubleshooting
 
 ### Windows DLL Entry Point Errors
 
