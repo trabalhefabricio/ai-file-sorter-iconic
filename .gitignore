@@ -126,3 +126,11 @@ dist/
 .github/instructions/codacy.instructions.md
 build-test/
 **/__pycache__/
+
+# Diagnostic tool output
+thoroughdiagnostic_*.json
+thorough_diagnostic_*.html
+thorough_diagnostic_*.md
+test_diagnostic_*.json
+test_diagnostic_*.html
+test_diagnostic_*.md
