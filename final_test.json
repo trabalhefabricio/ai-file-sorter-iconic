@@ -1,0 +1,1542 @@
+{
+  "diagnostic_metadata": {
+    "tool_version": "2.1",
+    "timestamp": "2026-01-19T00:43:39.850042",
+    "duration_seconds": 0.027688,
+    "quick_mode": true
+  },
+  "system_info": {
+    "platform": "Linux",
+    "release": "6.11.0-1018-azure",
+    "machine": "x86_64",
+    "python_version": "3.12.3"
+  },
+  "summary": {
+    "total_checks": 82,
+    "by_status": {
+      "INFO": 9,
+      "OK": 68,
+      "FAIL": 2,
+      "WARNING": 2,
+      "SKIP": 1
+    },
+    "by_category": {
+      "System": {
+        "INFO": 2,
+        "OK": 3
+      },
+      "File Structure": {
+        "FAIL": 2,
+        "OK": 7
+      },
+      "Dependencies": {
+        "WARNING": 1,
+        "OK": 2
+      },
+      "LLM Backends": {
+        "OK": 1,
+        "INFO": 3,
+        "WARNING": 1
+      },
+      "Database": {
+        "INFO": 1
+      },
+      "Configuration": {
+        "INFO": 1,
+        "OK": 1
+      },
+      "Feature: Categorization": {
+        "OK": 5
+      },
+      "Feature: File Scanner": {
+        "OK": 3
+      },
+      "Feature: Database": {
+        "OK": 5
+      },
+      "Feature: LLM Clients": {
+        "OK": 8
+      },
+      "Feature: User Profile": {
+        "OK": 5
+      },
+      "Feature: Undo": {
+        "OK": 5
+      },
+      "Feature: File Tinder": {
+        "OK": 3
+      },
+      "Feature: Cache": {
+        "OK": 3
+      },
+      "Feature: Whitelist": {
+        "OK": 2
+      },
+      "Feature: Consistency": {
+        "OK": 1
+      },
+      "Feature: API Usage": {
+        "OK": 3
+      },
+      "Feature: Translation": {
+        "OK": 3
+      },
+      "Feature: LLM Selection": {
+        "OK": 4
+      },
+      "Feature: UI": {
+        "OK": 4
+      },
+      "Logs": {
+        "INFO": 1
+      },
+      "Performance": {
+        "SKIP": 1,
+        "INFO": 1
+      }
+    },
+    "overall_health": "CRITICAL"
+  },
+  "results_by_category": {
+    "System": [
+      {
+        "name": "Operating System",
+        "status": "INFO",
+        "message": "Linux 6.11.0-1018-azure (#18~24.04.1-Ubuntu SMP Sat Jun 28 04:46:03 UTC 2025)",
+        "details": "Platform: Linux-6.11.0-1018-azure-x86_64-with-glibc2.39\nMachine: x86_64\nProcessor: x86_64",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.851705"
+      },
+      {
+        "name": "Python Version",
+        "status": "OK",
+        "message": "3.12.3",
+        "details": "3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.851725"
+      },
+      {
+        "name": "CPU Cores",
+        "status": "INFO",
+        "message": "4 cores available",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.856062"
+      },
+      {
+        "name": "System Memory",
+        "status": "OK",
+        "message": "15.6 GB total",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.856128"
+      },
+      {
+        "name": "Disk Space",
+        "status": "OK",
+        "message": "21.2 GB free (71.6 GB total, 70.4% used)",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.856183"
+      }
+    ],
+    "File Structure": [
+      {
+        "name": "Executable: Main Binary",
+        "status": "FAIL",
+        "message": "Not found",
+        "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/aifilesorter",
+        "recommendation": "Rebuild the application",
+        "timestamp": "2026-01-19T00:43:39.856228"
+      },
+      {
+        "name": "Executable: Launch Script",
+        "status": "FAIL",
+        "message": "Not found",
+        "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/run_aifilesorter.sh",
+        "recommendation": "Rebuild the application",
+        "timestamp": "2026-01-19T00:43:39.856256"
+      },
+      {
+        "name": "Include Directory",
+        "status": "OK",
+        "message": "Found (59 files, 0.1 MB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.857656"
+      },
+      {
+        "name": "Library Directory",
+        "status": "OK",
+        "message": "Found (56 files, 12.0 MB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.858881"
+      },
+      {
+        "name": "Resources Directory",
+        "status": "OK",
+        "message": "Found (47 files, 4.1 MB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.860020"
+      },
+      {
+        "name": "Scripts Directory",
+        "status": "OK",
+        "message": "Found (7 files, 0.0 MB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/scripts",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.860235"
+      },
+      {
+        "name": "C++ Headers",
+        "status": "OK",
+        "message": "Found (45 files)",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.860749"
+      },
+      {
+        "name": "Resource Files",
+        "status": "OK",
+        "message": "Found (1 files)",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.861110"
+      },
+      {
+        "name": "CMake Files",
+        "status": "OK",
+        "message": "Found (1 files)",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.861148"
+      }
+    ],
+    "Dependencies": [
+      {
+        "name": "Qt6 Framework",
+        "status": "WARNING",
+        "message": "Not found via pkg-config",
+        "details": "May still be available via system paths",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.863797"
+      },
+      {
+        "name": "Library: libcurl",
+        "status": "OK",
+        "message": "Available",
+        "details": "Version: curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.7",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.870449"
+      },
+      {
+        "name": "Library: SQLite3",
+        "status": "OK",
+        "message": "Available",
+        "details": "Version: 3.45.1 2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1 (64-bit)",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872074"
+      }
+    ],
+    "LLM Backends": [
+      {
+        "name": "Backend: CPU (OpenBLAS)",
+        "status": "OK",
+        "message": "Available (0 libraries, 0.0 MB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wocuda",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872442"
+      },
+      {
+        "name": "Backend: CUDA (NVIDIA GPU)",
+        "status": "INFO",
+        "message": "Not found (optional)",
+        "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wcuda",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872488"
+      },
+      {
+        "name": "Backend: Vulkan (Cross-platform GPU)",
+        "status": "INFO",
+        "message": "Not found (optional)",
+        "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wvulkan",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872527"
+      },
+      {
+        "name": "Precompiled LLM Libraries",
+        "status": "WARNING",
+        "message": "Directory not found",
+        "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/precompiled",
+        "recommendation": "Run build_llama script for your platform",
+        "timestamp": "2026-01-19T00:43:39.872554"
+      },
+      {
+        "name": "Local LLM Models",
+        "status": "INFO",
+        "message": "Models directory not created yet",
+        "details": "Expected at: /home/runner/.local/share/aifilesorter/llms",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872581"
+      }
+    ],
+    "Database": [
+      {
+        "name": "Database File",
+        "status": "INFO",
+        "message": "Not created yet (will be created on first run)",
+        "details": "Expected location: /home/runner/.local/share/aifilesorter/aifilesorter.db",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872619"
+      }
+    ],
+    "Configuration": [
+      {
+        "name": "Main Configuration",
+        "status": "INFO",
+        "message": "Not created yet (will be created on first run)",
+        "details": "Expected location: /home/runner/.config/aifilesorter/config.ini",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872643"
+      },
+      {
+        "name": "Config Directory Permissions",
+        "status": "OK",
+        "message": "Read/Write access",
+        "details": "Path: /home/runner/.config/aifilesorter",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872673"
+      }
+    ],
+    "Feature: Categorization": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (957 lines, 35.7 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationService.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872937"
+      },
+      {
+        "name": "Core Methods",
+        "status": "OK",
+        "message": "5/5 critical methods found",
+        "details": "categorize_entries: True, cache: True, consistency: True, whitelist: True, wizard: True",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872953"
+      },
+      {
+        "name": "Timeout Configuration",
+        "status": "OK",
+        "message": "Timeout environment variables supported",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.872963"
+      },
+      {
+        "name": "Label Validation",
+        "status": "OK",
+        "message": "Label validation logic present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873004"
+      },
+      {
+        "name": "Header File",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/CategorizationService.hpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873038"
+      }
+    ],
+    "Feature: File Scanner": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (148 lines, 4.6 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileScanner.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873138"
+      },
+      {
+        "name": "File Filtering",
+        "status": "OK",
+        "message": "File filtering logic present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873168"
+      },
+      {
+        "name": "Header File",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/FileScanner.hpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873194"
+      }
+    ],
+    "Feature: Database": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (2783 lines, 102.5 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DatabaseManager.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873603"
+      },
+      {
+        "name": "Database Schema",
+        "status": "OK",
+        "message": "15/15 tables defined",
+        "details": "Tables: file_categorization, category_taxonomy, category_alias, user_profile, user_characteristics...",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873796"
+      },
+      {
+        "name": "Database Indexes",
+        "status": "OK",
+        "message": "Index definitions present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873806"
+      },
+      {
+        "name": "Taxonomy Methods",
+        "status": "OK",
+        "message": "3/3 taxonomy methods found",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873832"
+      },
+      {
+        "name": "Header File",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/DatabaseManager.hpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.873971"
+      }
+    ],
+    "Feature: LLM Clients": [
+      {
+        "name": "Local LLM Client",
+        "status": "OK",
+        "message": "Implemented (1649 lines, 53.6 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LocalLLMClient.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874219"
+      },
+      {
+        "name": "Backend Support",
+        "status": "OK",
+        "message": "4 backends: Metal, CUDA, Vulkan, CPU",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874399"
+      },
+      {
+        "name": "GPU Memory Management",
+        "status": "OK",
+        "message": "GPU memory management present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874464"
+      },
+      {
+        "name": "Model Loading",
+        "status": "OK",
+        "message": "Model loading logic present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874510"
+      },
+      {
+        "name": "Environment Configuration",
+        "status": "OK",
+        "message": "5/5 config variables supported",
+        "details": "Variables: AI_FILE_SORTER_GPU_BACKEND, AI_FILE_SORTER_N_GPU_LAYERS, AI_FILE_SORTER_CTX_TOKENS, AI_FILE_SORTER_LLAMA_LOGS, AI_FILE_SORTER_GGML_DIR",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874531"
+      },
+      {
+        "name": "OpenAI Client",
+        "status": "OK",
+        "message": "OpenAI integration present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874618"
+      },
+      {
+        "name": "Gemini Client",
+        "status": "OK",
+        "message": "Implemented (824 lines, 30.3 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/GeminiClient.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874754"
+      },
+      {
+        "name": "Gemini API Integration",
+        "status": "OK",
+        "message": "Google Gemini API integration present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874764"
+      }
+    ],
+    "Feature: User Profile": [
+      {
+        "name": "Profile Manager",
+        "status": "OK",
+        "message": "Implemented (657 lines, 23.9 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileManager.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874941"
+      },
+      {
+        "name": "Profile Methods",
+        "status": "OK",
+        "message": "5/5 profile methods found",
+        "details": "initialize: True, analyze: True, characteristics: True, templates: True, hobbies: True",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874968"
+      },
+      {
+        "name": "Confidence Scoring",
+        "status": "OK",
+        "message": "Confidence calculation logic present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874984"
+      },
+      {
+        "name": "Folder Inclusion Levels",
+        "status": "OK",
+        "message": "Folder learning granularity supported",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.874993"
+      },
+      {
+        "name": "Profile Dialog",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875019"
+      }
+    ],
+    "Feature: Undo": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (153 lines, 4.7 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UndoManager.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875108"
+      },
+      {
+        "name": "Core Methods",
+        "status": "OK",
+        "message": "3/3 undo methods found",
+        "details": "save_plan: True, latest_plan: True, undo_plan: True",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875120"
+      },
+      {
+        "name": "JSON Serialization",
+        "status": "OK",
+        "message": "JSON plan serialization present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875126"
+      },
+      {
+        "name": "Plan Validation",
+        "status": "OK",
+        "message": "File integrity validation present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875131"
+      },
+      {
+        "name": "Header File",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/UndoManager.hpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875154"
+      }
+    ],
+    "Feature: File Tinder": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (540 lines, 18.0 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileTinderDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875276"
+      },
+      {
+        "name": "Swipe Actions",
+        "status": "OK",
+        "message": "3/3 actions found",
+        "details": "keep: True, delete: True, undo: True",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875614"
+      },
+      {
+        "name": "State Persistence",
+        "status": "OK",
+        "message": "Decision tracking present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875717"
+      }
+    ],
+    "Feature: Cache": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (212 lines, 7.4 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CacheManagerDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875847"
+      },
+      {
+        "name": "Cache Operations",
+        "status": "OK",
+        "message": "Cache clearing functionality present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875864"
+      },
+      {
+        "name": "Cache Statistics",
+        "status": "OK",
+        "message": "Cache statistics tracking present",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875867"
+      }
+    ],
+    "Feature: Whitelist": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (240 lines, 7.9 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/WhitelistManagerDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875948"
+      },
+      {
+        "name": "Whitelist Operations",
+        "status": "OK",
+        "message": "3/3 operations found",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.875970"
+      }
+    ],
+    "Feature: Consistency": [
+      {
+        "name": "Implementation File",
+        "status": "OK",
+        "message": "Found (637 lines, 20.6 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ConsistencyPassService.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876093"
+      }
+    ],
+    "Feature: API Usage": [
+      {
+        "name": "Usage Tracker",
+        "status": "OK",
+        "message": "Implemented (124 lines, 4.3 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/APIUsageTracker.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876228"
+      },
+      {
+        "name": "Tracking Metrics",
+        "status": "OK",
+        "message": "3/3 metrics tracked",
+        "details": "tokens: True, cost: True, provider: True",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876243"
+      },
+      {
+        "name": "Usage Dialog",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UsageStatsDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876263"
+      }
+    ],
+    "Feature: Translation": [
+      {
+        "name": "Translation Manager",
+        "status": "OK",
+        "message": "Implemented (709 lines, 49.1 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/TranslationManager.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876485"
+      },
+      {
+        "name": "Language Switching",
+        "status": "OK",
+        "message": "Dynamic language switching supported",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.876896"
+      },
+      {
+        "name": "Translation Files",
+        "status": "OK",
+        "message": "5 languages: de, es, it, fr, tr",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources/i18n",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877071"
+      }
+    ],
+    "Feature: LLM Selection": [
+      {
+        "name": "Selection Dialog",
+        "status": "OK",
+        "message": "Implemented (792 lines, 27.3 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMSelectionDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877201"
+      },
+      {
+        "name": "Provider Selection",
+        "status": "OK",
+        "message": "3/3 providers: openai, gemini, local",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877247"
+      },
+      {
+        "name": "Custom LLM Dialog",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CustomLLMDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877271"
+      },
+      {
+        "name": "Model Downloader",
+        "status": "OK",
+        "message": "Found",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMDownloader.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877287"
+      }
+    ],
+    "Feature: UI": [
+      {
+        "name": "Categorization Dialog",
+        "status": "OK",
+        "message": "Found (1224 lines, 39.2 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877420"
+      },
+      {
+        "name": "Progress Dialog",
+        "status": "OK",
+        "message": "Found (115 lines, 2.8 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationProgressDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877484"
+      },
+      {
+        "name": "Dry Run Preview",
+        "status": "OK",
+        "message": "Found (59 lines, 2.3 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DryRunPreviewDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877545"
+      },
+      {
+        "name": "Folder Learning Dialog",
+        "status": "OK",
+        "message": "Found (96 lines, 3.2 KB)",
+        "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FolderLearningDialog.cpp",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877601"
+      }
+    ],
+    "Logs": [
+      {
+        "name": "Log Directory",
+        "status": "INFO",
+        "message": "Not created yet (created on first run)",
+        "details": "Expected location: /home/runner/.local/share/aifilesorter/logs",
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877633"
+      }
+    ],
+    "Performance": [
+      {
+        "name": "Disk I/O Performance",
+        "status": "SKIP",
+        "message": "Skipped in quick mode",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877643"
+      },
+      {
+        "name": "Available Storage",
+        "status": "INFO",
+        "message": "21.2 GB free",
+        "details": null,
+        "recommendation": null,
+        "timestamp": "2026-01-19T00:43:39.877700"
+      }
+    ]
+  },
+  "all_results": [
+    {
+      "name": "Operating System",
+      "category": "System",
+      "status": "INFO",
+      "message": "Linux 6.11.0-1018-azure (#18~24.04.1-Ubuntu SMP Sat Jun 28 04:46:03 UTC 2025)",
+      "details": "Platform: Linux-6.11.0-1018-azure-x86_64-with-glibc2.39\nMachine: x86_64\nProcessor: x86_64",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.851705"
+    },
+    {
+      "name": "Python Version",
+      "category": "System",
+      "status": "OK",
+      "message": "3.12.3",
+      "details": "3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.851725"
+    },
+    {
+      "name": "CPU Cores",
+      "category": "System",
+      "status": "INFO",
+      "message": "4 cores available",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.856062"
+    },
+    {
+      "name": "System Memory",
+      "category": "System",
+      "status": "OK",
+      "message": "15.6 GB total",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.856128"
+    },
+    {
+      "name": "Disk Space",
+      "category": "System",
+      "status": "OK",
+      "message": "21.2 GB free (71.6 GB total, 70.4% used)",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.856183"
+    },
+    {
+      "name": "Executable: Main Binary",
+      "category": "File Structure",
+      "status": "FAIL",
+      "message": "Not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/aifilesorter",
+      "recommendation": "Rebuild the application",
+      "timestamp": "2026-01-19T00:43:39.856228"
+    },
+    {
+      "name": "Executable: Launch Script",
+      "category": "File Structure",
+      "status": "FAIL",
+      "message": "Not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/run_aifilesorter.sh",
+      "recommendation": "Rebuild the application",
+      "timestamp": "2026-01-19T00:43:39.856256"
+    },
+    {
+      "name": "Include Directory",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (59 files, 0.1 MB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.857656"
+    },
+    {
+      "name": "Library Directory",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (56 files, 12.0 MB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.858881"
+    },
+    {
+      "name": "Resources Directory",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (47 files, 4.1 MB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.860020"
+    },
+    {
+      "name": "Scripts Directory",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (7 files, 0.0 MB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/scripts",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.860235"
+    },
+    {
+      "name": "C++ Headers",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (45 files)",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.860749"
+    },
+    {
+      "name": "Resource Files",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (1 files)",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.861110"
+    },
+    {
+      "name": "CMake Files",
+      "category": "File Structure",
+      "status": "OK",
+      "message": "Found (1 files)",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.861148"
+    },
+    {
+      "name": "Qt6 Framework",
+      "category": "Dependencies",
+      "status": "WARNING",
+      "message": "Not found via pkg-config",
+      "details": "May still be available via system paths",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.863797"
+    },
+    {
+      "name": "Library: libcurl",
+      "category": "Dependencies",
+      "status": "OK",
+      "message": "Available",
+      "details": "Version: curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.7",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.870449"
+    },
+    {
+      "name": "Library: SQLite3",
+      "category": "Dependencies",
+      "status": "OK",
+      "message": "Available",
+      "details": "Version: 3.45.1 2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1 (64-bit)",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872074"
+    },
+    {
+      "name": "Backend: CPU (OpenBLAS)",
+      "category": "LLM Backends",
+      "status": "OK",
+      "message": "Available (0 libraries, 0.0 MB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wocuda",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872442"
+    },
+    {
+      "name": "Backend: CUDA (NVIDIA GPU)",
+      "category": "LLM Backends",
+      "status": "INFO",
+      "message": "Not found (optional)",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wcuda",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872488"
+    },
+    {
+      "name": "Backend: Vulkan (Cross-platform GPU)",
+      "category": "LLM Backends",
+      "status": "INFO",
+      "message": "Not found (optional)",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wvulkan",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872527"
+    },
+    {
+      "name": "Precompiled LLM Libraries",
+      "category": "LLM Backends",
+      "status": "WARNING",
+      "message": "Directory not found",
+      "details": "Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/precompiled",
+      "recommendation": "Run build_llama script for your platform",
+      "timestamp": "2026-01-19T00:43:39.872554"
+    },
+    {
+      "name": "Local LLM Models",
+      "category": "LLM Backends",
+      "status": "INFO",
+      "message": "Models directory not created yet",
+      "details": "Expected at: /home/runner/.local/share/aifilesorter/llms",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872581"
+    },
+    {
+      "name": "Database File",
+      "category": "Database",
+      "status": "INFO",
+      "message": "Not created yet (will be created on first run)",
+      "details": "Expected location: /home/runner/.local/share/aifilesorter/aifilesorter.db",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872619"
+    },
+    {
+      "name": "Main Configuration",
+      "category": "Configuration",
+      "status": "INFO",
+      "message": "Not created yet (will be created on first run)",
+      "details": "Expected location: /home/runner/.config/aifilesorter/config.ini",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872643"
+    },
+    {
+      "name": "Config Directory Permissions",
+      "category": "Configuration",
+      "status": "OK",
+      "message": "Read/Write access",
+      "details": "Path: /home/runner/.config/aifilesorter",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872673"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Categorization",
+      "status": "OK",
+      "message": "Found (957 lines, 35.7 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationService.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872937"
+    },
+    {
+      "name": "Core Methods",
+      "category": "Feature: Categorization",
+      "status": "OK",
+      "message": "5/5 critical methods found",
+      "details": "categorize_entries: True, cache: True, consistency: True, whitelist: True, wizard: True",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872953"
+    },
+    {
+      "name": "Timeout Configuration",
+      "category": "Feature: Categorization",
+      "status": "OK",
+      "message": "Timeout environment variables supported",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.872963"
+    },
+    {
+      "name": "Label Validation",
+      "category": "Feature: Categorization",
+      "status": "OK",
+      "message": "Label validation logic present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873004"
+    },
+    {
+      "name": "Header File",
+      "category": "Feature: Categorization",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/CategorizationService.hpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873038"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: File Scanner",
+      "status": "OK",
+      "message": "Found (148 lines, 4.6 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileScanner.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873138"
+    },
+    {
+      "name": "File Filtering",
+      "category": "Feature: File Scanner",
+      "status": "OK",
+      "message": "File filtering logic present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873168"
+    },
+    {
+      "name": "Header File",
+      "category": "Feature: File Scanner",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/FileScanner.hpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873194"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Database",
+      "status": "OK",
+      "message": "Found (2783 lines, 102.5 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DatabaseManager.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873603"
+    },
+    {
+      "name": "Database Schema",
+      "category": "Feature: Database",
+      "status": "OK",
+      "message": "15/15 tables defined",
+      "details": "Tables: file_categorization, category_taxonomy, category_alias, user_profile, user_characteristics...",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873796"
+    },
+    {
+      "name": "Database Indexes",
+      "category": "Feature: Database",
+      "status": "OK",
+      "message": "Index definitions present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873806"
+    },
+    {
+      "name": "Taxonomy Methods",
+      "category": "Feature: Database",
+      "status": "OK",
+      "message": "3/3 taxonomy methods found",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873832"
+    },
+    {
+      "name": "Header File",
+      "category": "Feature: Database",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/DatabaseManager.hpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.873971"
+    },
+    {
+      "name": "Local LLM Client",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "Implemented (1649 lines, 53.6 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LocalLLMClient.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874219"
+    },
+    {
+      "name": "Backend Support",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "4 backends: Metal, CUDA, Vulkan, CPU",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874399"
+    },
+    {
+      "name": "GPU Memory Management",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "GPU memory management present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874464"
+    },
+    {
+      "name": "Model Loading",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "Model loading logic present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874510"
+    },
+    {
+      "name": "Environment Configuration",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "5/5 config variables supported",
+      "details": "Variables: AI_FILE_SORTER_GPU_BACKEND, AI_FILE_SORTER_N_GPU_LAYERS, AI_FILE_SORTER_CTX_TOKENS, AI_FILE_SORTER_LLAMA_LOGS, AI_FILE_SORTER_GGML_DIR",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874531"
+    },
+    {
+      "name": "OpenAI Client",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "OpenAI integration present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874618"
+    },
+    {
+      "name": "Gemini Client",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "Implemented (824 lines, 30.3 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/GeminiClient.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874754"
+    },
+    {
+      "name": "Gemini API Integration",
+      "category": "Feature: LLM Clients",
+      "status": "OK",
+      "message": "Google Gemini API integration present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874764"
+    },
+    {
+      "name": "Profile Manager",
+      "category": "Feature: User Profile",
+      "status": "OK",
+      "message": "Implemented (657 lines, 23.9 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileManager.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874941"
+    },
+    {
+      "name": "Profile Methods",
+      "category": "Feature: User Profile",
+      "status": "OK",
+      "message": "5/5 profile methods found",
+      "details": "initialize: True, analyze: True, characteristics: True, templates: True, hobbies: True",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874968"
+    },
+    {
+      "name": "Confidence Scoring",
+      "category": "Feature: User Profile",
+      "status": "OK",
+      "message": "Confidence calculation logic present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874984"
+    },
+    {
+      "name": "Folder Inclusion Levels",
+      "category": "Feature: User Profile",
+      "status": "OK",
+      "message": "Folder learning granularity supported",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.874993"
+    },
+    {
+      "name": "Profile Dialog",
+      "category": "Feature: User Profile",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875019"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Undo",
+      "status": "OK",
+      "message": "Found (153 lines, 4.7 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UndoManager.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875108"
+    },
+    {
+      "name": "Core Methods",
+      "category": "Feature: Undo",
+      "status": "OK",
+      "message": "3/3 undo methods found",
+      "details": "save_plan: True, latest_plan: True, undo_plan: True",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875120"
+    },
+    {
+      "name": "JSON Serialization",
+      "category": "Feature: Undo",
+      "status": "OK",
+      "message": "JSON plan serialization present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875126"
+    },
+    {
+      "name": "Plan Validation",
+      "category": "Feature: Undo",
+      "status": "OK",
+      "message": "File integrity validation present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875131"
+    },
+    {
+      "name": "Header File",
+      "category": "Feature: Undo",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/UndoManager.hpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875154"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: File Tinder",
+      "status": "OK",
+      "message": "Found (540 lines, 18.0 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileTinderDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875276"
+    },
+    {
+      "name": "Swipe Actions",
+      "category": "Feature: File Tinder",
+      "status": "OK",
+      "message": "3/3 actions found",
+      "details": "keep: True, delete: True, undo: True",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875614"
+    },
+    {
+      "name": "State Persistence",
+      "category": "Feature: File Tinder",
+      "status": "OK",
+      "message": "Decision tracking present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875717"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Cache",
+      "status": "OK",
+      "message": "Found (212 lines, 7.4 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CacheManagerDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875847"
+    },
+    {
+      "name": "Cache Operations",
+      "category": "Feature: Cache",
+      "status": "OK",
+      "message": "Cache clearing functionality present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875864"
+    },
+    {
+      "name": "Cache Statistics",
+      "category": "Feature: Cache",
+      "status": "OK",
+      "message": "Cache statistics tracking present",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875867"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Whitelist",
+      "status": "OK",
+      "message": "Found (240 lines, 7.9 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/WhitelistManagerDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875948"
+    },
+    {
+      "name": "Whitelist Operations",
+      "category": "Feature: Whitelist",
+      "status": "OK",
+      "message": "3/3 operations found",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.875970"
+    },
+    {
+      "name": "Implementation File",
+      "category": "Feature: Consistency",
+      "status": "OK",
+      "message": "Found (637 lines, 20.6 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ConsistencyPassService.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876093"
+    },
+    {
+      "name": "Usage Tracker",
+      "category": "Feature: API Usage",
+      "status": "OK",
+      "message": "Implemented (124 lines, 4.3 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/APIUsageTracker.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876228"
+    },
+    {
+      "name": "Tracking Metrics",
+      "category": "Feature: API Usage",
+      "status": "OK",
+      "message": "3/3 metrics tracked",
+      "details": "tokens: True, cost: True, provider: True",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876243"
+    },
+    {
+      "name": "Usage Dialog",
+      "category": "Feature: API Usage",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UsageStatsDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876263"
+    },
+    {
+      "name": "Translation Manager",
+      "category": "Feature: Translation",
+      "status": "OK",
+      "message": "Implemented (709 lines, 49.1 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/TranslationManager.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876485"
+    },
+    {
+      "name": "Language Switching",
+      "category": "Feature: Translation",
+      "status": "OK",
+      "message": "Dynamic language switching supported",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.876896"
+    },
+    {
+      "name": "Translation Files",
+      "category": "Feature: Translation",
+      "status": "OK",
+      "message": "5 languages: de, es, it, fr, tr",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources/i18n",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877071"
+    },
+    {
+      "name": "Selection Dialog",
+      "category": "Feature: LLM Selection",
+      "status": "OK",
+      "message": "Implemented (792 lines, 27.3 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMSelectionDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877201"
+    },
+    {
+      "name": "Provider Selection",
+      "category": "Feature: LLM Selection",
+      "status": "OK",
+      "message": "3/3 providers: openai, gemini, local",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877247"
+    },
+    {
+      "name": "Custom LLM Dialog",
+      "category": "Feature: LLM Selection",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CustomLLMDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877271"
+    },
+    {
+      "name": "Model Downloader",
+      "category": "Feature: LLM Selection",
+      "status": "OK",
+      "message": "Found",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMDownloader.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877287"
+    },
+    {
+      "name": "Categorization Dialog",
+      "category": "Feature: UI",
+      "status": "OK",
+      "message": "Found (1224 lines, 39.2 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877420"
+    },
+    {
+      "name": "Progress Dialog",
+      "category": "Feature: UI",
+      "status": "OK",
+      "message": "Found (115 lines, 2.8 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationProgressDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877484"
+    },
+    {
+      "name": "Dry Run Preview",
+      "category": "Feature: UI",
+      "status": "OK",
+      "message": "Found (59 lines, 2.3 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DryRunPreviewDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877545"
+    },
+    {
+      "name": "Folder Learning Dialog",
+      "category": "Feature: UI",
+      "status": "OK",
+      "message": "Found (96 lines, 3.2 KB)",
+      "details": "Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FolderLearningDialog.cpp",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877601"
+    },
+    {
+      "name": "Log Directory",
+      "category": "Logs",
+      "status": "INFO",
+      "message": "Not created yet (created on first run)",
+      "details": "Expected location: /home/runner/.local/share/aifilesorter/logs",
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877633"
+    },
+    {
+      "name": "Disk I/O Performance",
+      "category": "Performance",
+      "status": "SKIP",
+      "message": "Skipped in quick mode",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877643"
+    },
+    {
+      "name": "Available Storage",
+      "category": "Performance",
+      "status": "INFO",
+      "message": "21.2 GB free",
+      "details": null,
+      "recommendation": null,
+      "timestamp": "2026-01-19T00:43:39.877700"
+    }
+  ]
+}

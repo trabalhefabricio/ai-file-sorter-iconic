@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI File Sorter - Diagnostic Report</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .health-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .health-EXCELLENT { background: #10b981; color: white; }
+        .health-GOOD { background: #f59e0b; color: white; }
+        .health-NEEDS\ ATTENTION { background: #ef4444; color: white; }
+        .health-CRITICAL { background: #dc2626; color: white; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .category {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .category h2 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        .result {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #e5e7eb;
+        }
+        .result-OK { border-left-color: #10b981; background: #f0fdf4; }
+        .result-WARNING { border-left-color: #f59e0b; background: #fffbeb; }
+        .result-FAIL { border-left-color: #ef4444; background: #fef2f2; }
+        .result-INFO { border-left-color: #3b82f6; background: #eff6ff; }
+        .result-SKIP { border-left-color: #9ca3af; background: #f9fafb; }
+        .result-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .result-message {
+            color: #4b5563;
+        }
+        .result-details {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            font-family: monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .recommendation {
+            margin-top: 8px;
+            padding: 8px;
+            background: #dbeafe;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .recommendation::before {
+            content: "💡 ";
+        }
+        .timestamp {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 AI File Sorter - Thorough Diagnostic Report</h1>
+        <p>Generated on 2026-01-19T00:43:39.850042</p>
+        <p>Duration: 0.03 seconds</p>
+    </div>
+    
+    <div class="summary">
+        <h2>Overall Health: <span class="health-badge health-CRITICAL">CRITICAL</span></h2>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Checks</div>
+                <div class="stat-value">82</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">✓ Passed</div>
+                <div class="stat-value" style="color: #10b981;">68</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚠ Warnings</div>
+                <div class="stat-value" style="color: #f59e0b;">2</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">✗ Failed</div>
+                <div class="stat-value" style="color: #ef4444;">2</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>System</h2>
+
+        <div class="result result-INFO">
+            <div class="result-name">Operating System</div>
+            <div class="result-message">Linux 6.11.0-1018-azure (#18~24.04.1-Ubuntu SMP Sat Jun 28 04:46:03 UTC 2025)</div>
+            <div class="result-details">Platform: Linux-6.11.0-1018-azure-x86_64-with-glibc2.39
+Machine: x86_64
+Processor: x86_64</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Python Version</div>
+            <div class="result-message">3.12.3</div>
+            <div class="result-details">3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]</div>
+            
+        </div>
+
+        <div class="result result-INFO">
+            <div class="result-name">CPU Cores</div>
+            <div class="result-message">4 cores available</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">System Memory</div>
+            <div class="result-message">15.6 GB total</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Disk Space</div>
+            <div class="result-message">21.2 GB free (71.6 GB total, 70.4% used)</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>File Structure</h2>
+
+        <div class="result result-FAIL">
+            <div class="result-name">Executable: Main Binary</div>
+            <div class="result-message">Not found</div>
+            <div class="result-details">Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/aifilesorter</div>
+            <div class="recommendation">Rebuild the application</div>
+        </div>
+
+        <div class="result result-FAIL">
+            <div class="result-name">Executable: Launch Script</div>
+            <div class="result-message">Not found</div>
+            <div class="result-details">Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/bin/run_aifilesorter.sh</div>
+            <div class="recommendation">Rebuild the application</div>
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Include Directory</div>
+            <div class="result-message">Found (59 files, 0.1 MB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Library Directory</div>
+            <div class="result-message">Found (56 files, 12.0 MB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Resources Directory</div>
+            <div class="result-message">Found (47 files, 4.1 MB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Scripts Directory</div>
+            <div class="result-message">Found (7 files, 0.0 MB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/scripts</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">C++ Headers</div>
+            <div class="result-message">Found (45 files)</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Resource Files</div>
+            <div class="result-message">Found (1 files)</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">CMake Files</div>
+            <div class="result-message">Found (1 files)</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Dependencies</h2>
+
+        <div class="result result-WARNING">
+            <div class="result-name">Qt6 Framework</div>
+            <div class="result-message">Not found via pkg-config</div>
+            <div class="result-details">May still be available via system paths</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Library: libcurl</div>
+            <div class="result-message">Available</div>
+            <div class="result-details">Version: curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.7</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Library: SQLite3</div>
+            <div class="result-message">Available</div>
+            <div class="result-details">Version: 3.45.1 2024-01-30 16:01:20 e876e51a0ed5c5b3126f52e532044363a014bc594cfefa87ffb5b82257ccalt1 (64-bit)</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>LLM Backends</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Backend: CPU (OpenBLAS)</div>
+            <div class="result-message">Available (0 libraries, 0.0 MB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wocuda</div>
+            
+        </div>
+
+        <div class="result result-INFO">
+            <div class="result-name">Backend: CUDA (NVIDIA GPU)</div>
+            <div class="result-message">Not found (optional)</div>
+            <div class="result-details">Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wcuda</div>
+            
+        </div>
+
+        <div class="result result-INFO">
+            <div class="result-name">Backend: Vulkan (Cross-platform GPU)</div>
+            <div class="result-message">Not found (optional)</div>
+            <div class="result-details">Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ggml/wvulkan</div>
+            
+        </div>
+
+        <div class="result result-WARNING">
+            <div class="result-name">Precompiled LLM Libraries</div>
+            <div class="result-message">Directory not found</div>
+            <div class="result-details">Expected at: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/precompiled</div>
+            <div class="recommendation">Run build_llama script for your platform</div>
+        </div>
+
+        <div class="result result-INFO">
+            <div class="result-name">Local LLM Models</div>
+            <div class="result-message">Models directory not created yet</div>
+            <div class="result-details">Expected at: /home/runner/.local/share/aifilesorter/llms</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Database</h2>
+
+        <div class="result result-INFO">
+            <div class="result-name">Database File</div>
+            <div class="result-message">Not created yet (will be created on first run)</div>
+            <div class="result-details">Expected location: /home/runner/.local/share/aifilesorter/aifilesorter.db</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Configuration</h2>
+
+        <div class="result result-INFO">
+            <div class="result-name">Main Configuration</div>
+            <div class="result-message">Not created yet (will be created on first run)</div>
+            <div class="result-details">Expected location: /home/runner/.config/aifilesorter/config.ini</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Config Directory Permissions</div>
+            <div class="result-message">Read/Write access</div>
+            <div class="result-details">Path: /home/runner/.config/aifilesorter</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Categorization</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (957 lines, 35.7 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationService.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Core Methods</div>
+            <div class="result-message">5/5 critical methods found</div>
+            <div class="result-details">categorize_entries: True, cache: True, consistency: True, whitelist: True, wizard: True</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Timeout Configuration</div>
+            <div class="result-message">Timeout environment variables supported</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Label Validation</div>
+            <div class="result-message">Label validation logic present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Header File</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/CategorizationService.hpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: File Scanner</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (148 lines, 4.6 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileScanner.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">File Filtering</div>
+            <div class="result-message">File filtering logic present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Header File</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/FileScanner.hpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Database</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (2783 lines, 102.5 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DatabaseManager.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Database Schema</div>
+            <div class="result-message">15/15 tables defined</div>
+            <div class="result-details">Tables: file_categorization, category_taxonomy, category_alias, user_profile, user_characteristics...</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Database Indexes</div>
+            <div class="result-message">Index definitions present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Taxonomy Methods</div>
+            <div class="result-message">3/3 taxonomy methods found</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Header File</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/DatabaseManager.hpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: LLM Clients</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Local LLM Client</div>
+            <div class="result-message">Implemented (1649 lines, 53.6 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LocalLLMClient.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Backend Support</div>
+            <div class="result-message">4 backends: Metal, CUDA, Vulkan, CPU</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">GPU Memory Management</div>
+            <div class="result-message">GPU memory management present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Model Loading</div>
+            <div class="result-message">Model loading logic present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Environment Configuration</div>
+            <div class="result-message">5/5 config variables supported</div>
+            <div class="result-details">Variables: AI_FILE_SORTER_GPU_BACKEND, AI_FILE_SORTER_N_GPU_LAYERS, AI_FILE_SORTER_CTX_TOKENS, AI_FILE_SORTER_LLAMA_LOGS, AI_FILE_SORTER_GGML_DIR</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">OpenAI Client</div>
+            <div class="result-message">OpenAI integration present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Gemini Client</div>
+            <div class="result-message">Implemented (824 lines, 30.3 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/GeminiClient.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Gemini API Integration</div>
+            <div class="result-message">Google Gemini API integration present</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: User Profile</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Profile Manager</div>
+            <div class="result-message">Implemented (657 lines, 23.9 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileManager.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Profile Methods</div>
+            <div class="result-message">5/5 profile methods found</div>
+            <div class="result-details">initialize: True, analyze: True, characteristics: True, templates: True, hobbies: True</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Confidence Scoring</div>
+            <div class="result-message">Confidence calculation logic present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Folder Inclusion Levels</div>
+            <div class="result-message">Folder learning granularity supported</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Profile Dialog</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UserProfileDialog.cpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Undo</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (153 lines, 4.7 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UndoManager.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Core Methods</div>
+            <div class="result-message">3/3 undo methods found</div>
+            <div class="result-details">save_plan: True, latest_plan: True, undo_plan: True</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">JSON Serialization</div>
+            <div class="result-message">JSON plan serialization present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Plan Validation</div>
+            <div class="result-message">File integrity validation present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Header File</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/include/UndoManager.hpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: File Tinder</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (540 lines, 18.0 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FileTinderDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Swipe Actions</div>
+            <div class="result-message">3/3 actions found</div>
+            <div class="result-details">keep: True, delete: True, undo: True</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">State Persistence</div>
+            <div class="result-message">Decision tracking present</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Cache</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (212 lines, 7.4 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CacheManagerDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Cache Operations</div>
+            <div class="result-message">Cache clearing functionality present</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Cache Statistics</div>
+            <div class="result-message">Cache statistics tracking present</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Whitelist</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (240 lines, 7.9 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/WhitelistManagerDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Whitelist Operations</div>
+            <div class="result-message">3/3 operations found</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Consistency</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Implementation File</div>
+            <div class="result-message">Found (637 lines, 20.6 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/ConsistencyPassService.cpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: API Usage</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Usage Tracker</div>
+            <div class="result-message">Implemented (124 lines, 4.3 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/APIUsageTracker.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Tracking Metrics</div>
+            <div class="result-message">3/3 metrics tracked</div>
+            <div class="result-details">tokens: True, cost: True, provider: True</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Usage Dialog</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/UsageStatsDialog.cpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: Translation</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Translation Manager</div>
+            <div class="result-message">Implemented (709 lines, 49.1 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/TranslationManager.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Language Switching</div>
+            <div class="result-message">Dynamic language switching supported</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Translation Files</div>
+            <div class="result-message">5 languages: de, es, it, fr, tr</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/resources/i18n</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: LLM Selection</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Selection Dialog</div>
+            <div class="result-message">Implemented (792 lines, 27.3 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMSelectionDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Provider Selection</div>
+            <div class="result-message">3/3 providers: openai, gemini, local</div>
+            
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Custom LLM Dialog</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CustomLLMDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Model Downloader</div>
+            <div class="result-message">Found</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/LLMDownloader.cpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Feature: UI</h2>
+
+        <div class="result result-OK">
+            <div class="result-name">Categorization Dialog</div>
+            <div class="result-message">Found (1224 lines, 39.2 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Progress Dialog</div>
+            <div class="result-message">Found (115 lines, 2.8 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/CategorizationProgressDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Dry Run Preview</div>
+            <div class="result-message">Found (59 lines, 2.3 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/DryRunPreviewDialog.cpp</div>
+            
+        </div>
+
+        <div class="result result-OK">
+            <div class="result-name">Folder Learning Dialog</div>
+            <div class="result-message">Found (96 lines, 3.2 KB)</div>
+            <div class="result-details">Path: /home/runner/work/ai-file-sorter-iconic/ai-file-sorter-iconic/app/lib/FolderLearningDialog.cpp</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Logs</h2>
+
+        <div class="result result-INFO">
+            <div class="result-name">Log Directory</div>
+            <div class="result-message">Not created yet (created on first run)</div>
+            <div class="result-details">Expected location: /home/runner/.local/share/aifilesorter/logs</div>
+            
+        </div>
+
+    </div>
+
+    <div class="category">
+        <h2>Performance</h2>
+
+        <div class="result result-SKIP">
+            <div class="result-name">Disk I/O Performance</div>
+            <div class="result-message">Skipped in quick mode</div>
+            
+            
+        </div>
+
+        <div class="result result-INFO">
+            <div class="result-name">Available Storage</div>
+            <div class="result-message">21.2 GB free</div>
+            
+            
+        </div>
+
+    </div>
+
+    <div class="timestamp">
+        <p>Platform: Linux 6.11.0-1018-azure</p>
+        <p>Python: 3.12.3</p>
+    </div>
+</body>
+</html>
