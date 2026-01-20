@@ -168,9 +168,15 @@ After:  "Categorize file: project.flp (FL Studio project file for music producti
 **Dependencies:** ALL previous feature PRs  
 **Purpose:** Test and validate all implemented features
 
+**Bug Testing Scope:**
+- **Original 12 bugs** from BUG_ANALYSIS_REPORT.md
+- **Accumulated bugs** discovered during PRs #1-5
+- **Regression detection** - ensure no bugs were reintroduced
+- **New issue detection** - identify any problems in integrated system
+
 **Implementation:**
 - Feature-by-feature testing framework
-- Automated bug detection for all 12 bugs
+- Automated bug detection for ALL identified bugs (original + accumulated)
 - Simulation of feature operations:
   - Gemini API rate limiting scenarios
   - File Tinder workflow simulations
@@ -226,23 +232,37 @@ After:  "Categorize file: project.flp (FL Studio project file for music producti
 1. **Start from main branch** (not newstuff)
 2. **Reference bug analysis** - Link to BUG_ANALYSIS_REPORT.md
 3. **Fix identified bugs** before adding functionality
-4. **Add comprehensive tests**:
+4. **Document any NEW bugs found** - Add to PR description for inclusion in final diagnostic tool
+5. **Add comprehensive tests**:
    - Unit tests for core logic
    - Integration tests for feature workflows
    - UI tests where applicable
    - Memory safety tests (AddressSanitizer)
    - Thread safety tests (ThreadSanitizer)
-5. **Update documentation**:
+6. **Update documentation**:
    - Add feature description to README
    - Document new API/UI elements
    - Include usage examples
-6. **Run sanitizers**:
+7. **Run sanitizers**:
    ```bash
    cmake -DCMAKE_CXX_FLAGS="-fsanitize=address,thread,undefined" ..
    make
    ctest
    ```
-7. **Code review** before merging
+8. **Code review** before merging
+
+### Bug Accumulation Strategy:
+
+**Important**: All bugs discovered during feature implementation (PRs #1-5) must be documented and will accumulate for testing in the final diagnostic tool PR.
+
+- **PR #1-5**: Document any new bugs found in PR description
+- **PR #6**: Diagnostic tool will test for:
+  - All 12 original bugs from BUG_ANALYSIS_REPORT.md
+  - Any new bugs discovered in feature PRs #1-5
+  - Verification that all bugs remain fixed
+  - Detection of any regressions
+
+This ensures comprehensive testing of all known issues at the end of the implementation process.
 
 ### Commit Message Format:
 ```
