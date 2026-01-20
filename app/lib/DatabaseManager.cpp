@@ -1144,7 +1144,8 @@ bool DatabaseManager::clear_tinder_session(const std::string& folder_path) {
     bool success = sqlite3_step(stmt) == SQLITE_DONE;
     
     if (!success) {
-        db_log(spdlog::level::err, "Failed to clear tinder session for folder: {}", folder_path);
+        db_log(spdlog::level::err, "Failed to clear tinder session for folder: {} (error: {})", 
+               folder_path, sqlite3_errmsg(db));
     }
     
     sqlite3_finalize(stmt);

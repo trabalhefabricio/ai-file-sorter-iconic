@@ -483,7 +483,8 @@ void FileTinderDialog::save_state() {
         if (!db_.save_tinder_decision(decision)) {
             any_save_failed = true;
             if (auto logger = Logger::get_logger("core_logger")) {
-                logger->warn("Failed to save tinder decision for file: {}", file.path);
+                logger->warn("Failed to save tinder decision for file: {} (folder: {}, decision: {})", 
+                           file.path, folder_path_, decision.decision);
             }
         }
     }
