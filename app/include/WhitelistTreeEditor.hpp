@@ -31,6 +31,11 @@ private slots:
     void on_selection_changed();
     void on_mode_changed();
     void on_edit_shared_subcategories();
+    void on_import_config();
+    void on_export_config();
+
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     void setup_ui();
@@ -44,12 +49,16 @@ private:
     void enable_drag_drop();
     QStringList get_category_names() const;
     QSet<QString> get_all_subcategories() const;
+    void import_node_recursive(QTreeWidgetItem* parent, const QJsonObject& node_obj);
+    QJsonObject export_node_recursive(QTreeWidgetItem* item) const;
     
     QLineEdit* name_edit_;
     QTreeWidget* tree_widget_;
     QPushButton* add_category_btn_;
     QPushButton* add_subcategory_btn_;
     QPushButton* remove_btn_;
+    QPushButton* import_btn_;
+    QPushButton* export_btn_;
     QTextEdit* context_edit_;
     QCheckBox* advanced_checkbox_;
     

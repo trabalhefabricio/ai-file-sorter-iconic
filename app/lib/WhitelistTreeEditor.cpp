@@ -9,6 +9,12 @@
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QFileDialog>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QKeyEvent>
+#include <QShortcut>
 
 WhitelistTreeEditor::WhitelistTreeEditor(const QString& name, WhitelistEntry& entry, QWidget* parent)
     : QDialog(parent)
@@ -102,6 +108,18 @@ void WhitelistTreeEditor::setup_ui()
     btn_layout->addWidget(remove_btn_);
     
     btn_layout->addStretch();
+    
+    import_btn_ = new QPushButton(tr("Import"), this);
+    import_btn_->setToolTip(tr("Import whitelist configuration from JSON file"));
+    import_btn_->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    btn_layout->addWidget(import_btn_);
+    
+    export_btn_ = new QPushButton(tr("Export"), this);
+    export_btn_->setToolTip(tr("Export whitelist configuration to JSON file"));
+    export_btn_->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    btn_layout->addWidget(export_btn_);
+    
+    btn_layout->addStretch();
     main_layout->addLayout(btn_layout);
     
     // Shared subcategories section (only visible in shared mode)
@@ -142,6 +160,8 @@ void WhitelistTreeEditor::setup_ui()
     connect(mode_group_, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), 
             this, &WhitelistTreeEditor::on_mode_changed);
     connect(edit_shared_subs_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_edit_shared_subcategories);
+    connect(import_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_import_config);
+    connect(export_btn_, &QPushButton::clicked, this, &WhitelistTreeEditor::on_export_config);
     connect(button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
@@ -584,4 +604,282 @@ void WhitelistTreeEditor::enable_drag_drop()
 {
     // Note: Drag-drop is intentionally disabled to prevent crashes
     // See setup_ui() where we set DragDropMode to NoDragDrop
+}
+
+void WhitelistTreeEditor::keyPressEvent(QKeyEvent* event)
+{
+    switch (event->key()) {
+        case Qt::Key_Delete:
+            if (tree_widget_->currentItem()) {
+                on_remove_item();
+            }
+            break;
+        case Qt::Key_Insert:
+            if (tree_widget_->currentItem() && hierarchical_mode_radio_->isChecked()) {
+                on_add_child_to_selected();
+            } else {
+                on_add_category();
+            }
+            break;
+        case Qt::Key_N:
+            if (event->modifiers() & Qt::ControlModifier) {
+                if (tree_widget_->currentItem() && hierarchical_mode_radio_->isChecked()) {
+                    on_add_child_to_selected();
+                } else {
+                    on_add_category();
+                }
+            } else {
+                QDialog::keyPressEvent(event);
+            }
+            break;
+        case Qt::Key_F2:
+            if (tree_widget_->currentItem()) {
+                tree_widget_->editItem(tree_widget_->currentItem(), 0);
+            }
+            break;
+        default:
+            QDialog::keyPressEvent(event);
+    }
+}
+
+void WhitelistTreeEditor::on_import_config()
+{
+    QString file_name = QFileDialog::getOpenFileName(this,
+        tr("Import Whitelist Configuration"),
+        QString(),
+        tr("JSON Files (*.json);;All Files (*)"));
+    
+    if (file_name.isEmpty()) {
+        return;
+    }
+    
+    QFile file(file_name);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Import Error"),
+            tr("Failed to open file: %1").arg(file.errorString()));
+        return;
+    }
+    
+    QByteArray data = file.readAll();
+    file.close();
+    
+    QJsonParseError parse_error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &parse_error);
+    
+    if (parse_error.error != QJsonParseError::NoError) {
+        QMessageBox::critical(this, tr("Import Error"),
+            tr("Failed to parse JSON: %1").arg(parse_error.errorString()));
+        return;
+    }
+    
+    if (!doc.isObject()) {
+        QMessageBox::critical(this, tr("Import Error"),
+            tr("Invalid JSON format: expected object"));
+        return;
+    }
+    
+    QJsonObject root = doc.object();
+    
+    // Import name
+    if (root.contains("name")) {
+        name_edit_->setText(root["name"].toString());
+    }
+    
+    // Import context
+    if (root.contains("context")) {
+        context_edit_->setPlainText(root["context"].toString());
+    }
+    
+    // Import advanced subcategories flag
+    if (root.contains("enable_advanced_subcategories")) {
+        advanced_checkbox_->setChecked(root["enable_advanced_subcategories"].toBool());
+    }
+    
+    // Import mode
+    bool is_hierarchical = root.value("use_hierarchical", false).toBool();
+    if (is_hierarchical) {
+        hierarchical_mode_radio_->setChecked(true);
+    } else {
+        shared_mode_radio_->setChecked(true);
+    }
+    
+    // Import tree structure
+    tree_widget_->clear();
+    updating_tree_ = true;
+    
+    if (is_hierarchical && root.contains("tree")) {
+        QJsonArray tree_array = root["tree"].toArray();
+        for (const QJsonValue& node_value : tree_array) {
+            if (node_value.isObject()) {
+                import_node_recursive(nullptr, node_value.toObject());
+            }
+        }
+    } else if (!is_hierarchical) {
+        // Import shared mode
+        if (root.contains("categories")) {
+            QJsonArray cats = root["categories"].toArray();
+            for (const QJsonValue& cat_value : cats) {
+                QString cat_name = cat_value.toString();
+                if (!cat_name.isEmpty()) {
+                    add_category_node(cat_name, QStringList());
+                }
+            }
+        }
+        
+        if (root.contains("subcategories")) {
+            shared_subcategories_.clear();
+            QJsonArray subs = root["subcategories"].toArray();
+            for (const QJsonValue& sub_value : subs) {
+                QString sub_name = sub_value.toString();
+                if (!sub_name.isEmpty()) {
+                    shared_subcategories_ << sub_name;
+                }
+            }
+        }
+    }
+    
+    tree_widget_->expandAll();
+    updating_tree_ = false;
+    update_mode_ui();
+    
+    QMessageBox::information(this, tr("Import Successful"),
+        tr("Whitelist configuration imported successfully."));
+}
+
+void WhitelistTreeEditor::on_export_config()
+{
+    QString file_name = QFileDialog::getSaveFileName(this,
+        tr("Export Whitelist Configuration"),
+        "whitelist_config.json",
+        tr("JSON Files (*.json);;All Files (*)"));
+    
+    if (file_name.isEmpty()) {
+        return;
+    }
+    
+    QJsonObject root;
+    
+    // Export name
+    root["name"] = name_edit_->text();
+    
+    // Export context
+    root["context"] = context_edit_->toPlainText();
+    
+    // Export advanced subcategories flag
+    root["enable_advanced_subcategories"] = advanced_checkbox_->isChecked();
+    
+    // Export mode
+    bool is_hierarchical = hierarchical_mode_radio_->isChecked();
+    root["use_hierarchical"] = is_hierarchical;
+    
+    if (is_hierarchical) {
+        // Export hierarchical tree
+        QJsonArray tree_array;
+        for (int i = 0; i < tree_widget_->topLevelItemCount(); ++i) {
+            auto* item = tree_widget_->topLevelItem(i);
+            if (item) {
+                tree_array.append(export_node_recursive(item));
+            }
+        }
+        root["tree"] = tree_array;
+    } else {
+        // Export shared mode
+        QJsonArray cats;
+        for (int i = 0; i < tree_widget_->topLevelItemCount(); ++i) {
+            auto* item = tree_widget_->topLevelItem(i);
+            if (item) {
+                cats.append(item->text(0));
+            }
+        }
+        root["categories"] = cats;
+        
+        QJsonArray subs;
+        for (const QString& sub : shared_subcategories_) {
+            subs.append(sub);
+        }
+        root["subcategories"] = subs;
+    }
+    
+    QJsonDocument doc(root);
+    
+    QFile file(file_name);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, tr("Export Error"),
+            tr("Failed to open file for writing: %1").arg(file.errorString()));
+        return;
+    }
+    
+    file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
+    
+    QMessageBox::information(this, tr("Export Successful"),
+        tr("Whitelist configuration exported to:\n%1").arg(file_name));
+}
+
+void WhitelistTreeEditor::import_node_recursive(QTreeWidgetItem* parent, const QJsonObject& node_obj)
+{
+    QString name = node_obj["name"].toString();
+    if (name.isEmpty()) return;
+    
+    QTreeWidgetItem* item;
+    if (parent) {
+        item = new QTreeWidgetItem(parent);
+    } else {
+        item = new QTreeWidgetItem(tree_widget_);
+    }
+    
+    item->setText(0, name);
+    item->setFlags(item->flags() | Qt::ItemIsEditable);
+    
+    // Determine depth for type label and icon
+    int depth = 0;
+    QTreeWidgetItem* temp = parent;
+    while (temp) {
+        depth++;
+        temp = temp->parent();
+    }
+    
+    if (depth == 0) {
+        item->setText(1, tr("Category"));
+        item->setData(0, Qt::UserRole, "category");
+        item->setIcon(0, style()->standardIcon(QStyle::SP_DirIcon));
+    } else if (depth == 1) {
+        item->setText(1, tr("Subcategory"));
+        item->setData(0, Qt::UserRole, "subcategory");
+        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+    } else {
+        item->setText(1, tr("Level %1").arg(depth + 1));
+        item->setData(0, Qt::UserRole, QString("level%1").arg(depth));
+        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
+    }
+    
+    // Recursively import children
+    if (node_obj.contains("children") && node_obj["children"].isArray()) {
+        QJsonArray children = node_obj["children"].toArray();
+        for (const QJsonValue& child_value : children) {
+            if (child_value.isObject()) {
+                import_node_recursive(item, child_value.toObject());
+            }
+        }
+    }
+}
+
+QJsonObject WhitelistTreeEditor::export_node_recursive(QTreeWidgetItem* item) const
+{
+    QJsonObject node_obj;
+    node_obj["name"] = item->text(0);
+    
+    // Export children if any
+    if (item->childCount() > 0) {
+        QJsonArray children;
+        for (int i = 0; i < item->childCount(); ++i) {
+            auto* child = item->child(i);
+            if (child) {
+                children.append(export_node_recursive(child));
+            }
+        }
+        node_obj["children"] = children;
+    }
+    
+    return node_obj;
 }

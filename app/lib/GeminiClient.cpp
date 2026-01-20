@@ -674,7 +674,13 @@ std::string GeminiClient::make_payload(const std::string& file_name,
     std::string prompt = "You are an intelligent file categorization assistant. "
         "Analyze the file name, extension, and context to understand what the file represents. "
         "Consider the purpose, content type, and intended use of the file.\n\n"
-        "IMPORTANT: If you are uncertain about the categorization (confidence < 70%), "
+        "IMPORTANT GUIDELINES:\n"
+        "1. Look at what the file name actually means in context\n"
+        "2. For example, 'serum.dll' is a VST plugin for music production, not just a DLL file\n"
+        "3. Consider the whitelist categories and subcategories when determining file meaning\n"
+        "4. Think about the real-world purpose: Is it a tool, library, media file, document, etc?\n"
+        "5. File extensions can be misleading - focus on the actual purpose and context\n\n"
+        "If you are uncertain about the categorization (confidence < 70%), "
         "respond with: UNCERTAIN : [filename]\n"
         "Otherwise, respond ONLY with: Category : Subcategory\n"
         "No explanations, no additional text.\n\n";
@@ -695,10 +701,15 @@ std::string GeminiClient::make_payload(const std::string& file_name,
     size_t dot_pos = file_name.find_last_of('.');
     if (dot_pos != std::string::npos && dot_pos < file_name.length() - 1) {
         std::string extension = file_name.substr(dot_pos + 1);
-        prompt += "\nAnalyze this file based on:\n";
-        prompt += "- What this file type (." + extension + ") is typically used for\n";
-        prompt += "- The semantic meaning of the filename\n";
-        prompt += "- Common purposes and applications for this file format\n";
+        prompt += "\nCRITICAL ANALYSIS INSTRUCTIONS:\n";
+        prompt += "1. File extension: ." + extension + "\n";
+        prompt += "2. What is the ACTUAL purpose of files with this name and extension?\n";
+        prompt += "3. Look beyond the extension - what does the filename indicate?\n";
+        prompt += "4. Examples of context-aware categorization:\n";
+        prompt += "   - 'serum.dll' -> Music Production : VST Plugins (not System : DLL Files)\n";
+        prompt += "   - 'dataset.csv' -> Data : Datasets (not Documents : Spreadsheets)\n";
+        prompt += "   - 'texture.png' -> Graphics : Textures (not Images : Photos)\n";
+        prompt += "5. Match to the most specific and contextually appropriate category\n";
     }
     
     part["text"] = prompt;
