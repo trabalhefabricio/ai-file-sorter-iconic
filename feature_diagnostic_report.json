@@ -1,0 +1,278 @@
+{
+  "timestamp": "2026-01-20T15:56:38.959036",
+  "repository": ".",
+  "total_features_tested": 5,
+  "total_tests": 40,
+  "total_passed": 25,
+  "total_failed": 15,
+  "pass_rate": 62.5,
+  "features": {
+    "Gemini API": {
+      "passed": 8,
+      "failed": 0,
+      "total": 8
+    },
+    "File Tinder": {
+      "passed": 7,
+      "failed": 1,
+      "total": 8
+    },
+    "Whitelist Editor": {
+      "passed": 6,
+      "failed": 2,
+      "total": 8
+    },
+    "Cache Manager": {
+      "passed": 0,
+      "failed": 8,
+      "total": 8
+    },
+    "Content-Based Sorting": {
+      "passed": 4,
+      "failed": 4,
+      "total": 8
+    }
+  },
+  "detailed_results": [
+    {
+      "feature": "Gemini API",
+      "test": "Implementation Files",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956569"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Rate Limiting Logic",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956765"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "State Persistence",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956830"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Circuit Breaker Pattern",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956886"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Progress Callback",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956935"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Timeout Management",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.956999"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Error Handling",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957066"
+    },
+    {
+      "feature": "Gemini API",
+      "test": "Thread Safety",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957103"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "Implementation Files",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957140"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "Arrow Key Navigation",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957222"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "File Preview System",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957465"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "Decision Tracking",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957526"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "Session Persistence",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957594"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "Database Integration",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957663"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "File Deletion Logic",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.957746"
+    },
+    {
+      "feature": "File Tinder",
+      "test": "UI Components",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957818"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Implementation Files",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957851"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Tree Structure",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957898"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Hierarchical Mode",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957940"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Shared Subcategories Mode",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.957981"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Add/Remove Operations",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958020"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Import/Export",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958077"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "Keyboard Shortcuts",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958130"
+    },
+    {
+      "feature": "Whitelist Editor",
+      "test": "CategoryNode Conversion",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958164"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Implementation Files",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958213"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Statistics Display",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958227"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Clear All Cache",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958240"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Clear Old Entries",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958252"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Database Optimization",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958265"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Real-time Refresh",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958277"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "Error Handling",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958291"
+    },
+    {
+      "feature": "Cache Manager",
+      "test": "UI Components",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958307"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "File Type Mappings",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958360"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Extension Detection",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958435"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Prompt Enhancement",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958526"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "VST Plugin Detection",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958611"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Config File Detection",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958711"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Source Code Detection",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958817"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Fallback Mechanism",
+      "passed": true,
+      "timestamp": "2026-01-20T15:56:38.958929"
+    },
+    {
+      "feature": "Content-Based Sorting",
+      "test": "Integration",
+      "passed": false,
+      "timestamp": "2026-01-20T15:56:38.958998"
+    }
+  ]
+}
