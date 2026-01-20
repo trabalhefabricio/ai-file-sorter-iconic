@@ -7,6 +7,8 @@
 #include <set>
 
 namespace {
+constexpr const char* SUBCATEGORY_KEY_PREFIX = "Subcategories_";
+
 // Changed from comma to semicolon as the primary separator
 std::vector<std::string> split_csv(const QString& value) {
     std::vector<std::string> out;
@@ -68,7 +70,7 @@ bool WhitelistStore::load()
         // Load hierarchical structure if present
         if (hierarchical) {
             for (const auto& category : cats) {
-                QString key = QString("Subcategories_%1").arg(QString::fromStdString(category));
+                QString key = QString(SUBCATEGORY_KEY_PREFIX) + QString::fromStdString(category);
                 auto cat_subs = split_csv(settings.value(key).toString());
                 entry.category_subcategory_map[category] = cat_subs;
             }
@@ -101,7 +103,7 @@ bool WhitelistStore::save() const
         // Save hierarchical structure if present
         if (pair.second.use_hierarchical) {
             for (const auto& [category, subs] : pair.second.category_subcategory_map) {
-                QString key = QString("Subcategories_%1").arg(QString::fromStdString(category));
+                QString key = QString(SUBCATEGORY_KEY_PREFIX) + QString::fromStdString(category);
                 settings.setValue(key, join_csv(subs));
             }
         }

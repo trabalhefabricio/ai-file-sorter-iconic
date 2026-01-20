@@ -3,7 +3,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
-#antml:parameter>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QGroupBox>
