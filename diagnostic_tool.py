@@ -33,7 +33,7 @@ class FeatureDiagnosticTool:
         self.test_feature_1_gemini_api()
         self.test_feature_2_file_tinder()
         self.test_feature_3_whitelist_editor()
-        self.test_feature_4_cache_manager()
+        # Cache Manager skipped - not needed per user request
         self.test_feature_5_content_sorting()
         
         return self.generate_report()
@@ -95,29 +95,12 @@ class FeatureDiagnosticTool:
         
         self.run_test_suite("Whitelist Editor", tests)
     
-    def test_feature_4_cache_manager(self):
-        """Feature #4: Cache Management Dialog"""
-        print("\n" + "=" * 80)
-        print("[FEATURE #4] Cache Management Dialog")
-        print("=" * 80)
-        
-        tests = [
-            ("Implementation Files", self.check_cache_files),
-            ("Statistics Display", self.check_cache_stats),
-            ("Clear All Cache", self.check_clear_all),
-            ("Clear Old Entries", self.check_clear_old),
-            ("Database Optimization", self.check_db_optimize),
-            ("Real-time Refresh", self.check_stats_refresh),
-            ("Error Handling", self.check_cache_errors),
-            ("UI Components", self.check_cache_ui),
-        ]
-        
-        self.run_test_suite("Cache Manager", tests)
+    # Cache Manager tests removed - feature not needed per user request
     
     def test_feature_5_content_sorting(self):
-        """Feature #5: Content-Based File Sorting"""
+        """Feature #4: Content-Based File Sorting"""
         print("\n" + "=" * 80)
-        print("[FEATURE #5] Content-Based File Sorting")
+        print("[FEATURE #4] Content-Based File Sorting")
         print("=" * 80)
         
         tests = [
@@ -289,7 +272,9 @@ class FeatureDiagnosticTool:
         if not cpp_file.exists():
             return False
         content = cpp_file.read_text()
-        return "on_execute_deletions" in content and "QFile::remove" in content
+        has_function = "on_execute_deletions" in content
+        has_remove = "QFile::remove" in content or ".remove()" in content
+        return has_function and has_remove
     
     def check_tinder_ui(self) -> bool:
         """Check UI components"""
@@ -365,67 +350,9 @@ class FeatureDiagnosticTool:
         return "CategoryNode" in content or "struct" in content
     
     # Cache Manager Tests
-    def check_cache_files(self) -> bool:
-        """Check if Cache Manager files exist"""
-        hpp = (self.app_path / "include" / "CacheManagerDialog.hpp").exists()
-        cpp = (self.app_path / "lib" / "CacheManagerDialog.cpp").exists()
-        return hpp and cpp
-    
-    def check_cache_stats(self) -> bool:
-        """Check statistics display"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "CacheStatistics" in content or "update_statistics" in content
-    
-    def check_clear_all(self) -> bool:
-        """Check clear all functionality"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "clear_all" in content.lower() and "confirmation" in content.lower()
-    
-    def check_clear_old(self) -> bool:
-        """Check clear old entries"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "clear_old" in content.lower() or "days" in content.lower()
-    
-    def check_db_optimize(self) -> bool:
-        """Check database optimization"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "optimize" in content.lower() and ("vacuum" in content.lower() or "VACUUM" in content)
-    
-    def check_stats_refresh(self) -> bool:
-        """Check real-time statistics refresh"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "refresh" in content.lower() or "update_statistics" in content
-    
-    def check_cache_errors(self) -> bool:
-        """Check error handling"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "QMessageBox" in content and ("warning" in content.lower() or "error" in content.lower())
-    
-    def check_cache_ui(self) -> bool:
-        """Check UI components"""
-        cpp_file = self.app_path / "lib" / "CacheManagerDialog.cpp"
-        if not cpp_file.exists():
-            return False
-        content = cpp_file.read_text()
-        return "QPushButton" in content and "QLabel" in content
+    # Cache Manager tests removed - feature not needed per user request
+    # def check_cache_files, check_cache_stats, check_clear_all, check_clear_old
+    # def check_db_optimize, check_stats_refresh, check_cache_errors, check_cache_ui
     
     # Content-Based Sorting Tests
     def check_file_type_mappings(self) -> bool:
