@@ -49,6 +49,17 @@ public:
     bool clear_directory_categorizations(const std::string& dir_path);
     std::optional<bool> get_directory_categorization_style(const std::string& dir_path) const;
 
+    // File Tinder methods
+    struct FileTinderDecision {
+        std::string folder_path;
+        std::string file_path;
+        std::string decision;  // keep, delete, ignore, pending
+        std::string timestamp;
+    };
+    bool save_tinder_decision(const FileTinderDecision& decision);
+    std::vector<FileTinderDecision> get_tinder_decisions(const std::string& folder_path);
+    bool clear_tinder_session(const std::string& folder_path);
+
 private:
     struct TaxonomyEntry {
         int id;
