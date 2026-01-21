@@ -5,6 +5,7 @@
 #include "Utils.hpp"
 #include "LLMSelectionDialog.hpp"
 #include "AppException.hpp"
+#include "DialogUtils.hpp"
 #include <app_version.hpp>
 
 #include <QApplication>
@@ -66,6 +67,38 @@ bool initialize_loggers()
             REPORT_STARTUP_ERROR("LOGGER_INIT_FAILED", e.what());
         } catch (...) {
             // Ignore if error reporter also fails
+        }
+        
+        // Create a basic fallback error file even if ErrorReporter fails
+        try {
+            std::string fallback_dir;
+            std::string fallback_file;
+            
+            try {
+                fallback_dir = Logger::get_log_directory();
+                fallback_file = fallback_dir + "/STARTUP_ERROR.txt";
+            } catch (...) {
+                // If we can't even get log directory, try a temp location
+                fallback_dir = ".";
+                fallback_file = "./STARTUP_ERROR.txt";
+            }
+            
+            std::ofstream out(fallback_file);
+            if (out.is_open()) {
+                out << "CRITICAL STARTUP ERROR\n";
+                out << "======================\n\n";
+                out << "Failed to initialize logging system.\n\n";
+                out << "Error: " << e.what() << "\n\n";
+                out << "Please check:\n";
+                out << "  - Disk space availability\n";
+                out << "  - Write permissions in application directory\n";
+                out << "  - Logs directory exists and is writable\n\n";
+                out << "Log directory: " << fallback_dir << "\n";
+                out << "Application version: " << APP_VERSION.to_string() << "\n";
+                out.close();
+            }
+        } catch (...) {
+            // If even this fails, there's nothing more we can do
         }
         
         return false;
@@ -322,17 +355,46 @@ int main(int argc, char **argv) {
 #endif
 
     if (!initialize_loggers()) {
+        const std::string error_msg = 
+            "Failed to initialize logging system.\n\n"
+            "The application cannot start without logging.\n\n"
+            "Please check:\n"
+            "  - Disk space availability\n"
+            "  - Write permissions in application directory\n"
+            "  - Logs directory exists and is writable";
+        
+        // Try to find the fallback error file
+        std::string fallback_file;
+        try {
+            fallback_file = Logger::get_log_directory() + "/STARTUP_ERROR.txt";
+        } catch (...) {
+            // If we can't get log directory, try current directory
+            try {
+                fallback_file = "./STARTUP_ERROR.txt";
+            } catch (...) {
+                // If even this fails, leave it empty
+            }
+        }
+        
 #ifdef _WIN32
-        MessageBoxW(NULL,
-            L"Failed to initialize logging system.\n\n"
-            L"The application cannot start without logging.\n\n"
-            L"Please check:\n"
-            L"  - Disk space availability\n"
-            L"  - Write permissions in application directory\n"
-            L"  - Logs directory exists and is writable\n\n"
-            L"See console output for details.",
-            L"Initialization Error",
-            MB_ICONERROR | MB_OK);
+        if (QApplication::instance()) {
+            // Qt is available (unlikely at this point, but check anyway)
+            DialogUtils::show_startup_error_dialog(nullptr, error_msg, fallback_file);
+        } else {
+            // Fallback to Windows MessageBox
+            MessageBoxW(NULL,
+                L"Failed to initialize logging system.\n\n"
+                L"The application cannot start without logging.\n\n"
+                L"Please check:\n"
+                L"  - Disk space availability\n"
+                L"  - Write permissions in application directory\n"
+                L"  - Logs directory exists and is writable\n\n"
+                L"See console output for details.",
+                L"Initialization Error",
+                MB_ICONERROR | MB_OK);
+        }
+#else
+        std::fprintf(stderr, "%s\n", error_msg.c_str());
 #endif
         return EXIT_FAILURE;
     }
@@ -352,12 +414,27 @@ int main(int argc, char **argv) {
             logger->critical("Application Error [Code: {}]: {}", 
                            static_cast<int>(ex.get_error_code()), ex.what());
         }
+        
+        // Get error report file if available
+        std::string error_report_file = ErrorReporter::get_last_error_report_path();
+        
+        // Build error message
+        const std::string error_msg = 
+            "Application Error: " + std::string(ex.what()) +
+            "\n\nError Code: " + std::to_string(static_cast<int>(ex.get_error_code()));
+        
 #ifdef _WIN32
-        std::wstring errorMsg = L"Application Error: ";
-        errorMsg += QString::fromStdString(ex.what()).toStdWString();
-        errorMsg += L"\n\nError Code: ";
-        errorMsg += std::to_wstring(static_cast<int>(ex.get_error_code()));
-        MessageBoxW(NULL, errorMsg.c_str(), L"Application Error", MB_ICONERROR | MB_OK);
+        if (QApplication::instance()) {
+            // Qt is available, use our enhanced dialog
+            DialogUtils::show_startup_error_dialog(nullptr, error_msg, error_report_file);
+        } else {
+            // Fallback to Windows MessageBox
+            std::wstring errorMsg = L"Application Error: ";
+            errorMsg += QString::fromStdString(ex.what()).toStdWString();
+            errorMsg += L"\n\nError Code: ";
+            errorMsg += std::to_wstring(static_cast<int>(ex.get_error_code()));
+            MessageBoxW(NULL, errorMsg.c_str(), L"Application Error", MB_ICONERROR | MB_OK);
+        }
 #else
         std::fprintf(stderr, "Application Error [Code: %d]: %s\n", 
                     static_cast<int>(ex.get_error_code()), ex.what());
@@ -368,11 +445,26 @@ int main(int argc, char **argv) {
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->critical("Runtime Error: {}", ex.what());
         }
+        
+        // Get error report file if available
+        std::string error_report_file = ErrorReporter::get_last_error_report_path();
+        
+        // Build error message
+        const std::string error_msg = 
+            "Runtime Error: " + std::string(ex.what()) +
+            "\n\nThe application encountered an unexpected error and must exit.";
+        
 #ifdef _WIN32
-        std::wstring errorMsg = L"Runtime Error: ";
-        errorMsg += QString::fromStdString(ex.what()).toStdWString();
-        errorMsg += L"\n\nThe application encountered an unexpected error and must exit.";
-        MessageBoxW(NULL, errorMsg.c_str(), L"Runtime Error", MB_ICONERROR | MB_OK);
+        if (QApplication::instance()) {
+            // Qt is available, use our enhanced dialog
+            DialogUtils::show_startup_error_dialog(nullptr, error_msg, error_report_file);
+        } else {
+            // Fallback to Windows MessageBox
+            std::wstring errorMsg = L"Runtime Error: ";
+            errorMsg += QString::fromStdString(ex.what()).toStdWString();
+            errorMsg += L"\n\nThe application encountered an unexpected error and must exit.";
+            MessageBoxW(NULL, errorMsg.c_str(), L"Runtime Error", MB_ICONERROR | MB_OK);
+        }
 #else
         std::fprintf(stderr, "Runtime Error: %s\n", ex.what());
 #endif
@@ -382,12 +474,28 @@ int main(int argc, char **argv) {
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->critical("Unexpected Error: {}", ex.what());
         }
+        
+        // Get error report file if available
+        std::string error_report_file = ErrorReporter::get_last_error_report_path();
+        
+        // Build error message
+        const std::string error_msg = 
+            "Unexpected Error: " + std::string(ex.what()) +
+            "\n\nThe application encountered a critical error and must exit.\n"
+            "Please check the log files for details.";
+        
 #ifdef _WIN32
-        std::wstring errorMsg = L"Unexpected Error: ";
-        errorMsg += QString::fromStdString(ex.what()).toStdWString();
-        errorMsg += L"\n\nThe application encountered a critical error and must exit.\n";
-        errorMsg += L"Please check the log files for details.";
-        MessageBoxW(NULL, errorMsg.c_str(), L"Critical Error", MB_ICONERROR | MB_OK);
+        if (QApplication::instance()) {
+            // Qt is available, use our enhanced dialog
+            DialogUtils::show_startup_error_dialog(nullptr, error_msg, error_report_file);
+        } else {
+            // Fallback to Windows MessageBox
+            std::wstring errorMsg = L"Unexpected Error: ";
+            errorMsg += QString::fromStdString(ex.what()).toStdWString();
+            errorMsg += L"\n\nThe application encountered a critical error and must exit.\n";
+            errorMsg += L"Please check the log files for details.";
+            MessageBoxW(NULL, errorMsg.c_str(), L"Critical Error", MB_ICONERROR | MB_OK);
+        }
 #else
         std::fprintf(stderr, "Unexpected Error: %s\n", ex.what());
 #endif
@@ -397,13 +505,29 @@ int main(int argc, char **argv) {
         if (auto logger = Logger::get_logger("core_logger")) {
             logger->critical("Unknown critical error occurred during application startup");
         }
+        
+        // Get error report file if available
+        std::string error_report_file = ErrorReporter::get_last_error_report_path();
+        
+        // Build error message
+        const std::string error_msg = 
+            "An unknown critical error occurred.\n\n"
+            "The application must exit.\n"
+            "Please check the log files for details.";
+        
 #ifdef _WIN32
-        MessageBoxW(NULL,
-            L"An unknown critical error occurred.\n\n"
-            L"The application must exit.\n"
-            L"Please check the log files for details.",
-            L"Critical Error",
-            MB_ICONERROR | MB_OK);
+        if (QApplication::instance()) {
+            // Qt is available, use our enhanced dialog
+            DialogUtils::show_startup_error_dialog(nullptr, error_msg, error_report_file);
+        } else {
+            // Fallback to Windows MessageBox
+            MessageBoxW(NULL,
+                L"An unknown critical error occurred.\n\n"
+                L"The application must exit.\n"
+                L"Please check the log files for details.",
+                L"Critical Error",
+                MB_ICONERROR | MB_OK);
+        }
 #else
         std::fprintf(stderr, "Unknown critical error occurred\n");
 #endif

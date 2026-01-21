@@ -29,6 +29,7 @@ std::string ErrorReporter::app_version_;
 std::string ErrorReporter::log_directory_;
 std::shared_ptr<spdlog::logger> ErrorReporter::error_logger_;
 std::string ErrorReporter::last_error_id_;
+std::string ErrorReporter::last_error_report_path_;
 
 void ErrorReporter::initialize(const std::string& app_version,
                                const std::string& log_directory) {
@@ -126,6 +127,9 @@ std::string ErrorReporter::report_quick(Category category,
     if (copilot_out.is_open()) {
         copilot_out << copilot_msg;
         copilot_out.close();
+        
+        // Track the last error report file path
+        last_error_report_path_ = copilot_file;
         
         if (error_logger_) {
             error_logger_->info("Copilot-friendly error message saved to: {}", copilot_file);
@@ -611,4 +615,8 @@ std::string ErrorReporter::generate_copilot_message(const ErrorContext& context,
     msg << "I'm using AI File Sorter on Windows and I'm comfortable following step-by-step instructions.\n";
     
     return msg.str();
+}
+
+std::string ErrorReporter::get_last_error_report_path() {
+    return last_error_report_path_;
 }

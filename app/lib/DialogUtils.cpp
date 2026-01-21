@@ -9,6 +9,12 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QFileInfo>
+#include <QDir>
 
 void DialogUtils::show_error_dialog(QWidget* parent, const std::string& message)
 {
@@ -148,5 +154,115 @@ void DialogUtils::show_info_dialog(QWidget* parent, const std::string& title, co
     if (msg_box.clickedButton() == copy_button) {
         QClipboard* clipboard = QApplication::clipboard();
         clipboard->setText(QString::fromStdString(message));
+    }
+}
+
+void DialogUtils::show_startup_error_dialog(QWidget* parent, 
+                                           const std::string& error_message,
+                                           const std::string& error_report_file)
+{
+    QMessageBox msg_box(parent);
+    msg_box.setIcon(QMessageBox::Critical);
+    msg_box.setWindowTitle(QObject::tr("Startup Error"));
+    
+    // Build the message
+    QString full_message = QString::fromStdString(error_message);
+    
+    // Add information about error report file if provided
+    if (!error_report_file.empty()) {
+        QFileInfo file_info(QString::fromStdString(error_report_file));
+        if (file_info.exists()) {
+            full_message.append(
+                QString("\n\n%1\n%2\n\n%3\n%4\n%5\n%6")
+                .arg(QObject::tr("📋 Detailed Error Report:"))
+                .arg(file_info.absoluteFilePath())
+                .arg(QObject::tr("💡 To get help:"))
+                .arg(QObject::tr("1. Click 'Copy Error Report' below"))
+                .arg(QObject::tr("2. Paste into GitHub Copilot Chat or GitHub issue"))
+                .arg(QObject::tr("3. Ask: \"How do I fix this error?\""))
+            );
+        } else {
+            // File doesn't exist yet, just tell them where logs are
+            QDir log_dir = file_info.dir();
+            full_message.append(
+                QString("\n\n%1\n%2\n\n%3")
+                .arg(QObject::tr("📋 Logs directory:"))
+                .arg(log_dir.absolutePath())
+                .arg(QObject::tr("💡 Check the logs directory for detailed error information."))
+            );
+        }
+    } else {
+        full_message.append(
+            QString("\n\n%1\n%2\n%3\n%4")
+            .arg(QObject::tr("💡 To report this issue:"))
+            .arg(QObject::tr("1. Click 'Copy Error Info' below"))
+            .arg(QObject::tr("2. Paste into GitHub Copilot Chat or create a GitHub issue"))
+            .arg(QObject::tr("3. Include any additional context about what you were doing"))
+        );
+    }
+    
+    msg_box.setText(full_message);
+    
+    // Make text selectable for copying
+    msg_box.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+    
+    // Add buttons
+    QPushButton* copy_report_button = nullptr;
+    QPushButton* open_logs_button = nullptr;
+    
+    if (!error_report_file.empty()) {
+        QFileInfo file_info(QString::fromStdString(error_report_file));
+        if (file_info.exists()) {
+            // Add "Copy Error Report" button to copy the entire error report file
+            copy_report_button = msg_box.addButton(QObject::tr("Copy Error Report"), QMessageBox::ActionRole);
+            
+            // Add "Open Logs Folder" button
+            open_logs_button = msg_box.addButton(QObject::tr("Open Logs Folder"), QMessageBox::ActionRole);
+        }
+    }
+    
+    // Add "Copy Error Info" button to copy just the error message
+    QPushButton* copy_message_button = msg_box.addButton(QObject::tr("Copy Error Info"), QMessageBox::ActionRole);
+    
+    // Add standard OK button
+    msg_box.addButton(QMessageBox::Ok);
+    
+    msg_box.exec();
+    
+    QAbstractButton* clicked = msg_box.clickedButton();
+    
+    // Handle button clicks
+    if (clicked == copy_report_button && copy_report_button) {
+        // Read and copy the entire error report file
+        QFile file(QString::fromStdString(error_report_file));
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            QString file_content = in.readAll();
+            file.close();
+            
+            QClipboard* clipboard = QApplication::clipboard();
+            clipboard->setText(file_content);
+            
+            // Show confirmation
+            QMessageBox::information(parent, QObject::tr("Copied"),
+                QObject::tr("Error report has been copied to clipboard.\n\n"
+                           "Paste it into GitHub Copilot Chat or a GitHub issue for help."),
+                QMessageBox::Ok);
+        } else {
+            QMessageBox::warning(parent, QObject::tr("Error"),
+                QObject::tr("Could not read error report file."));
+        }
+    } else if (clicked == open_logs_button && open_logs_button) {
+        // Open the logs folder in file explorer
+        QFileInfo file_info(QString::fromStdString(error_report_file));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(file_info.dir().absolutePath()));
+    } else if (clicked == copy_message_button) {
+        // Copy just the error message
+        QClipboard* clipboard = QApplication::clipboard();
+        clipboard->setText(full_message);
+        
+        // Show brief confirmation
+        QMessageBox::information(parent, QObject::tr("Copied"),
+            QObject::tr("Error information has been copied to clipboard."));
     }
 }

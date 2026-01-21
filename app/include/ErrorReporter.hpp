@@ -162,12 +162,23 @@ public:
      * @return Code snippet with line numbers
      */
     static std::string get_code_snippet(const std::string& file_path, int line_number, int context_lines = 5);
+    
+    /**
+     * @brief Get the path to the last generated error report file
+     * 
+     * Returns the path to the most recently generated COPILOT_ERROR_*.md file.
+     * This can be used to direct users to the error report for troubleshooting.
+     * 
+     * @return Path to the last error report file, or empty string if none exists
+     */
+    static std::string get_last_error_report_path();
 
 private:
     static std::string app_version_;
     static std::string log_directory_;
     static std::shared_ptr<spdlog::logger> error_logger_;
     static std::string last_error_id_;
+    static std::string last_error_report_path_;  // Track the last error report file path
 
     static std::string generate_error_id();
     static std::string get_os_version();
