@@ -15,6 +15,7 @@
 #include <QSysInfo>
 #include <QDateTime>
 #include <QFont>
+#include <QFontDatabase>
 
 #include <filesystem>
 #include <sstream>
@@ -72,7 +73,8 @@ void StartupErrorDialog::setup_ui()
     text_display_ = new QTextEdit(this);
     text_display_->setReadOnly(true);
     text_display_->setPlainText(generate_error_report());
-    text_display_->setFont(QFont("Courier New", 9));
+    // Use system's monospace font for better cross-platform compatibility
+    text_display_->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     main_layout->addWidget(text_display_);
 
     // Action buttons
@@ -113,7 +115,7 @@ QString StartupErrorDialog::generate_error_report() const
 {
     std::ostringstream report;
     
-    report << "=== AI File SORTER STARTUP ERROR REPORT ===" << std::endl;
+    report << "=== AI File Sorter STARTUP ERROR REPORT ===" << std::endl;
     report << "Timestamp: " << QDateTime::currentDateTime().toString(Qt::ISODate).toStdString() << std::endl;
     report << std::endl;
     

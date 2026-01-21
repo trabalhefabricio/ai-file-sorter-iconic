@@ -58,6 +58,14 @@ bool initialize_loggers()
 
 namespace {
 
+// Helper to get core logger safely
+inline std::shared_ptr<spdlog::logger> get_core_logger() {
+    return Logger::get_logger("core_logger");
+}
+
+// Common error message constants
+constexpr const char* ERR_MAINAPP_INIT_FAILED = "Failed to initialize main application window";
+
 struct ParsedArguments {
     bool development_mode{false};
     bool console_log{false};
@@ -283,14 +291,14 @@ PreFlightCheck validate_startup_environment()
                 std::filesystem::create_directories(log_path);
             } catch (const std::exception& ex) {
                 // Log directory creation failure is not fatal, but worth noting
-                if (auto logger = Logger::get_logger("core_logger")) {
+                if (auto logger = get_core_logger()) {
                     logger->warn("Could not create log directory: {}", ex.what());
                 }
             }
         }
     } catch (const std::exception& ex) {
         // Log directory issues are not fatal
-        if (auto logger = Logger::get_logger("core_logger")) {
+        if (auto logger = get_core_logger()) {
             logger->warn("Log directory validation issue: {}", ex.what());
         }
     }
@@ -312,7 +320,7 @@ int run_application(const ParsedArguments& parsed_args)
         // Run pre-flight checks before attempting to start the application
         PreFlightCheck preflight = validate_startup_environment();
         if (!preflight.success) {
-            if (auto logger = Logger::get_logger("core_logger")) {
+            if (auto logger = get_core_logger()) {
                 logger->critical("Pre-flight check failed: {}", preflight.details);
             }
             StartupErrorDialog::show_startup_error(preflight.error_message, preflight.details);
@@ -333,7 +341,7 @@ int run_application(const ParsedArguments& parsed_args)
             settings.load();
         } catch (const std::exception& ex) {
             std::string error_msg = "Failed to load application settings";
-            if (auto logger = Logger::get_logger("core_logger")) {
+            if (auto logger = get_core_logger()) {
                 logger->critical("Settings load failed: {}", ex.what());
             }
             StartupErrorDialog::show_startup_error(error_msg, ex.what());
@@ -352,19 +360,17 @@ int run_application(const ParsedArguments& parsed_args)
         try {
             main_app = std::make_unique<MainApp>(settings, parsed_args.development_mode);
         } catch (const std::exception& ex) {
-            std::string error_msg = "Failed to initialize main application window";
-            if (auto logger = Logger::get_logger("core_logger")) {
+            if (auto logger = get_core_logger()) {
                 logger->critical("MainApp initialization failed: {}", ex.what());
             }
-            StartupErrorDialog::show_startup_error(error_msg, ex.what());
+            StartupErrorDialog::show_startup_error(ERR_MAINAPP_INIT_FAILED, ex.what());
             return EXIT_FAILURE;
         } catch (...) {
-            std::string error_msg = "Failed to initialize main application window";
             std::string details = "Unknown error occurred during initialization";
-            if (auto logger = Logger::get_logger("core_logger")) {
+            if (auto logger = get_core_logger()) {
                 logger->critical("MainApp initialization failed: unknown error");
             }
-            StartupErrorDialog::show_startup_error(error_msg, details);
+            StartupErrorDialog::show_startup_error(ERR_MAINAPP_INIT_FAILED, details);
             return EXIT_FAILURE;
         }
 
@@ -377,7 +383,7 @@ int run_application(const ParsedArguments& parsed_args)
 
     } catch (const std::exception& ex) {
         std::string error_msg = "Critical startup error";
-        if (auto logger = Logger::get_logger("core_logger")) {
+        if (auto logger = get_core_logger()) {
             logger->critical("Critical startup error: {}", ex.what());
         }
         StartupErrorDialog::show_startup_error(error_msg, ex.what());
@@ -385,7 +391,7 @@ int run_application(const ParsedArguments& parsed_args)
     } catch (...) {
         std::string error_msg = "Critical startup error";
         std::string details = "Unknown exception during application startup";
-        if (auto logger = Logger::get_logger("core_logger")) {
+        if (auto logger = get_core_logger()) {
             logger->critical("Critical startup error: unknown exception");
         }
         StartupErrorDialog::show_startup_error(error_msg, details);
@@ -441,7 +447,7 @@ int main(int argc, char **argv) {
         return run_application(parsed);
     } catch (const std::exception& ex) {
         // Log the critical error
-        if (auto logger = Logger::get_logger("core_logger")) {
+        if (auto logger = get_core_logger()) {
             logger->critical("Unhandled exception in main: {}", ex.what());
         } else {
             std::fprintf(stderr, "FATAL ERROR: %s\n", ex.what());
@@ -460,7 +466,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     } catch (...) {
         // Unknown exception
-        if (auto logger = Logger::get_logger("core_logger")) {
+        if (auto logger = get_core_logger()) {
             logger->critical("Unhandled unknown exception in main");
         } else {
             std::fprintf(stderr, "FATAL ERROR: Unknown exception\n");

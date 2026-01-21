@@ -100,7 +100,7 @@ QString ErrorHandler::get_log_location_message()
 {
     try {
         std::string log_dir = Logger::get_log_directory();
-        return QObject::tr("📁 Log files location:\n%1\n\n"
+        return QObject::tr("Log files location:\n%1\n\n"
                           "Check the log files for detailed error information.")
             .arg(QString::fromStdString(log_dir));
     } catch (...) {
