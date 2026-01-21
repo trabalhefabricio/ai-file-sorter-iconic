@@ -54,9 +54,16 @@ bool WhitelistStore::load()
         settings.beginGroup(group);
         const auto cats = split_csv(settings.value("Categories").toString());
         const auto subs = split_csv(settings.value("Subcategories").toString());
-        const auto context = settings.value("Context", "").toString().toStdString();
-        const bool advanced = settings.value("AdvancedSubcategories", false).toBool();
-        const bool hierarchical = settings.value("UseHierarchical", false).toBool();
+        
+        // Qt 6: QSettings::value() only takes one argument, handle defaults manually
+        QVariant contextVar = settings.value("Context");
+        const auto context = contextVar.isNull() ? "" : contextVar.toString().toStdString();
+        
+        QVariant advancedVar = settings.value("AdvancedSubcategories");
+        const bool advanced = advancedVar.isNull() ? false : advancedVar.toBool();
+        
+        QVariant hierarchicalVar = settings.value("UseHierarchical");
+        const bool hierarchical = hierarchicalVar.isNull() ? false : hierarchicalVar.toBool();
         
         WhitelistEntry entry;
         entry.categories = cats;
