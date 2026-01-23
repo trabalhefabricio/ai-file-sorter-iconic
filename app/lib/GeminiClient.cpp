@@ -231,7 +231,7 @@ private:
         }
         
         // BUG FIX #1: Capture by move to avoid dangling references (states_copy is non-copyable)
-        save_thread_ = std::thread([this, path_copy = std::move(path_copy), states_copy = std::move(states_copy)]() mutable {
+        save_thread_ = std::thread([this, path_copy = std::move(path_copy), states_copy = std::move(states_copy)]() {
             std::this_thread::sleep_for(250ms);
             
             // Perform save with copied data
