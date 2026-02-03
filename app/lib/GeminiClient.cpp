@@ -111,17 +111,26 @@ struct ModelState {
     ModelState() = default;
     
     // Custom copy constructor: copies all fields except mutex (mutex is non-copyable)
-    ModelState(const ModelState& other)
-        : tokens(other.tokens), capacity(other.capacity), refill_per_sec(other.refill_per_sec),
-          last_refill_ms(other.last_refill_ms), retry_after_until_ms(other.retry_after_until_ms),
-          ewma_ms(other.ewma_ms), consecutive_failures(other.consecutive_failures),
-          circuit_open_until_ms(other.circuit_open_until_ms), last_timeout_ms(other.last_timeout_ms),
-          timeout_extensions(other.timeout_extensions)
-    {}
+    // Locks source mutex for thread-safe reading
+    ModelState(const ModelState& other) {
+        std::lock_guard<std::mutex> lock(other.state_mutex);
+        tokens = other.tokens;
+        capacity = other.capacity;
+        refill_per_sec = other.refill_per_sec;
+        last_refill_ms = other.last_refill_ms;
+        retry_after_until_ms = other.retry_after_until_ms;
+        ewma_ms = other.ewma_ms;
+        consecutive_failures = other.consecutive_failures;
+        circuit_open_until_ms = other.circuit_open_until_ms;
+        last_timeout_ms = other.last_timeout_ms;
+        timeout_extensions = other.timeout_extensions;
+    }
     
     // Custom copy assignment operator: copies all fields except mutex
+    // Uses std::scoped_lock with deadlock prevention for thread safety
     ModelState& operator=(const ModelState& other) {
         if (this != &other) {
+            std::scoped_lock lock(state_mutex, other.state_mutex);
             tokens = other.tokens;
             capacity = other.capacity;
             refill_per_sec = other.refill_per_sec;
@@ -143,7 +152,9 @@ struct ModelState {
 };
 
 // Helper function to copy ModelState data fields without copying the mutex
+// Uses std::scoped_lock with deadlock prevention for thread safety
 inline void copy_state_data(const ModelState& src, ModelState& dest) {
+    std::scoped_lock lock(src.state_mutex, dest.state_mutex);
     dest.tokens = src.tokens;
     dest.capacity = src.capacity;
     dest.refill_per_sec = src.refill_per_sec;
