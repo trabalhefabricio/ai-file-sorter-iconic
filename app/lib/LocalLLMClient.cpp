@@ -6,7 +6,6 @@
 #include "llama.h"
 #include "gguf.h"
 #include "ggml-backend.h"
-#include "ggml-backend.h"
 #include <string>
 #include <vector>
 #include <cctype>
@@ -27,7 +26,6 @@
 #include <fstream>
 #include <limits>
 #include <string_view>
-#include <string>
 #include <array>
 
 #if defined(__APPLE__)
