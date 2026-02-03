@@ -1298,9 +1298,10 @@ int DatabaseManager::clear_cache_older_than(int days) {
     db_log(spdlog::level::info, "Clearing cache entries older than {} days...", days);
 
     // SQLite date calculation - delete entries older than N days
+    // Use concatenation in SQL for proper modifier format
     const char* sql = R"(
         DELETE FROM file_categorization 
-        WHERE created_at < datetime('now', ? || ' days');
+        WHERE created_at < datetime('now', '-' || ? || ' days');
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -1309,8 +1310,8 @@ int DatabaseManager::clear_cache_older_than(int days) {
         return -1;
     }
 
-    std::string days_modifier = "-" + std::to_string(days);
-    sqlite3_bind_text(stmt, 1, days_modifier.c_str(), -1, SQLITE_TRANSIENT);
+    // Bind only the number of days, concatenation is done in SQL
+    sqlite3_bind_int(stmt, 1, days);
 
     int deleted_count = 0;
     if (sqlite3_step(stmt) == SQLITE_DONE) {

@@ -10,6 +10,13 @@
 #include <QFileInfo>
 #include <QStyle>
 
+namespace {
+// File size formatting constants
+constexpr int64_t kBytesPerKB = 1024LL;
+constexpr int64_t kBytesPerMB = 1024LL * kBytesPerKB;
+constexpr int64_t kBytesPerGB = 1024LL * kBytesPerMB;
+} // namespace
+
 CacheManagerDialog::CacheManagerDialog(DatabaseManager& db, QWidget* parent)
     : QDialog(parent), db_(db) {
     
@@ -266,24 +273,20 @@ void CacheManagerDialog::on_optimize_database() {
 }
 
 QString CacheManagerDialog::format_file_size(int64_t bytes) const {
-    const int64_t KB = 1024LL;
-    const int64_t MB = 1024LL * KB;
-    const int64_t GB = 1024LL * MB;
-
     if (bytes < 0) {
         return QString("0 bytes");
     }
 
-    if (bytes >= GB) {
-        double gb_value = static_cast<double>(bytes) / static_cast<double>(GB);
+    if (bytes >= kBytesPerGB) {
+        double gb_value = static_cast<double>(bytes) / static_cast<double>(kBytesPerGB);
         return QString("%1 GB").arg(gb_value, 0, 'f', 2);
     }
-    if (bytes >= MB) {
-        double mb_value = static_cast<double>(bytes) / static_cast<double>(MB);
+    if (bytes >= kBytesPerMB) {
+        double mb_value = static_cast<double>(bytes) / static_cast<double>(kBytesPerMB);
         return QString("%1 MB").arg(mb_value, 0, 'f', 2);
     }
-    if (bytes >= KB) {
-        double kb_value = static_cast<double>(bytes) / static_cast<double>(KB);
+    if (bytes >= kBytesPerKB) {
+        double kb_value = static_cast<double>(bytes) / static_cast<double>(kBytesPerKB);
         return QString("%1 KB").arg(kb_value, 0, 'f', 1);
     }
 
