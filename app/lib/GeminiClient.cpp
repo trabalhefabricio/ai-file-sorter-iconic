@@ -111,7 +111,7 @@ struct ModelState {
     ModelState() = default;
     
     // Custom copy constructor: copies all fields except mutex (mutex is non-copyable)
-    // Locks source mutex for thread-safe reading
+    // Only locks source mutex since dest is newly constructed and not yet accessible by other threads
     ModelState(const ModelState& other) {
         std::lock_guard<std::mutex> lock(other.state_mutex);
         tokens = other.tokens;
