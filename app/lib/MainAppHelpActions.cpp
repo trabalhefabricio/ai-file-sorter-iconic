@@ -97,7 +97,7 @@ void MainAppHelpActions::show_agpl_info(QWidget* parent)
 {
     QDialog dialog(parent);
     dialog.setWindowTitle(QObject::tr("About the AGPL License"));
-    dialog.resize(ui::dimensions::kCreditsDialogWidth, ui::dimensions::kCreditsDialogHeight);
+    dialog.resize(ui::dimensions::kLicenseDialogWidth, ui::dimensions::kLicenseDialogHeight);
 
     auto* layout = new QVBoxLayout(&dialog);
 

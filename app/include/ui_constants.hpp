@@ -41,8 +41,8 @@ namespace dimensions {
     constexpr int kAboutDialogWidth = 600;
     constexpr int kAboutDialogHeight = 420;
     
-    constexpr int kCreditsDialogWidth = 520;
-    constexpr int kCreditsDialogHeight = 320;
+    constexpr int kLicenseDialogWidth = 520;
+    constexpr int kLicenseDialogHeight = 320;
     
     constexpr int kStartupErrorMinWidth = 700;
     constexpr int kStartupErrorMinHeight = 500;
