@@ -1,5 +1,6 @@
 #include "FileTinderDialog.hpp"
 #include "Logger.hpp"
+#include "ui_constants.hpp"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileInfo>
@@ -23,7 +24,7 @@ FileTinderDialog::FileTinderDialog(const std::string& folder_path,
     : QDialog(parent), db_(db), folder_path_(folder_path) {
     
     setWindowTitle(tr("File Tinder - Quick Cleanup"));
-    setMinimumSize(800, 600);
+    setMinimumSize(ui::dimensions::kFileTinderMinWidth, ui::dimensions::kFileTinderMinHeight);
     
     setup_ui();
     load_files();

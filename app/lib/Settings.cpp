@@ -315,9 +315,13 @@ std::string Settings::define_config_path()
         return (std::filesystem::path(appDataPath) / AppName / "config.ini").string();
     }
 #elif defined(__APPLE__)
-    return (std::filesystem::path(getenv("HOME")) / "Library" / "Application Support" / AppName / "config.ini").string();
+    if (const char* home = std::getenv("HOME")) {
+        return (std::filesystem::path(home) / "Library" / "Application Support" / AppName / "config.ini").string();
+    }
 #else
-    return (std::filesystem::path(getenv("HOME")) / ".config" / AppName / "config.ini").string();
+    if (const char* home = std::getenv("HOME")) {
+        return (std::filesystem::path(home) / ".config" / AppName / "config.ini").string();
+    }
 #endif
     return "config.ini";
 }

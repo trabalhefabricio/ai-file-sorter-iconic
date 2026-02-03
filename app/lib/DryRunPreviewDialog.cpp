@@ -1,4 +1,5 @@
 #include "DryRunPreviewDialog.hpp"
+#include "ui_constants.hpp"
 
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -10,7 +11,7 @@ DryRunPreviewDialog::DryRunPreviewDialog(const std::vector<Entry>& entries, QWid
     : QDialog(parent)
 {
     setWindowTitle(tr("Dry run preview"));
-    resize(900, 480);
+    resize(ui::dimensions::kDryRunPreviewWidth, ui::dimensions::kDryRunPreviewHeight);
     setup_ui(entries);
 }
 

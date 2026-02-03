@@ -1,4 +1,5 @@
 #include "WhitelistTreeEditor.hpp"
+#include "ui_constants.hpp"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -20,7 +21,7 @@ WhitelistTreeEditor::WhitelistTreeEditor(const QString& name, WhitelistEntry& en
     : QDialog(parent)
 {
     setWindowTitle(tr("Edit Whitelist - Tree View"));
-    resize(700, 650);
+    resize(ui::dimensions::kWhitelistEditorWidth, ui::dimensions::kWhitelistEditorHeight);
     setup_ui();
     
     name_edit_->setText(name);

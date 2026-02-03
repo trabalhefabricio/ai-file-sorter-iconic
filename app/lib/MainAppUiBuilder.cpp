@@ -6,6 +6,7 @@
 #include "UiTranslator.hpp"
 #include "Language.hpp"
 #include "CategoryLanguage.hpp"
+#include "ui_constants.hpp"
 
 #include <QAction>
 #include <QActionGroup>
@@ -52,7 +53,7 @@ void MainAppUiBuilder::build(MainApp& app) {
 
 void MainAppUiBuilder::build_central_panel(MainApp& app) {
     app.setWindowTitle(QStringLiteral("AI File Sorter"));
-    app.resize(1000, 800);
+    app.resize(ui::dimensions::kMainWindowWidth, ui::dimensions::kMainWindowHeight);
 
     QWidget* central = new QWidget(&app);
     auto* main_layout = new QVBoxLayout(central);

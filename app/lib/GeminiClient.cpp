@@ -107,17 +107,54 @@ struct ModelState {
     // BUG FIX #2: Add mutex for thread-safe access
     mutable std::mutex state_mutex;
     
-    // Explicitly delete copy operations (std::mutex is non-copyable)
+    // Default constructor
     ModelState() = default;
-    ModelState(const ModelState&) = delete;
-    ModelState& operator=(const ModelState&) = delete;
+    
+    // Custom copy constructor: copies all fields except mutex (mutex is non-copyable)
+    // Only locks source mutex since dest is newly constructed and not yet accessible by other threads
+    ModelState(const ModelState& other) {
+        std::lock_guard<std::mutex> lock(other.state_mutex);
+        tokens = other.tokens;
+        capacity = other.capacity;
+        refill_per_sec = other.refill_per_sec;
+        last_refill_ms = other.last_refill_ms;
+        retry_after_until_ms = other.retry_after_until_ms;
+        ewma_ms = other.ewma_ms;
+        consecutive_failures = other.consecutive_failures;
+        circuit_open_until_ms = other.circuit_open_until_ms;
+        last_timeout_ms = other.last_timeout_ms;
+        timeout_extensions = other.timeout_extensions;
+    }
+    
+    // Custom copy assignment operator: copies all fields except mutex
+    // Uses std::scoped_lock with deadlock prevention for thread safety
+    ModelState& operator=(const ModelState& other) {
+        if (this != &other) {
+            std::scoped_lock lock(state_mutex, other.state_mutex);
+            tokens = other.tokens;
+            capacity = other.capacity;
+            refill_per_sec = other.refill_per_sec;
+            last_refill_ms = other.last_refill_ms;
+            retry_after_until_ms = other.retry_after_until_ms;
+            ewma_ms = other.ewma_ms;
+            consecutive_failures = other.consecutive_failures;
+            circuit_open_until_ms = other.circuit_open_until_ms;
+            last_timeout_ms = other.last_timeout_ms;
+            timeout_extensions = other.timeout_extensions;
+            // Do not copy the mutex!
+        }
+        return *this;
+    }
+    
     // Allow move operations
     ModelState(ModelState&&) = default;
     ModelState& operator=(ModelState&&) = default;
 };
 
 // Helper function to copy ModelState data fields without copying the mutex
+// Uses std::scoped_lock with deadlock prevention for thread safety
 inline void copy_state_data(const ModelState& src, ModelState& dest) {
+    std::scoped_lock lock(src.state_mutex, dest.state_mutex);
     dest.tokens = src.tokens;
     dest.capacity = src.capacity;
     dest.refill_per_sec = src.refill_per_sec;
@@ -222,7 +259,7 @@ private:
         std::map<std::string, ModelState> states_copy;
         {
             std::lock_guard<std::mutex> g(mu_);
-            // Manually copy each state since ModelState is non-copyable
+            // Copy each state for safe access outside the lock
             for (const auto& [model, state] : states_) {
                 ModelState copy;
                 copy_state_data(state, copy);
@@ -230,7 +267,7 @@ private:
             }
         }
         
-        // BUG FIX #1: Capture by move to avoid dangling references (states_copy is non-copyable)
+        // BUG FIX #1: Capture by move to avoid dangling references
         save_thread_ = std::thread([this, path_copy = std::move(path_copy), states_copy = std::move(states_copy)]() {
             std::this_thread::sleep_for(250ms);
             
