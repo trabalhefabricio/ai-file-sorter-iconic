@@ -6,6 +6,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -1210,5 +1211,137 @@ bool DatabaseManager::record_api_usage(const std::string& service, int prompt_to
     // A full implementation would require creating an api_usage table in initialize_schema()
     db_log(spdlog::level::debug, "API usage recorded: service={}, prompt_tokens={}, completion_tokens={}, cost={}", 
            service, prompt_tokens, completion_tokens, cost);
+    return true;
+}
+
+// Cache Management Methods Implementation
+
+DatabaseManager::CacheStats DatabaseManager::get_cache_stats() {
+    CacheStats stats;
+    if (!db) return stats;
+
+    // Get entry count
+    const char* count_sql = "SELECT COUNT(*) FROM file_categorization;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, count_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            stats.entry_count = sqlite3_column_int64(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Get oldest and newest entry dates
+    const char* date_sql = R"(
+        SELECT MIN(created_at), MAX(created_at) FROM file_categorization 
+        WHERE created_at IS NOT NULL;
+    )";
+    if (sqlite3_prepare_v2(db, date_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char* oldest = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            const char* newest = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            stats.oldest_entry_date = oldest ? oldest : "";
+            stats.newest_entry_date = newest ? newest : "";
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Get taxonomy entry count
+    const char* taxonomy_sql = "SELECT COUNT(*) FROM category_taxonomy;";
+    if (sqlite3_prepare_v2(db, taxonomy_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            stats.taxonomy_entry_count = sqlite3_column_int64(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Get database file size
+    if (!db_file.empty()) {
+        std::ifstream file(db_file, std::ios::binary | std::ios::ate);
+        if (file.is_open()) {
+            stats.database_size_bytes = file.tellg();
+        }
+    }
+
+    return stats;
+}
+
+bool DatabaseManager::clear_all_cache() {
+    if (!db) return false;
+
+    db_log(spdlog::level::info, "Clearing all categorization cache...");
+    
+    char* error_msg = nullptr;
+    bool success = true;
+
+    // Delete all categorization entries
+    if (sqlite3_exec(db, "DELETE FROM file_categorization;", nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to clear file_categorization: {}", 
+               error_msg ? error_msg : "unknown error");
+        if (error_msg) sqlite3_free(error_msg);
+        success = false;
+    }
+
+    // Clear the in-memory cache as well
+    cached_results.clear();
+
+    if (success) {
+        db_log(spdlog::level::info, "Cache cleared successfully");
+    }
+
+    return success;
+}
+
+int DatabaseManager::clear_cache_older_than(int days) {
+    if (!db) return -1;
+    if (days < 0) return -1;
+
+    db_log(spdlog::level::info, "Clearing cache entries older than {} days...", days);
+
+    // SQLite date calculation - delete entries older than N days
+    const char* sql = R"(
+        DELETE FROM file_categorization 
+        WHERE created_at < datetime('now', ? || ' days');
+    )";
+
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare clear old cache statement: {}", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    std::string days_modifier = "-" + std::to_string(days);
+    sqlite3_bind_text(stmt, 1, days_modifier.c_str(), -1, SQLITE_TRANSIENT);
+
+    int deleted_count = 0;
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        deleted_count = sqlite3_changes(db);
+        db_log(spdlog::level::info, "Deleted {} old cache entries", deleted_count);
+    } else {
+        db_log(spdlog::level::err, "Failed to clear old cache: {}", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    sqlite3_finalize(stmt);
+    
+    // Clear in-memory cache since it may contain stale entries
+    cached_results.clear();
+
+    return deleted_count;
+}
+
+bool DatabaseManager::optimize_database() {
+    if (!db) return false;
+
+    db_log(spdlog::level::info, "Optimizing database (VACUUM)...");
+
+    char* error_msg = nullptr;
+    if (sqlite3_exec(db, "VACUUM;", nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "VACUUM failed: {}", error_msg ? error_msg : "unknown error");
+        if (error_msg) sqlite3_free(error_msg);
+        return false;
+    }
+
+    db_log(spdlog::level::info, "Database optimization complete");
     return true;
 }
