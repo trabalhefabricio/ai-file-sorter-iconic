@@ -1,4 +1,5 @@
 #include "CategorizationProgressDialog.hpp"
+#include "ui_constants.hpp"
 
 #include "Logger.hpp"
 #include "MainApp.hpp"
@@ -19,7 +20,7 @@ CategorizationProgressDialog::CategorizationProgressDialog(QWidget* parent,
     : QDialog(parent),
       main_app(main_app)
 {
-    resize(800, 600);
+    resize(ui::dimensions::kProgressDialogWidth, ui::dimensions::kProgressDialogHeight);
     setup_ui(show_subcategory_col);
     retranslate_ui();
 }

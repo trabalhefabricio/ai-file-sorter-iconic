@@ -1,5 +1,6 @@
 #include "CacheManagerDialog.hpp"
 #include "Logger.hpp"
+#include "ui_constants.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -22,7 +23,7 @@ CacheManagerDialog::CacheManagerDialog(DatabaseManager& db, QWidget* parent)
     
     setWindowTitle(tr("Cache Management"));
     setMinimumWidth(500);
-    resize(550, 400);
+    resize(ui::dimensions::kCacheManagerWidth, ui::dimensions::kCacheManagerHeight);
     
     setup_ui();
     on_refresh_stats();  // Initial stats load

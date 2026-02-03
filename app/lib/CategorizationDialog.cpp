@@ -8,6 +8,7 @@
 #include "UndoManager.hpp"
 #include "DryRunPreviewDialog.hpp"
 #include "StringUtils.hpp"
+#include "ui_constants.hpp"
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -128,7 +129,7 @@ CategorizationDialog::CategorizationDialog(DatabaseManager* db_manager,
       ui_logger(Logger::get_logger("ui_logger")),
       undo_dir_(undo_dir)
 {
-    resize(1100, 720);
+    resize(ui::dimensions::kCategorizationDialogWidth, ui::dimensions::kCategorizationDialogHeight);
     setup_ui();
     retranslate_ui();
 }

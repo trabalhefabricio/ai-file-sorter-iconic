@@ -1,5 +1,6 @@
 #include "MainAppHelpActions.hpp"
 #include "ErrorHandler.hpp"
+#include "ui_constants.hpp"
 
 #include <app_version.hpp>
 
@@ -17,7 +18,7 @@ void MainAppHelpActions::show_about(QWidget* parent)
 {
     QDialog dialog(parent);
     dialog.setWindowTitle(QObject::tr("About AI File Sorter"));
-    dialog.resize(600, 420);
+    dialog.resize(ui::dimensions::kAboutDialogWidth, ui::dimensions::kAboutDialogHeight);
 
     auto* layout = new QVBoxLayout(&dialog);
     auto* tabs = new QTabWidget(&dialog);
@@ -96,7 +97,7 @@ void MainAppHelpActions::show_agpl_info(QWidget* parent)
 {
     QDialog dialog(parent);
     dialog.setWindowTitle(QObject::tr("About the AGPL License"));
-    dialog.resize(520, 320);
+    dialog.resize(ui::dimensions::kCreditsDialogWidth, ui::dimensions::kCreditsDialogHeight);
 
     auto* layout = new QVBoxLayout(&dialog);
 

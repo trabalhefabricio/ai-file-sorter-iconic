@@ -1,6 +1,7 @@
 #include "StartupErrorDialog.hpp"
 #include "Logger.hpp"
 #include "Utils.hpp"
+#include "ui_constants.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -35,7 +36,7 @@ StartupErrorDialog::StartupErrorDialog(const std::string& error_message,
     }
     
     setup_ui();
-    setMinimumSize(700, 500);
+    setMinimumSize(ui::dimensions::kStartupErrorMinWidth, ui::dimensions::kStartupErrorMinHeight);
     setWindowTitle(tr("AI File Sorter - Startup Error"));
 }
 
