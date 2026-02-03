@@ -116,7 +116,7 @@ Based on the codebase analysis and the app's purpose, here are recommended featu
 - Create custom categorization rules (if X then Y)
 - Pattern matching beyond AI (regex, wildcards)
 - Folder-specific rule overrides
-- Export/import rule sets
+- Export/import rule sets locally
 
 #### 7. **Multi-Language Model Support**
 - Allow mixing local and cloud models
@@ -132,25 +132,49 @@ Based on the codebase analysis and the app's purpose, here are recommended featu
 
 ### 🔧 Lower Priority
 
-#### 9. **Cloud Sync Integration**
-- Sync categorization results across devices
-- Optional backup of configuration
-- Share whitelists with team members
-- Version control for configuration
+#### 9. **Personal Backup & Restore**
+- Local backup of all configurations, whitelists, and database
+- Export to a single archive file
+- Import/restore from backup
+- Scheduled automatic backups to a local folder
 
-#### 10. **Plugin/Extension System**
-- Allow third-party categorization enhancers
-- Custom file type handlers
-- Integration with other apps (photo managers, etc.)
-- Scripting support (Python/Lua)
+#### 10. **Smart Tagging System**
+- Add custom tags to files in addition to categories
+- Search/filter by tags across all folders
+- Tag-based quick actions (e.g., "Archive all tagged 'Old'")
+- Color-coded tag visualization
 
-#### 11. **Accessibility Improvements**
+#### 11. **File Relationship Mapping**
+- Detect and visualize related files (e.g., project files)
+- Group files that belong together
+- Move/archive related files as a unit
+- "Project mode" for software/creative work
+
+#### 12. **Folder Templates**
+- Create reusable folder structures for different projects
+- Auto-generate folders when sorting to a new location
+- Template variables (date, project name, etc.)
+- Quick-apply templates from context menu
+
+#### 13. **Personal Workflow Automation**
+- Create multi-step workflows (sort → rename → archive)
+- Trigger workflows on schedule or file system events
+- Workflow history and logging
+- Pause/resume long-running workflows
+
+#### 14. **Enhanced File Preview**
+- Preview more file types (PDFs, Office docs, videos)
+- Quick view panel in main window
+- Thumbnail generation for faster browsing
+- File metadata editor (EXIF, ID3, etc.)
+
+#### 15. **Accessibility Improvements**
 - Screen reader optimization
 - High contrast themes
 - Keyboard-only navigation throughout
 - Adjustable font sizes
 
-#### 12. **Performance Profiling Tools**
+#### 16. **Performance Profiling Tools**
 - Built-in timing analysis for categorization
 - Identify slow models or folders
 - Memory usage monitoring
