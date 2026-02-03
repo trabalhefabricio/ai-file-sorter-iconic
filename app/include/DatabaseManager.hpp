@@ -63,6 +63,20 @@ public:
     // API usage tracking
     bool record_api_usage(const std::string& service, int prompt_tokens, int completion_tokens, float cost);
 
+    // Cache management methods
+    struct CacheStats {
+        int64_t entry_count{0};
+        int64_t database_size_bytes{0};
+        std::string oldest_entry_date;
+        std::string newest_entry_date;
+        int64_t taxonomy_entry_count{0};
+    };
+    CacheStats get_cache_stats();
+    bool clear_all_cache();
+    int clear_cache_older_than(int days);
+    bool optimize_database();  // VACUUM operation
+    std::string get_database_path() const { return db_file; }
+
 private:
     struct TaxonomyEntry {
         int id;

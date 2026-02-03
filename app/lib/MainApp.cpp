@@ -17,6 +17,7 @@
 #include "MainAppUiBuilder.hpp"
 #include "UiTranslator.hpp"
 #include "WhitelistManagerDialog.hpp"
+#include "CacheManagerDialog.hpp"
 #include "UndoManager.hpp"
 #ifdef AI_FILE_SORTER_TEST_BUILD
 #include "MainAppTestAccess.hpp"
@@ -808,6 +809,12 @@ void MainApp::show_whitelist_manager()
     whitelist_dialog->show();
     whitelist_dialog->raise();
     whitelist_dialog->activateWindow();
+}
+
+void MainApp::show_cache_manager()
+{
+    auto dialog = std::make_unique<CacheManagerDialog>(db_manager, this);
+    dialog->exec();
 }
 
 void MainApp::initialize_whitelists()

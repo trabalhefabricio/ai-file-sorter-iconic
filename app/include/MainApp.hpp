@@ -49,6 +49,7 @@ class QLabel;
 class QEvent;
 class MainAppUiBuilder;
 class WhitelistManagerDialog;
+class CacheManagerDialog;
 
 struct CategorizedFile;
 struct FileEntry;
@@ -145,6 +146,7 @@ private:
     void set_categorization_style(bool use_consistency);
     bool ensure_folder_categorization_style(const std::string& folder_path);
     void show_whitelist_manager();
+    void show_cache_manager();
     void apply_whitelist_to_selector();
 
     void run_on_ui(std::function<void()> func);
@@ -207,6 +209,7 @@ private:
     QAction* toggle_explorer_action{nullptr};
     QAction* toggle_llm_action{nullptr};
     QAction* manage_whitelists_action{nullptr};
+    QAction* manage_cache_action{nullptr};
     QAction* development_prompt_logging_action{nullptr};
     QAction* consistency_pass_action{nullptr};
     QActionGroup* language_group{nullptr};

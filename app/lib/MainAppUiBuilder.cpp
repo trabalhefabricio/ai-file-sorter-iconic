@@ -197,6 +197,7 @@ UiTranslator::Dependencies MainAppUiBuilder::build_translator_dependencies(MainA
             app.toggle_explorer_action,
             app.toggle_llm_action,
             app.manage_whitelists_action,
+            app.manage_cache_action,
             app.development_prompt_logging_action,
             app.consistency_pass_action,
             app.english_action,
@@ -317,6 +318,9 @@ void MainAppUiBuilder::build_settings_menu(MainApp& app) {
 
     app.manage_whitelists_action = app.settings_menu->addAction(QString());
     QObject::connect(app.manage_whitelists_action, &QAction::triggered, &app, &MainApp::show_whitelist_manager);
+
+    app.manage_cache_action = app.settings_menu->addAction(QString());
+    QObject::connect(app.manage_cache_action, &QAction::triggered, &app, &MainApp::show_cache_manager);
 
     app.language_menu = app.settings_menu->addMenu(QString());
     app.language_group = new QActionGroup(&app);

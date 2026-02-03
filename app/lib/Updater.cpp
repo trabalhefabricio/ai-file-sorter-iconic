@@ -302,8 +302,18 @@ Version Updater::string_to_Version(const std::string& version_str) {
     std::istringstream stream(version_str);
     std::string segment;
 
+    auto parse_segment = [](const std::string& seg) -> int {
+        try {
+            return std::stoi(seg);
+        } catch (const std::invalid_argument&) {
+            return 0;  // Non-numeric segment
+        } catch (const std::out_of_range&) {
+            return 0;  // Number too large
+        }
+    };
+
     while (std::getline(stream, segment, '.')) {
-        digits.push_back(std::stoi(segment));
+        digits.push_back(parse_segment(segment));
     }
 
     return Version{digits};
