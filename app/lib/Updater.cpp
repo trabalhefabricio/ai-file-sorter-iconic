@@ -303,7 +303,15 @@ Version Updater::string_to_Version(const std::string& version_str) {
     std::string segment;
 
     while (std::getline(stream, segment, '.')) {
-        digits.push_back(std::stoi(segment));
+        try {
+            digits.push_back(std::stoi(segment));
+        } catch (const std::invalid_argument&) {
+            // Non-numeric segment, treat as 0
+            digits.push_back(0);
+        } catch (const std::out_of_range&) {
+            // Number too large, treat as 0
+            digits.push_back(0);
+        }
     }
 
     return Version{digits};

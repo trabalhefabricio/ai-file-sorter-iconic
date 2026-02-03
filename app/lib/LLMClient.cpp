@@ -177,7 +177,17 @@ std::string parse_category_response(const std::string& payload,
         throw std::runtime_error("Client Error: " + error_message);
     }
 
-    return root["choices"][0]["message"]["content"].asString();
+    // Validate response structure before accessing
+    if (!root.isMember("choices") || root["choices"].empty()) {
+        throw std::runtime_error("Response Error: Missing or empty 'choices' in API response");
+    }
+    
+    const auto& choice = root["choices"][0];
+    if (!choice.isMember("message") || !choice["message"].isMember("content")) {
+        throw std::runtime_error("Response Error: Missing 'message.content' in API response");
+    }
+
+    return choice["message"]["content"].asString();
 }
 }
 
