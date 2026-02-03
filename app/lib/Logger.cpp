@@ -21,7 +21,7 @@ std::string Logger::get_xdg_cache_home()
 {
     const char* xdg_cache_home = std::getenv("XDG_CACHE_HOME");
     if (xdg_cache_home && *xdg_cache_home) {
-        return (std::filesystem::path(xdg_cache_home) / APP_NAME_DIR / "my_app" / "logs").string();
+        return (std::filesystem::path(xdg_cache_home) / APP_NAME_DIR / "logs").string();
     }
 
     const char* home = std::getenv("HOME");
