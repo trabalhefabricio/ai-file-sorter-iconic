@@ -160,7 +160,7 @@ public:
             // Try to read extended fields (backward compatible)
             ss >> s.consecutive_failures >> s.circuit_open_until_ms 
                >> s.last_timeout_ms >> s.timeout_extensions;
-            states_[model] = std::move(s);
+            states_.insert_or_assign(model, std::move(s));
         }
     }
 
@@ -191,7 +191,7 @@ public:
         ModelState s;
         s.tokens = s.capacity;
         s.last_refill_ms = now_ms();
-        states_[model] = std::move(s);
+        states_.insert_or_assign(model, std::move(s));
         // Return a copy of the data
         ModelState result;
         copy_state_data(states_[model], result);
@@ -226,7 +226,7 @@ private:
             for (const auto& [model, state] : states_) {
                 ModelState copy;
                 copy_state_data(state, copy);
-                states_copy[model] = std::move(copy);
+                states_copy.insert_or_assign(model, std::move(copy));
             }
         }
         
