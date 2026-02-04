@@ -170,18 +170,7 @@ Result<CategorizationResult> LegacyLLMAdapter::categorize(
         result.raw_response = response;
         result.duration = duration;
 
-        // Parse "Category : Subcategory" format
-        const std::string delimiter = " : ";
-        size_t pos = response.find(delimiter);
-        if (pos != std::string::npos) {
-            result.category = response.substr(0, pos);
-            result.subcategory = response.substr(pos + delimiter.size());
-        } else {
-            result.category = response;
-            result.subcategory = "";
-        }
-
-        // Trim whitespace
+        // Trim whitespace helper
         auto trim = [](std::string& s) {
             size_t start = s.find_first_not_of(" \t\n\r");
             size_t end = s.find_last_not_of(" \t\n\r");
@@ -191,6 +180,30 @@ Result<CategorizationResult> LegacyLLMAdapter::categorize(
                 s = s.substr(start, end - start + 1);
             }
         };
+
+        // Parse "Category : Subcategory" format
+        // Handle variations: "Category:Subcategory", "Category : Subcategory", 
+        // "Category  :  Subcategory", etc.
+        // Try multiple delimiter patterns in order of specificity
+        std::vector<std::string> delimiters = {" : ", ": ", " :", ":"};
+        bool found = false;
+        
+        for (const auto& delimiter : delimiters) {
+            size_t pos = response.find(delimiter);
+            if (pos != std::string::npos) {
+                result.category = response.substr(0, pos);
+                result.subcategory = response.substr(pos + delimiter.size());
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            // No delimiter found, use entire response as category
+            result.category = response;
+            result.subcategory = "";
+        }
+
         trim(result.category);
         trim(result.subcategory);
 
