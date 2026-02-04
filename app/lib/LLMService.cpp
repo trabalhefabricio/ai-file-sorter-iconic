@@ -4,6 +4,7 @@
 #include "LocalLLMClient.hpp"
 #include "GeminiClient.hpp"
 #include "InputValidator.hpp"
+#include "StringUtils.hpp"
 
 #include <spdlog/spdlog.h>
 #include <chrono>
@@ -170,21 +171,14 @@ Result<CategorizationResult> LegacyLLMAdapter::categorize(
         result.raw_response = response;
         result.duration = duration;
 
-        // Trim whitespace helper
-        auto trim = [](std::string& s) {
-            size_t start = s.find_first_not_of(" \t\n\r");
-            size_t end = s.find_last_not_of(" \t\n\r");
-            if (start == std::string::npos) {
-                s.clear();
-            } else {
-                s = s.substr(start, end - start + 1);
-            }
-        };
-
         // Parse "Category : Subcategory" format
-        // Handle variations: "Category:Subcategory", "Category : Subcategory", 
-        // "Category  :  Subcategory", etc.
-        // Try multiple delimiter patterns in order of specificity
+        // LLM responses may vary in delimiter formatting, so we check multiple patterns
+        // in order of specificity:
+        // 1. " : " - canonical format with spaces (most specific)
+        // 2. ": "  - colon followed by space
+        // 3. " :"  - space followed by colon
+        // 4. ":"   - bare colon (least specific, as fallback)
+        // The order prevents " : " from matching at the wrong position when only ":" exists
         std::vector<std::string> delimiters = {" : ", ": ", " :", ":"};
         bool found = false;
         
@@ -204,8 +198,9 @@ Result<CategorizationResult> LegacyLLMAdapter::categorize(
             result.subcategory = "";
         }
 
-        trim(result.category);
-        trim(result.subcategory);
+        // Use StringUtils for consistent trimming across the codebase
+        result.category = StringUtils::trim_copy(result.category);
+        result.subcategory = StringUtils::trim_copy(result.subcategory);
 
         if (logger_) {
             logger_->debug("Categorized '{}' as '{}' / '{}' in {}ms",
