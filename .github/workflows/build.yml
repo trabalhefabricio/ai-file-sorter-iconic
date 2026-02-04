@@ -7,10 +7,17 @@ on:
     branches: [ main, dev ]
   workflow_dispatch:  # Allow manual trigger
 
+# Minimal permissions for security
+permissions:
+  contents: read
+
 jobs:
   build-linux:
     name: Build (Ubuntu)
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
     
     steps:
       - name: Check out repository
@@ -67,6 +74,9 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+    
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -74,9 +84,25 @@ jobs:
       - name: Check for common issues
         run: |
           echo "=== Checking for debug statements ==="
-          ! grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" || echo "Warning: Found std::cout statements"
+          # Report std::cout statements but don't fail (they may be intentional for CLI output)
+          COUT_COUNT=$(grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | wc -l)
+          if [ "$COUT_COUNT" -gt 0 ]; then
+            echo "::warning::Found $COUT_COUNT std::cout statements - review if these are intentional"
+            grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | head -20
+          else
+            echo "[OK] No std::cout debug statements found"
+          fi
           
+          echo ""
           echo "=== Checking for TODO comments ==="
-          grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" || echo "No TODO comments found"
+          # Report TODO comments (informational, doesn't fail)
+          TODO_COUNT=$(grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | wc -l)
+          if [ "$TODO_COUNT" -gt 0 ]; then
+            echo "::notice::Found $TODO_COUNT TODO/FIXME comments"
+            grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | head -20
+          else
+            echo "[OK] No TODO comments found"
+          fi
           
+          echo ""
           echo "=== Code quality check complete ==="
