@@ -354,6 +354,110 @@ ctest --test-dir build --output-on-failure
 
 ---
 
+## 6. Repository Pattern (`CategorizationRepository.hpp`)
+
+### Problem
+Database access was tightly coupled:
+- Direct SQLite calls throughout codebase
+- Hard to mock for testing
+- No transactional boundaries
+- Inconsistent error handling
+
+### Solution
+Created `ICategorizationRepository` interface:
+
+```cpp
+#include "CategorizationRepository.hpp"
+using namespace afs;
+
+// Create repository
+auto repo = CategorizationRepositoryFactory::create_sqlite(config_dir);
+if (!repo) {
+    handle_error(repo.error());
+    return;
+}
+
+// Use repository
+auto files = (*repo)->find_by_directory("/path/to/dir");
+if (files) {
+    for (const auto& file : files.value()) {
+        process(file);
+    }
+}
+
+// Transaction support
+{
+    auto guard = TransactionGuard::begin(**repo);
+    if (!guard) return guard.error();
+    
+    (*repo)->save(entry1);
+    (*repo)->save(entry2);
+    
+    guard->commit();
+}
+```
+
+### Benefits
+- **Testable**: Easy to mock with `create_memory()`
+- **Consistent**: All operations return `Result<T>`
+- **Transactional**: RAII guard for transactions
+- **Extensible**: Could add different backends
+
+---
+
+## 7. Analysis Orchestrator (`AnalysisOrchestrator.hpp`)
+
+### Problem
+Analysis logic was scattered:
+- MainApp handled scanning, caching, LLM calls, and progress
+- Hard to test individual pieces
+- Complex state management
+- No clear workflow
+
+### Solution
+Created `AnalysisOrchestrator` to coordinate the workflow:
+
+```cpp
+#include "AnalysisOrchestrator.hpp"
+using namespace afs;
+
+AnalysisOrchestrator orchestrator(
+    settings, repository, llm_service, scanner, logger);
+
+AnalysisConfig config;
+config.directory_path = "/path/to/analyze";
+config.scan_options = FileScanOptions::Files | FileScanOptions::Directories;
+config.use_consistency_hints = true;
+
+// Validate before running
+if (auto result = orchestrator.validate_config(config); !result) {
+    show_error(result.error().message);
+    return;
+}
+
+// Run with callbacks
+AnalysisCallbacks callbacks;
+callbacks.on_progress = [](const AnalysisProgress& p) {
+    update_ui(p.processed_files, p.total_files);
+};
+callbacks.on_file_categorized = [](const CategorizedFile& f) {
+    add_to_list(f);
+};
+
+auto result = orchestrator.run(config, callbacks, &cancel_flag);
+if (result) {
+    show_results(result->categorized_files);
+}
+```
+
+### Benefits
+- **Clear Workflow**: Defined sequence of operations
+- **Testable**: Can inject mock dependencies
+- **Progress Reporting**: Structured callbacks
+- **Cancellation**: Built-in support
+
+---
+
 ## Future Improvements
 
 1. **Complete Component Extraction** - Finish extracting MainApp components
