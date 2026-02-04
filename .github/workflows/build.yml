@@ -1,17 +1,17 @@
-name: Build
+name: Build & Test
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, newstuff ]
   pull_request:
     branches: [ main, dev ]
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+  build-linux:
+    name: Build (Ubuntu)
+    runs-on: ubuntu-latest
+    
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -24,18 +24,59 @@ jobs:
           version: '6.6.3'
           host: linux
           target: desktop
+          cache: true
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build libcurl4-openssl-dev libjsoncpp-dev libsqlite3-dev libssl-dev libfmt-dev libspdlog-dev
+          sudo apt-get install -y build-essential cmake ninja-build \
+            libcurl4-openssl-dev libjsoncpp-dev libsqlite3-dev \
+            libssl-dev libfmt-dev libspdlog-dev libintl-perl gettext
 
-      - name: Configure
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: cmake-linux-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/*.cpp', 'app/**/*.hpp') }}
+          restore-keys: |
+            cmake-linux-${{ runner.os }}-
+
+      - name: Configure CMake
         run: |
-          cmake -S app -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake -S app -B build -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DAI_FILE_SORTER_BUILD_TESTS=ON
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel $(nproc)
 
-      - name: Run ctest
-        run: cd build && ctest --output-on-failure
+      - name: Run Unit Tests
+        run: |
+          cd build
+          ctest --output-on-failure --verbose
+          
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: aifilesorter-linux-${{ github.sha }}
+          path: build/aifilesorter
+          retention-days: 7
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        
+      - name: Check for common issues
+        run: |
+          echo "=== Checking for debug statements ==="
+          ! grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" || echo "Warning: Found std::cout statements"
+          
+          echo "=== Checking for TODO comments ==="
+          grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" || echo "No TODO comments found"
+          
+          echo "=== Code quality check complete ==="
