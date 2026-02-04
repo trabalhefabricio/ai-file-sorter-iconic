@@ -315,6 +315,9 @@ if(AI_FILE_SORTER_BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_categorization_dialog.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_support_prompt.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_whitelist_and_prompt.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_result.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_input_validator.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_custom_llm.cpp"
     )
 
     target_include_directories(ai_file_sorter_tests PRIVATE
@@ -361,4 +364,16 @@ if(AI_FILE_SORTER_BUILD_TESTS)
             PASS_REGULAR_EXPRESSION "All tests completed successfully."
         )
     endif()
+endif()
+
+# ============================================================================
+# Launcher Application
+# ============================================================================
+# The launcher is a simple application that lets users choose between
+# GUI and TUI versions. It has no external dependencies.
+
+option(AI_FILE_SORTER_BUILD_LAUNCHER "Build the GUI/TUI launcher" ON)
+
+if(AI_FILE_SORTER_BUILD_LAUNCHER)
+    add_subdirectory(launcher)
 endif()

@@ -632,6 +632,7 @@ jobs:
           $outputDir = "$env:GITHUB_WORKSPACE\output"
           $criticalFiles = @(
             "aifilesorter.exe", 
+            "aifilesorter-launcher.exe",
             "StartAiFileSorter.exe",
             "Qt6Core.dll", 
             "Qt6Gui.dll", 
