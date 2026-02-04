@@ -21,6 +21,13 @@ constexpr std::array<char, 9> kInvalidChars = {
     '<', '>', ':', '"', '/', '\\', '|', '?', '*'
 };
 
+// Maximum filename length - 255 is the limit for most filesystems:
+// - ext4 (Linux): 255 bytes
+// - NTFS (Windows): 255 characters (UTF-16 code units)
+// - HFS+/APFS (macOS): 255 characters
+// Some filesystems allow longer names, but 255 is a safe universal limit.
+constexpr size_t kMaxFilenameLength = 255;
+
 std::string to_upper(const std::string& str) {
     std::string result = str;
     std::transform(result.begin(), result.end(), result.begin(),
@@ -320,9 +327,9 @@ std::string InputValidator::sanitize_filename(const std::string& name)
         result = "_" + result;
     }
 
-    // Truncate if too long
-    if (result.length() > 255) {
-        result = result.substr(0, 255);
+    // Truncate if too long for filesystem compatibility
+    if (result.length() > kMaxFilenameLength) {
+        result = result.substr(0, kMaxFilenameLength);
     }
 
     return result.empty() ? "unnamed" : result;
