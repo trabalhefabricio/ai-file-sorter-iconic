@@ -365,3 +365,15 @@ if(AI_FILE_SORTER_BUILD_TESTS)
         )
     endif()
 endif()
+
+# ============================================================================
+# Launcher Application
+# ============================================================================
+# The launcher is a simple application that lets users choose between
+# GUI and TUI versions. It has no external dependencies.
+
+option(AI_FILE_SORTER_BUILD_LAUNCHER "Build the GUI/TUI launcher" ON)
+
+if(AI_FILE_SORTER_BUILD_LAUNCHER)
+    add_subdirectory(launcher)
+endif()
