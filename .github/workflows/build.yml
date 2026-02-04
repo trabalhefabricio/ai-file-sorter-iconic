@@ -44,9 +44,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: cmake-linux-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/*.cpp', 'app/**/*.hpp') }}
+          key: cmake-${{ runner.os }}-${{ hashFiles('app/CMakeLists.txt', 'app/**/*.cpp', 'app/**/*.hpp') }}
           restore-keys: |
-            cmake-linux-${{ runner.os }}-
+            cmake-${{ runner.os }}-
 
       - name: Configure CMake
         run: |
@@ -85,10 +85,10 @@ jobs:
         run: |
           echo "=== Checking for debug statements ==="
           # Report std::cout statements but don't fail (they may be intentional for CLI output)
-          COUT_COUNT=$(grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | wc -l)
+          COUT_COUNT=$(grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" 2>/dev/null | wc -l || echo "0")
           if [ "$COUT_COUNT" -gt 0 ]; then
             echo "::warning::Found $COUT_COUNT std::cout statements - review if these are intentional"
-            grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | head -20
+            grep -rn "std::cout" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" 2>/dev/null | head -20 || true
           else
             echo "[OK] No std::cout debug statements found"
           fi
@@ -96,10 +96,10 @@ jobs:
           echo ""
           echo "=== Checking for TODO comments ==="
           # Report TODO comments (informational, doesn't fail)
-          TODO_COUNT=$(grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | wc -l)
+          TODO_COUNT=$(grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" 2>/dev/null | wc -l || echo "0")
           if [ "$TODO_COUNT" -gt 0 ]; then
             echo "::notice::Found $TODO_COUNT TODO/FIXME comments"
-            grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" | head -20
+            grep -rn "TODO\|FIXME\|HACK\|XXX" app/lib/ app/include/ --include="*.cpp" --include="*.hpp" 2>/dev/null | head -20 || true
           else
             echo "[OK] No TODO comments found"
           fi
