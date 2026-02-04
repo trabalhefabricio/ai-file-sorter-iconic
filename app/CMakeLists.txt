@@ -19,6 +19,10 @@ endif()
 # Qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
+# Enable Qt Meta-Object Compiler (MOC) for automatic generation
+# This is required for classes using Q_OBJECT macro (signals/slots)
+set(CMAKE_AUTOMOC ON)
+
 # Third-party deps (resolved best via vcpkg on Windows)
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
