@@ -14,8 +14,6 @@ add_executable(aifilesorter-launcher
 
 # Platform-specific settings
 if(WIN32)
-    # Link Windows system libraries for process management
-    target_link_libraries(aifilesorter-launcher PRIVATE)
     target_compile_definitions(aifilesorter-launcher PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
