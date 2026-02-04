@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-02-03T17:13:10.981300",
+  "timestamp": "2026-02-04T13:48:31.509963",
   "repository": ".",
-  "total_features_tested": 4,
-  "total_tests": 32,
-  "total_passed": 29,
+  "total_features_tested": 5,
+  "total_tests": 43,
+  "total_passed": 40,
   "total_failed": 3,
-  "pass_rate": 90.625,
+  "pass_rate": 93.02325581395348,
   "features": {
     "Gemini API": {
       "passed": 8,
@@ -26,6 +26,11 @@
       "passed": 5,
       "failed": 3,
       "total": 8
+    },
+    "TUI Interface": {
+      "passed": 11,
+      "failed": 0,
+      "total": 11
     }
   },
   "detailed_results": [
@@ -33,193 +38,259 @@
       "feature": "Gemini API",
       "test": "Implementation Files",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.977974"
+      "timestamp": "2026-02-04T13:48:31.507055"
     },
     {
       "feature": "Gemini API",
       "test": "Rate Limiting Logic",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978208"
+      "timestamp": "2026-02-04T13:48:31.507224"
     },
     {
       "feature": "Gemini API",
       "test": "State Persistence",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978305"
+      "timestamp": "2026-02-04T13:48:31.507291"
     },
     {
       "feature": "Gemini API",
       "test": "Circuit Breaker Pattern",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978402"
+      "timestamp": "2026-02-04T13:48:31.507362"
     },
     {
       "feature": "Gemini API",
       "test": "Progress Callback",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978492"
+      "timestamp": "2026-02-04T13:48:31.507423"
     },
     {
       "feature": "Gemini API",
       "test": "Timeout Management",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978600"
+      "timestamp": "2026-02-04T13:48:31.507501"
     },
     {
       "feature": "Gemini API",
       "test": "Error Handling",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978705"
+      "timestamp": "2026-02-04T13:48:31.507577"
     },
     {
       "feature": "Gemini API",
       "test": "Thread Safety",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978782"
+      "timestamp": "2026-02-04T13:48:31.507624"
     },
     {
       "feature": "File Tinder",
       "test": "Implementation Files",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978873"
+      "timestamp": "2026-02-04T13:48:31.507665"
     },
     {
       "feature": "File Tinder",
       "test": "Arrow Key Navigation",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.978970"
+      "timestamp": "2026-02-04T13:48:31.507768"
     },
     {
       "feature": "File Tinder",
       "test": "File Preview System",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979211"
+      "timestamp": "2026-02-04T13:48:31.508002"
     },
     {
       "feature": "File Tinder",
       "test": "Decision Tracking",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979290"
+      "timestamp": "2026-02-04T13:48:31.508070"
     },
     {
       "feature": "File Tinder",
       "test": "Session Persistence",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979360"
+      "timestamp": "2026-02-04T13:48:31.508130"
     },
     {
       "feature": "File Tinder",
       "test": "Database Integration",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979438"
+      "timestamp": "2026-02-04T13:48:31.508191"
     },
     {
       "feature": "File Tinder",
       "test": "File Deletion Logic",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979545"
+      "timestamp": "2026-02-04T13:48:31.508267"
     },
     {
       "feature": "File Tinder",
       "test": "UI Components",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979626"
+      "timestamp": "2026-02-04T13:48:31.508316"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Implementation Files",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979747"
+      "timestamp": "2026-02-04T13:48:31.508354"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Tree Structure",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979829"
+      "timestamp": "2026-02-04T13:48:31.508401"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Hierarchical Mode",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.979916"
+      "timestamp": "2026-02-04T13:48:31.508455"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Shared Subcategories Mode",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980000"
+      "timestamp": "2026-02-04T13:48:31.508510"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Add/Remove Operations",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980102"
+      "timestamp": "2026-02-04T13:48:31.508559"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Import/Export",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980212"
+      "timestamp": "2026-02-04T13:48:31.508631"
     },
     {
       "feature": "Whitelist Editor",
       "test": "Keyboard Shortcuts",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980295"
+      "timestamp": "2026-02-04T13:48:31.508680"
     },
     {
       "feature": "Whitelist Editor",
       "test": "CategoryNode Conversion",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980365"
+      "timestamp": "2026-02-04T13:48:31.508719"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "File Type Mappings",
       "passed": false,
-      "timestamp": "2026-02-03T17:13:10.980482"
+      "timestamp": "2026-02-04T13:48:31.508811"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Extension Detection",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980582"
+      "timestamp": "2026-02-04T13:48:31.508905"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Prompt Enhancement",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980694"
+      "timestamp": "2026-02-04T13:48:31.509006"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "VST Plugin Detection",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980754"
+      "timestamp": "2026-02-04T13:48:31.509058"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Config File Detection",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.980852"
+      "timestamp": "2026-02-04T13:48:31.509146"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Source Code Detection",
       "passed": false,
-      "timestamp": "2026-02-03T17:13:10.980968"
+      "timestamp": "2026-02-04T13:48:31.509250"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Fallback Mechanism",
       "passed": true,
-      "timestamp": "2026-02-03T17:13:10.981070"
+      "timestamp": "2026-02-04T13:48:31.509341"
     },
     {
       "feature": "Content-Based Sorting",
       "test": "Integration",
       "passed": false,
-      "timestamp": "2026-02-03T17:13:10.981170"
+      "timestamp": "2026-02-04T13:48:31.509401"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Directory Structure",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509424"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI CMakeLists.txt",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509472"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Main Entry Point",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509513"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI App Implementation",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509598"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Settings (Qt-free)",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509678"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI LLM Selection Dialog",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509710"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Categorization Progress",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509773"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Results Display",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509804"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI File Tinder",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509877"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Whitelist Manager",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509910"
+    },
+    {
+      "feature": "TUI Interface",
+      "test": "TUI Build Script",
+      "passed": true,
+      "timestamp": "2026-02-04T13:48:31.509929"
     }
   ]
 }

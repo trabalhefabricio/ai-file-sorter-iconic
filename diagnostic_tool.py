@@ -35,6 +35,7 @@ class FeatureDiagnosticTool:
         self.test_feature_3_whitelist_editor()
         # Cache Manager skipped - not needed per user request
         self.test_feature_5_content_sorting()
+        self.test_feature_6_tui()
         
         return self.generate_report()
     
@@ -115,6 +116,108 @@ class FeatureDiagnosticTool:
         ]
         
         self.run_test_suite("Content-Based Sorting", tests)
+    
+    def test_feature_6_tui(self):
+        """Feature #6: TUI (Text-based User Interface)"""
+        print("\n" + "=" * 80)
+        print("[FEATURE #6] TUI (Text-based User Interface)")
+        print("=" * 80)
+        
+        tests = [
+            ("TUI Directory Structure", self.check_tui_directory),
+            ("TUI CMakeLists.txt", self.check_tui_cmake),
+            ("TUI Main Entry Point", self.check_tui_main),
+            ("TUI App Implementation", self.check_tui_app),
+            ("TUI Settings (Qt-free)", self.check_tui_settings),
+            ("TUI LLM Selection Dialog", self.check_tui_llm_selection),
+            ("TUI Categorization Progress", self.check_tui_categorization_progress),
+            ("TUI Results Display", self.check_tui_results),
+            ("TUI File Tinder", self.check_tui_file_tinder),
+            ("TUI Whitelist Manager", self.check_tui_whitelist),
+            ("TUI Build Script", self.check_tui_build_script),
+        ]
+        
+        self.run_test_suite("TUI Interface", tests)
+    
+    # TUI Test Methods
+    def check_tui_directory(self) -> bool:
+        """Check if TUI directory exists"""
+        return (self.app_path / "tui").exists()
+    
+    def check_tui_cmake(self) -> bool:
+        """Check if TUI CMakeLists.txt exists and is properly configured"""
+        cmake_file = self.app_path / "tui" / "CMakeLists.txt"
+        if not cmake_file.exists():
+            return False
+        content = cmake_file.read_text()
+        has_ftxui = "ftxui" in content.lower()
+        has_project = "project" in content.lower()
+        has_executable = "add_executable" in content
+        return has_ftxui and has_project and has_executable
+    
+    def check_tui_main(self) -> bool:
+        """Check if TUI main entry point exists"""
+        main_file = self.app_path / "tui" / "main_tui.cpp"
+        if not main_file.exists():
+            return False
+        content = main_file.read_text()
+        return "TuiApp" in content and "main" in content
+    
+    def check_tui_app(self) -> bool:
+        """Check if TuiApp implementation exists"""
+        hpp = (self.app_path / "tui" / "TuiApp.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiApp.cpp").exists()
+        if not (hpp and cpp):
+            return False
+        content = (self.app_path / "tui" / "TuiApp.cpp").read_text()
+        return "build_main_ui" in content and "run" in content
+    
+    def check_tui_settings(self) -> bool:
+        """Check if TUI Settings (Qt-free) exists"""
+        hpp = (self.app_path / "tui" / "TuiSettings.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiSettings.cpp").exists()
+        if not (hpp and cpp):
+            return False
+        # Verify it doesn't use Qt
+        content = (self.app_path / "tui" / "TuiSettings.cpp").read_text()
+        return "QStandardPaths" not in content and "QString" not in content
+    
+    def check_tui_llm_selection(self) -> bool:
+        """Check if TUI LLM Selection dialog exists"""
+        hpp = (self.app_path / "tui" / "TuiLLMSelection.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiLLMSelection.cpp").exists()
+        return hpp and cpp
+    
+    def check_tui_categorization_progress(self) -> bool:
+        """Check if TUI Categorization Progress exists"""
+        hpp = (self.app_path / "tui" / "TuiCategorizationProgress.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiCategorizationProgress.cpp").exists()
+        return hpp and cpp
+    
+    def check_tui_results(self) -> bool:
+        """Check if TUI Results Display exists"""
+        hpp = (self.app_path / "tui" / "TuiCategorizationResults.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiCategorizationResults.cpp").exists()
+        return hpp and cpp
+    
+    def check_tui_file_tinder(self) -> bool:
+        """Check if TUI File Tinder exists"""
+        hpp = (self.app_path / "tui" / "TuiFileTinder.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiFileTinder.cpp").exists()
+        if not (hpp and cpp):
+            return False
+        content = (self.app_path / "tui" / "TuiFileTinder.cpp").read_text()
+        return "ArrowLeft" in content or "mark_keep" in content
+    
+    def check_tui_whitelist(self) -> bool:
+        """Check if TUI Whitelist Manager exists"""
+        hpp = (self.app_path / "tui" / "TuiWhitelistManager.hpp").exists()
+        cpp = (self.app_path / "tui" / "TuiWhitelistManager.cpp").exists()
+        return hpp and cpp
+    
+    def check_tui_build_script(self) -> bool:
+        """Check if TUI build script exists"""
+        return (self.app_path / "scripts" / "build_tui.sh").exists()
     
     def run_test_suite(self, feature_name: str, tests: List):
         """Run a suite of tests for a feature"""
