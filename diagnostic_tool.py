@@ -217,7 +217,7 @@ class FeatureDiagnosticTool:
     
     def check_tui_build_script(self) -> bool:
         """Check if TUI build script exists"""
-        return (self.repo_path / "scripts" / "build_tui.sh").exists()
+        return (self.app_path / "scripts" / "build_tui.sh").exists()
     
     def run_test_suite(self, feature_name: str, tests: List):
         """Run a suite of tests for a feature"""
