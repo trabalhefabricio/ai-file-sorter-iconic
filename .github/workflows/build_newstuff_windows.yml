@@ -126,6 +126,10 @@ jobs:
           
           Write-Host "`n[OK] Windows SDK verification completed successfully"
 
+      # Setup MSVC environment - ensures C++ compiler is properly detected
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
       # Install Qt with built-in caching support
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
