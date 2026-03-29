@@ -55,6 +55,7 @@ File content–based sorting for certain file types is also in development.
   - [Categorization](#categorization)
     - [Categorization modes](#categorization-modes)
     - [Category whitelists](#category-whitelists)
+  - [Architecture](#architecture)
   - [Requirements](#requirements)
   - [Installation](#installation)
     - [Linux](#linux)
@@ -231,6 +232,24 @@ See also:
 - Manage lists (add, edit, remove) under **Settings → Manage category whitelists…**. A default list is auto-created only when no lists exist, and multiple named lists can be kept for different projects.
 - Keep each whitelist to roughly **15–20 categories/subcategories** to avoid overlong prompts on smaller local models. Use several narrower lists instead of a single very long one.
 - Whitelists apply in either categorization mode; pair them with **More consistent** when you want the strongest adherence to a constrained vocabulary.
+
+---
+
+## Architecture
+
+For developers and contributors interested in understanding how AI File Sorter is structured, see **[ARCHITECTURE.md](ARCHITECTURE.md)** for comprehensive documentation covering:
+
+- **Application Layers**: Presentation, Business Logic, and Data Access
+- **Core Components**: Detailed breakdown of all major classes and their responsibilities
+- **Data Flow**: How file categorization, user profiles, and learning work end-to-end
+- **LLM Integration**: Abstract interface and multiple provider implementations (Local, ChatGPT, Gemini)
+- **Database Architecture**: SQLite schema, caching strategy, and query patterns
+- **User Profile System**: How the app learns from your organization patterns
+- **Error Handling**: Type-safe error codes with user-friendly messages
+- **Threading Model**: UI and worker thread coordination
+- **Design Patterns**: Observer, Factory, Strategy, and Callback patterns used throughout
+
+The architecture document provides abstractions and explanations for each part of the application, making it easier to understand, extend, and contribute to the project.
 
 ---
 
