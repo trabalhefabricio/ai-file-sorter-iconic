@@ -1153,6 +1153,13 @@ void DatabaseManager::initialize_user_profile_schema() {
         sqlite3_free(error_msg);
     }
 
+    const char *create_profile_chars_index_sql =
+        "CREATE INDEX IF NOT EXISTS idx_profile_characteristics_profile ON profile_characteristics(profile_id);";
+    if (sqlite3_exec(db, create_profile_chars_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create profile characteristics index: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+
     const char *create_insights_index_sql =
         "CREATE INDEX IF NOT EXISTS idx_folder_insights_user ON folder_insights(user_id);";
     if (sqlite3_exec(db, create_insights_index_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
@@ -1276,6 +1283,25 @@ void DatabaseManager::initialize_user_profile_schema() {
     )";
     if (sqlite3_exec(db, user_profiles_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
         db_log(spdlog::level::err, "Failed to create user_profiles table: {}", error_msg);
+        sqlite3_free(error_msg);
+    }
+    
+    // Profile characteristics table for multi-profile support
+    const char *profile_characteristics_sql = R"(
+        CREATE TABLE IF NOT EXISTS profile_characteristics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL,
+            trait_name TEXT NOT NULL,
+            value TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            evidence TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(profile_id) REFERENCES user_profiles(profile_id) ON DELETE CASCADE,
+            UNIQUE(profile_id, trait_name, value)
+        );
+    )";
+    if (sqlite3_exec(db, profile_characteristics_sql, nullptr, nullptr, &error_msg) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to create profile_characteristics table: {}", error_msg);
         sqlite3_free(error_msg);
     }
     
@@ -2229,6 +2255,88 @@ bool DatabaseManager::delete_profile(int profile_id) {
     bool success = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return success;
+}
+
+bool DatabaseManager::save_profile_characteristic(int profile_id,
+                                                  const std::string& trait_name,
+                                                  const std::string& value,
+                                                  float confidence,
+                                                  const std::string& evidence) {
+    if (!db) return false;
+
+    const char *sql = R"(
+        INSERT INTO profile_characteristics (profile_id, trait_name, value, confidence, evidence, timestamp)
+        VALUES (?, ?, ?, ?, ?, DATETIME('now'))
+        ON CONFLICT(profile_id, trait_name, value) DO UPDATE SET
+            confidence = excluded.confidence,
+            evidence = excluded.evidence,
+            timestamp = excluded.timestamp;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare save profile characteristic: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_int(stmt, 1, profile_id);
+    sqlite3_bind_text(stmt, 2, trait_name.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, value.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 4, confidence);
+    sqlite3_bind_text(stmt, 5, evidence.c_str(), -1, SQLITE_TRANSIENT);
+
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    
+    if (!success) {
+        db_log(spdlog::level::err, "Failed to save profile characteristic: {}", sqlite3_errmsg(db));
+    }
+    
+    return success;
+}
+
+std::vector<DatabaseManager::ProfileCharacteristic> DatabaseManager::load_profile_characteristics(int profile_id) {
+    std::vector<ProfileCharacteristic> characteristics;
+    if (!db) return characteristics;
+
+    const char *sql = R"(
+        SELECT profile_id, trait_name, value, confidence, evidence, timestamp
+        FROM profile_characteristics
+        WHERE profile_id = ?
+        ORDER BY timestamp DESC;
+    )";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_log(spdlog::level::err, "Failed to prepare load profile characteristics: {}", sqlite3_errmsg(db));
+        return characteristics;
+    }
+
+    sqlite3_bind_int(stmt, 1, profile_id);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ProfileCharacteristic pc;
+        pc.profile_id = sqlite3_column_int(stmt, 0);
+        
+        const char* trait = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        pc.trait_name = trait ? trait : "";
+        
+        const char* val = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        pc.value = val ? val : "";
+        
+        pc.confidence = static_cast<float>(sqlite3_column_double(stmt, 3));
+        
+        const char* ev = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        pc.evidence = ev ? ev : "";
+        
+        const char* ts = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        pc.timestamp = ts ? ts : "";
+        
+        characteristics.push_back(pc);
+    }
+
+    sqlite3_finalize(stmt);
+    return characteristics;
 }
 
 bool DatabaseManager::record_correction(const UserCorrection& correction, int profile_id) {
