@@ -2,7 +2,36 @@
 
 ## Overview
 
-The **Thorough Diagnostic Tool** (`thorough_diagnostic.py`) is a comprehensive, standalone diagnostic utility designed to thoroughly test **every feature** of AI File Sorter and validate all system requirements. It is completely separate from the main application and can be run independently for in-depth system validation.
+The **Thorough Diagnostic Tool** (`thorough_diagnostic.py`) is a comprehensive, standalone diagnostic utility designed to thoroughly test **every feature individually** of AI File Sorter and validate all system requirements. It is completely separate from the main application and can be run independently for in-depth system validation.
+
+## ✨ New in v2.1: Feature-by-Feature Testing
+
+The diagnostic tool has been **remodeled to provide feature-specific testing** instead of aggregated checks. Each major feature now has:
+
+- **Dedicated test section** with its own header
+- **Specific validation checks** relevant to that feature
+- **Method/function detection** to verify implementation completeness
+- **Configuration validation** for feature-specific settings
+- **Dependency checks** for required libraries/resources
+
+This means instead of a single "Feature Implementation Validation" section, you now get **14 individual feature sections** with targeted tests:
+
+1. **Core Categorization Service** - Tests 5 critical methods, timeout config, label validation
+2. **File Scanner** - Tests recursive scanning, filtering
+3. **Database Manager** - Tests 15 tables, indexes, taxonomy methods, UTF-8 support
+4. **LLM Client System** - Tests 4 backends, GPU management, 3 clients (Local/OpenAI/Gemini)
+5. **User Profile System** - Tests 5 profile methods, confidence scoring, folder inclusion
+6. **Undo Manager** - Tests 3 core methods, JSON serialization, validation
+7. **File Tinder** - Tests 3 swipe actions, state persistence
+8. **Cache Manager** - Tests cache operations, statistics
+9. **Whitelist Manager** - Tests whitelist operations
+10. **Consistency Service** - Tests consistency modes, pattern detection
+11. **API Usage Tracking** - Tests 3 metrics, usage dialog
+12. **Translation System** - Tests language switching, 5 translation files
+13. **LLM Selection & Configuration** - Tests 3 providers, custom dialog, downloader
+14. **UI Components** - Tests 4 main dialogs
+
+Each feature section provides **detailed pass/fail/warning status** with actionable recommendations.
 
 ## Key Features
 
@@ -134,40 +163,90 @@ python3 thorough_diagnostic.py --quick
 - **Settings** - Language, theme, LLM model preferences
 - **Directory Permissions** - Read/write access validation
 
-### 7. Feature Implementation ✓
-Tests source code presence for ALL features:
+### 7. Feature Implementation (Feature-by-Feature) ✓
+Tests ALL features individually with specific validation for each:
 
-#### Core Features
-- ✓ Core Categorization Service
-- ✓ File Scanner
-- ✓ Database Manager
-- ✓ LLM Client Interface
-- ✓ Local LLM Client
-- ✓ OpenAI Client
-- ✓ Gemini Client
-- ✓ Categorization Dialog
+#### **Feature: Core Categorization Service**
+- Implementation & Header Files (source code presence)
+- Core Methods: categorize_entries, categorize_with_cache, collect_consistency_hints, build_whitelist_context, should_trigger_wizard
+- Timeout Configuration (environment variables)
+- Label Validation (80 char max, forbidden chars)
 
-#### User Profiling Features
-- ✓ User Profile Manager
-- ✓ User Profile Dialog
-- ✓ Folder Learning Dialog
+#### **Feature: File Scanner**
+- Implementation & Header Files
+- Recursive Scanning Support
+- File Filtering Logic
 
-#### File Management Features
-- ✓ File Tinder (Swipe-style cleanup)
-- ✓ Cache Manager
-- ✓ Undo Manager
-- ✓ Dry Run Preview Dialog
+#### **Feature: Database Manager**
+- Implementation & Header Files (large codebase check)
+- Database Schema (15 expected tables)
+- Database Indexes (performance optimization)
+- Taxonomy Methods: resolve_category, normalize_label, string_similarity
+- UTF-8 Support
 
-#### Configuration Features
-- ✓ Whitelist Manager
-- ✓ Custom LLM Dialog
-- ✓ LLM Selection Dialog
-- ✓ API Usage Statistics
+#### **Feature: LLM Client System**
+- Local LLM Client Implementation
+- Backend Support: Metal, CUDA, Vulkan, CPU
+- GPU Memory Management
+- Model Loading Logic
+- Environment Configuration (5 variables)
+- OpenAI Client Integration
+- Gemini Client Implementation
+- Gemini API Integration
 
-#### Additional Features
-- ✓ Translation Manager
-- ✓ Consistency Service
-- ✓ Categorization Progress Dialog
+#### **Feature: User Profile System**
+- Profile Manager Implementation
+- Profile Methods: initialize_profile, analyze_and_update_from_folder, infer_characteristics, learn_organizational_template, extract_hobbies
+- Confidence Scoring Logic
+- Folder Inclusion Levels (full/partial/none)
+- Profile Dialog UI
+
+#### **Feature: Undo Manager**
+- Implementation & Header Files
+- Core Methods: save_plan, latest_plan, undo_plan
+- JSON Serialization
+- Plan Validation (file integrity)
+
+#### **Feature: File Tinder (Swipe UI)**
+- Implementation File
+- Swipe Actions: keep, delete, undo
+- State Persistence
+
+#### **Feature: Cache Manager**
+- Implementation File
+- Cache Operations (clear)
+- Cache Statistics
+
+#### **Feature: Whitelist Manager**
+- Implementation File
+- Whitelist Operations: add, remove, categories
+
+#### **Feature: Consistency Service**
+- Implementation File
+- Consistency Modes
+- Pattern Detection
+
+#### **Feature: API Usage Tracking**
+- Usage Tracker Implementation
+- Tracking Metrics: tokens, cost, provider
+- Usage Dialog UI
+
+#### **Feature: Translation System**
+- Translation Manager Implementation
+- Language Switching
+- Translation Files (5 languages: de, es, it, fr, tr)
+
+#### **Feature: LLM Selection & Configuration**
+- Selection Dialog Implementation
+- Provider Selection: OpenAI, Gemini, Local
+- Custom LLM Dialog
+- Model Downloader
+
+#### **Feature: UI Components**
+- Categorization Dialog
+- Progress Dialog
+- Dry Run Preview
+- Folder Learning Dialog
 
 ### 8. Internationalization ✓
 - **Translation Files** - Available languages

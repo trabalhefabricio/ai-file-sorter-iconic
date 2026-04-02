@@ -131,6 +131,12 @@ build-test/
 thoroughdiagnostic_*.json
 thorough_diagnostic_*.html
 thorough_diagnostic_*.md
+thorough_diagnostic_*.json
 test_diagnostic_*.json
 test_diagnostic_*.html
 test_diagnostic_*.md
+diagnostic_*.json
+diagnostic_*.html
+diagnostic_*.md
+test_feature_report.json
+final_diagnostic.json

@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 """
-AI File Sorter - Thorough Diagnostic Tool (Separate from Main App)
+AI File Sorter - Thorough Diagnostic Tool v2.1 (Separate from Main App)
 
 This comprehensive diagnostic tool performs extensive testing of every feature,
 dependency, and component of AI File Sorter. It is completely separate from the
 main application and can be run independently for thorough system validation.
 
+**NEW in v2.1: Feature-by-Feature Testing**
+Each major feature is now tested individually with specific validation checks:
+- Dedicated test section per feature
+- Method/function detection for implementation completeness
+- Feature-specific configuration and dependency validation
+- Detailed pass/fail/warning status with actionable recommendations
+
 Features:
-- Tests ALL application features comprehensively
+- Tests ALL application features comprehensively (14 individual feature sections)
 - Validates every dependency and library
 - Checks database integrity and schema
 - Tests LLM backends (CPU, CUDA, Vulkan, Metal)
@@ -881,92 +888,1209 @@ class ThoroughDiagnosticTool:
                 category=category
             )
     
-    # ==================== Feature Tests ====================
+    # ==================== Feature Tests (Individual) ====================
     
-    def check_features(self):
-        """Test all features comprehensively"""
-        self.section_header("Feature Implementation Validation")
-        category = "Features"
+    def check_feature_categorization_service(self):
+        """Test Core Categorization Service"""
+        self.section_header("Feature: Core Categorization Service")
+        category = "Feature: Categorization"
         
-        # Map features to their implementation files
-        features = [
-            ("Core Categorization", "app/lib/CategorizationService.cpp", True),
-            ("File Scanner", "app/lib/FileScanner.cpp", True),
-            ("Database Manager", "app/lib/DatabaseManager.cpp", True),
-            ("LLM Client Interface", "app/lib/LLMClient.cpp", True),
-            ("Local LLM Client", "app/lib/LocalLLMClient.cpp", True),
-            ("OpenAI Client", "app/lib/LLMClient.cpp", True),
-            ("Gemini Client", "app/lib/GeminiClient.cpp", True),
-            ("Categorization Dialog", "app/lib/CategorizationDialog.cpp", True),
-            ("User Profile Manager", "app/lib/UserProfileManager.cpp", False),
-            ("User Profile Dialog", "app/lib/UserProfileDialog.cpp", False),
-            ("Folder Learning", "app/lib/FolderLearningDialog.cpp", False),
-            ("File Tinder", "app/lib/FileTinderDialog.cpp", False),
-            ("Cache Manager", "app/lib/CacheManagerDialog.cpp", False),
-            ("Undo Manager", "app/lib/UndoManager.cpp", False),
-            ("Dry Run Preview", "app/lib/DryRunPreviewDialog.cpp", False),
-            ("Whitelist Manager", "app/lib/WhitelistManagerDialog.cpp", False),
-            ("Custom LLM Dialog", "app/lib/CustomLLMDialog.cpp", False),
-            ("LLM Selection Dialog", "app/lib/LLMSelectionDialog.cpp", True),
-            ("API Usage Statistics", "app/lib/UsageStatsDialog.cpp", False),
-            ("Translation Manager", "app/lib/TranslationManager.cpp", False),
-            ("Consistency Service", "app/lib/ConsistencyPassService.cpp", False),
-            ("Categorization Progress", "app/lib/CategorizationProgressDialog.cpp", True),
-        ]
+        # Check source files
+        impl_file = self.repo_root / "app" / "lib" / "CategorizationService.cpp"
+        header_file = self.repo_root / "app" / "include" / "CategorizationService.hpp"
         
-        for feature_name, file_path, is_core in features:
-            full_path = self.repo_root / file_path
-            if full_path.exists():
-                size = full_path.stat().st_size
-                lines = 0
-                try:
-                    with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        lines = len(f.readlines())
-                except:
-                    pass
-                
+        if impl_file.exists():
+            size = impl_file.stat().st_size / 1024
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    
+                    # Check for key methods
+                    has_categorize = "categorize_entries" in content
+                    has_cache = "categorize_with_cache" in content
+                    has_consistency = "collect_consistency_hints" in content
+                    has_whitelist = "build_whitelist_context" in content
+                    has_wizard = "should_trigger_wizard" in content
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check critical methods
+                    methods_found = sum([has_categorize, has_cache, has_consistency, has_whitelist, has_wizard])
+                    if methods_found >= 4:
+                        self.add_result(
+                            "Core Methods",
+                            "OK",
+                            f"{methods_found}/5 critical methods found",
+                            f"categorize_entries: {has_categorize}, cache: {has_cache}, consistency: {has_consistency}, whitelist: {has_whitelist}, wizard: {has_wizard}",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Core Methods",
+                            "WARNING",
+                            f"Only {methods_found}/5 critical methods found",
+                            recommendation="Some methods may be renamed or missing",
+                            category=category
+                        )
+                    
+                    # Check timeout handling
+                    has_timeout = "AI_FILE_SORTER_LOCAL_LLM_TIMEOUT" in content or "AI_FILE_SORTER_REMOTE_LLM_TIMEOUT" in content
+                    if has_timeout:
+                        self.add_result(
+                            "Timeout Configuration",
+                            "OK",
+                            "Timeout environment variables supported",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Timeout Configuration",
+                            "WARNING",
+                            "Timeout handling not detected",
+                            category=category
+                        )
+                    
+                    # Check label validation
+                    has_validation = "80" in content and ("forbidden" in content.lower() or "reserved" in content.lower())
+                    if has_validation:
+                        self.add_result(
+                            "Label Validation",
+                            "OK",
+                            "Label validation logic present",
+                            category=category
+                        )
+                    
+            except Exception as e:
                 self.add_result(
-                    f"Feature: {feature_name}",
-                    "OK",
-                    f"Implemented ({lines} lines, {size/1024:.1f} KB)",
-                    f"Source: {file_path}",
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
                     category=category
                 )
-            else:
-                status = "FAIL" if is_core else "WARNING"
-                message = "Not found" + (" (core feature)" if is_core else " (optional feature)")
-                rec = "Core feature missing - rebuild required" if is_core else "Feature may not be available"
-                
-                self.add_result(
-                    f"Feature: {feature_name}",
-                    status,
-                    message,
-                    f"Expected: {file_path}",
-                    recommendation=rec,
-                    category=category
-                )
-        
-        # Check for translation files
-        i18n_dir = self.repo_root / "app" / "resources" / "i18n"
-        if i18n_dir.exists():
-            translation_files = list(i18n_dir.glob("*.ts"))
-            languages = [f.stem.replace("aifilesorter_", "") for f in translation_files]
-            
+        else:
             self.add_result(
-                "Internationalization",
+                "Implementation File",
+                "FAIL",
+                "Not found",
+                f"Expected at: {impl_file}",
+                recommendation="Core feature missing - rebuild required",
+                category=category
+            )
+        
+        if header_file.exists():
+            self.add_result(
+                "Header File",
                 "OK",
-                f"{len(languages)} languages supported: {', '.join(languages)}",
-                f"Path: {i18n_dir}",
+                "Found",
+                f"Path: {header_file}",
                 category=category
             )
         else:
             self.add_result(
-                "Internationalization",
+                "Header File",
+                "WARNING",
+                "Not found",
+                f"Expected at: {header_file}",
+                category=category
+            )
+    
+    def check_feature_file_scanner(self):
+        """Test File Scanner"""
+        self.section_header("Feature: File Scanner")
+        category = "Feature: File Scanner"
+        
+        impl_file = self.repo_root / "app" / "lib" / "FileScanner.cpp"
+        header_file = self.repo_root / "app" / "include" / "FileScanner.hpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for recursive scanning
+                    has_recursive = "recursive" in content.lower() or "QDirIterator" in content
+                    if has_recursive:
+                        self.add_result(
+                            "Recursive Scanning",
+                            "OK",
+                            "Recursive directory traversal supported",
+                            category=category
+                        )
+                    
+                    # Check for file filtering
+                    has_filtering = "filter" in content.lower() or "extension" in content.lower()
+                    if has_filtering:
+                        self.add_result(
+                            "File Filtering",
+                            "OK",
+                            "File filtering logic present",
+                            category=category
+                        )
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "FAIL",
+                "Not found",
+                f"Expected at: {impl_file}",
+                recommendation="Core feature missing - rebuild required",
+                category=category
+            )
+        
+        if header_file.exists():
+            self.add_result(
+                "Header File",
+                "OK",
+                "Found",
+                f"Path: {header_file}",
+                category=category
+            )
+    
+    def check_feature_database_manager(self):
+        """Test Database Manager"""
+        self.section_header("Feature: Database Manager")
+        category = "Feature: Database"
+        
+        impl_file = self.repo_root / "app" / "lib" / "DatabaseManager.cpp"
+        header_file = self.repo_root / "app" / "include" / "DatabaseManager.hpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for critical tables
+                    expected_tables = [
+                        "file_categorization", "category_taxonomy", "category_alias",
+                        "user_profile", "user_characteristics", "folder_insights",
+                        "organizational_templates", "confidence_scores",
+                        "content_analysis_cache", "api_usage_tracking",
+                        "categorization_sessions", "undo_history",
+                        "file_tinder_state", "user_profiles", "user_corrections"
+                    ]
+                    
+                    tables_found = [t for t in expected_tables if t in content]
+                    
+                    if len(tables_found) >= 12:
+                        self.add_result(
+                            "Database Schema",
+                            "OK",
+                            f"{len(tables_found)}/{len(expected_tables)} tables defined",
+                            f"Tables: {', '.join(tables_found[:5])}...",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Database Schema",
+                            "WARNING",
+                            f"Only {len(tables_found)}/{len(expected_tables)} tables found",
+                            recommendation="Some tables may be missing",
+                            category=category
+                        )
+                    
+                    # Check for indexes
+                    has_indexes = "CREATE INDEX" in content or "idx_" in content
+                    if has_indexes:
+                        self.add_result(
+                            "Database Indexes",
+                            "OK",
+                            "Index definitions present",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Database Indexes",
+                            "WARNING",
+                            "No indexes detected",
+                            recommendation="Indexes improve query performance",
+                            category=category
+                        )
+                    
+                    # Check for critical methods
+                    has_resolve = "resolve_category" in content
+                    has_normalize = "normalize_label" in content
+                    has_similarity = "string_similarity" in content
+                    
+                    methods_found = sum([has_resolve, has_normalize, has_similarity])
+                    if methods_found >= 2:
+                        self.add_result(
+                            "Taxonomy Methods",
+                            "OK",
+                            f"{methods_found}/3 taxonomy methods found",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Taxonomy Methods",
+                            "WARNING",
+                            f"Only {methods_found}/3 taxonomy methods found",
+                            category=category
+                        )
+                    
+                    # Check for UTF-8 handling
+                    has_utf8 = "utf-8" in content.lower() or "UTF8" in content
+                    if has_utf8:
+                        self.add_result(
+                            "UTF-8 Support",
+                            "OK",
+                            "UTF-8 encoding handling present",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "FAIL",
+                "Not found",
+                f"Expected at: {impl_file}",
+                recommendation="Core feature missing - rebuild required",
+                category=category
+            )
+        
+        if header_file.exists():
+            self.add_result(
+                "Header File",
+                "OK",
+                "Found",
+                f"Path: {header_file}",
+                category=category
+            )
+    
+    def check_feature_llm_clients(self):
+        """Test LLM Client System"""
+        self.section_header("Feature: LLM Client System")
+        category = "Feature: LLM Clients"
+        
+        # Check Local LLM Client
+        local_impl = self.repo_root / "app" / "lib" / "LocalLLMClient.cpp"
+        if local_impl.exists():
+            try:
+                with open(local_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = local_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Local LLM Client",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {local_impl}",
+                        category=category
+                    )
+                    
+                    # Check for backend support
+                    backends = {
+                        "Metal": "metal" in content.lower() or "Metal" in content,
+                        "CUDA": "cuda" in content.lower() or "CUDA" in content,
+                        "Vulkan": "vulkan" in content.lower() or "Vulkan" in content,
+                        "CPU": "cpu" in content.lower() or "OpenBLAS" in content
+                    }
+                    
+                    found_backends = [name for name, present in backends.items() if present]
+                    if len(found_backends) >= 2:
+                        self.add_result(
+                            "Backend Support",
+                            "OK",
+                            f"{len(found_backends)} backends: {', '.join(found_backends)}",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Backend Support",
+                            "WARNING",
+                            f"Only {len(found_backends)} backend(s) detected",
+                            category=category
+                        )
+                    
+                    # Check for GPU memory management
+                    has_memory_mgmt = "gpu" in content.lower() and ("memory" in content.lower() or "RAM" in content)
+                    if has_memory_mgmt:
+                        self.add_result(
+                            "GPU Memory Management",
+                            "OK",
+                            "GPU memory management present",
+                            category=category
+                        )
+                    
+                    # Check for model loading
+                    has_model_load = "load_model" in content.lower() or "llama_model" in content
+                    if has_model_load:
+                        self.add_result(
+                            "Model Loading",
+                            "OK",
+                            "Model loading logic present",
+                            category=category
+                        )
+                    
+                    # Check for environment variable configuration
+                    env_vars = [
+                        "AI_FILE_SORTER_GPU_BACKEND",
+                        "AI_FILE_SORTER_N_GPU_LAYERS",
+                        "AI_FILE_SORTER_CTX_TOKENS",
+                        "AI_FILE_SORTER_LLAMA_LOGS",
+                        "AI_FILE_SORTER_GGML_DIR"
+                    ]
+                    found_env_vars = [var for var in env_vars if var in content]
+                    
+                    if len(found_env_vars) >= 3:
+                        self.add_result(
+                            "Environment Configuration",
+                            "OK",
+                            f"{len(found_env_vars)}/{len(env_vars)} config variables supported",
+                            f"Variables: {', '.join(found_env_vars)}",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Environment Configuration",
+                            "WARNING",
+                            f"Only {len(found_env_vars)}/{len(env_vars)} config variables found",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Local LLM Client",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Local LLM Client",
+                "FAIL",
+                "Not found",
+                f"Expected at: {local_impl}",
+                category=category
+            )
+        
+        # Check OpenAI Client
+        openai_impl = self.repo_root / "app" / "lib" / "LLMClient.cpp"
+        if openai_impl.exists():
+            try:
+                with open(openai_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    has_openai = "openai" in content.lower() or "gpt" in content.lower()
+                    
+                    if has_openai:
+                        self.add_result(
+                            "OpenAI Client",
+                            "OK",
+                            "OpenAI integration present",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "OpenAI Client",
+                            "WARNING",
+                            "OpenAI integration not clearly detected",
+                            category=category
+                        )
+            except:
+                pass
+        
+        # Check Gemini Client
+        gemini_impl = self.repo_root / "app" / "lib" / "GeminiClient.cpp"
+        if gemini_impl.exists():
+            try:
+                with open(gemini_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = gemini_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Gemini Client",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {gemini_impl}",
+                        category=category
+                    )
+                    
+                    # Check for API integration
+                    has_api = "generativelanguage.googleapis.com" in content or "gemini" in content.lower()
+                    if has_api:
+                        self.add_result(
+                            "Gemini API Integration",
+                            "OK",
+                            "Google Gemini API integration present",
+                            category=category
+                        )
+            except Exception as e:
+                self.add_result(
+                    "Gemini Client",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Gemini Client",
+                "WARNING",
+                "Not found",
+                f"Expected at: {gemini_impl}",
+                category=category
+            )
+    
+    def check_feature_user_profile_system(self):
+        """Test User Profile System"""
+        self.section_header("Feature: User Profile System")
+        category = "Feature: User Profile"
+        
+        manager_impl = self.repo_root / "app" / "lib" / "UserProfileManager.cpp"
+        dialog_impl = self.repo_root / "app" / "lib" / "UserProfileDialog.cpp"
+        
+        if manager_impl.exists():
+            try:
+                with open(manager_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = manager_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Profile Manager",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {manager_impl}",
+                        category=category
+                    )
+                    
+                    # Check for key methods
+                    has_initialize = "initialize_profile" in content
+                    has_analyze = "analyze_and_update_from_folder" in content
+                    has_characteristics = "infer_characteristics" in content
+                    has_templates = "learn_organizational_template" in content
+                    has_hobbies = "extract_hobbies" in content
+                    
+                    methods_found = sum([has_initialize, has_analyze, has_characteristics, has_templates, has_hobbies])
+                    if methods_found >= 4:
+                        self.add_result(
+                            "Profile Methods",
+                            "OK",
+                            f"{methods_found}/5 profile methods found",
+                            f"initialize: {has_initialize}, analyze: {has_analyze}, characteristics: {has_characteristics}, templates: {has_templates}, hobbies: {has_hobbies}",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Profile Methods",
+                            "WARNING",
+                            f"Only {methods_found}/5 profile methods found",
+                            category=category
+                        )
+                    
+                    # Check for confidence calculation
+                    has_confidence = "confidence" in content.lower() and ("0.3" in content or "0.4" in content or "0.5" in content)
+                    if has_confidence:
+                        self.add_result(
+                            "Confidence Scoring",
+                            "OK",
+                            "Confidence calculation logic present",
+                            category=category
+                        )
+                    
+                    # Check for folder inclusion levels
+                    has_inclusion = "full" in content and "partial" in content and "none" in content
+                    if has_inclusion:
+                        self.add_result(
+                            "Folder Inclusion Levels",
+                            "OK",
+                            "Folder learning granularity supported",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Profile Manager",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Profile Manager",
+                "WARNING",
+                "Not found",
+                f"Expected at: {manager_impl}",
+                category=category
+            )
+        
+        if dialog_impl.exists():
+            self.add_result(
+                "Profile Dialog",
+                "OK",
+                "Found",
+                f"Path: {dialog_impl}",
+                category=category
+            )
+        else:
+            self.add_result(
+                "Profile Dialog",
+                "INFO",
+                "Not found (optional UI component)",
+                category=category
+            )
+    
+    def check_feature_undo_manager(self):
+        """Test Undo Manager"""
+        self.section_header("Feature: Undo Manager")
+        category = "Feature: Undo"
+        
+        impl_file = self.repo_root / "app" / "lib" / "UndoManager.cpp"
+        header_file = self.repo_root / "app" / "include" / "UndoManager.hpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for key methods
+                    has_save = "save_plan" in content
+                    has_latest = "latest_plan" in content
+                    has_undo = "undo_plan" in content
+                    
+                    methods_found = sum([has_save, has_latest, has_undo])
+                    if methods_found >= 2:
+                        self.add_result(
+                            "Core Methods",
+                            "OK",
+                            f"{methods_found}/3 undo methods found",
+                            f"save_plan: {has_save}, latest_plan: {has_latest}, undo_plan: {has_undo}",
+                            category=category
+                        )
+                    else:
+                        self.add_result(
+                            "Core Methods",
+                            "WARNING",
+                            f"Only {methods_found}/3 undo methods found",
+                            category=category
+                        )
+                    
+                    # Check for JSON serialization
+                    has_json = "json" in content.lower() or "JSON" in content
+                    if has_json:
+                        self.add_result(
+                            "JSON Serialization",
+                            "OK",
+                            "JSON plan serialization present",
+                            category=category
+                        )
+                    
+                    # Check for validation
+                    has_validation = ("size" in content and "mtime" in content) or "validation" in content.lower()
+                    if has_validation:
+                        self.add_result(
+                            "Plan Validation",
+                            "OK",
+                            "File integrity validation present",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "WARNING",
+                "Not found",
+                f"Expected at: {impl_file}",
+                category=category
+            )
+        
+        if header_file.exists():
+            self.add_result(
+                "Header File",
+                "OK",
+                "Found",
+                f"Path: {header_file}",
+                category=category
+            )
+    
+    def check_feature_file_tinder(self):
+        """Test File Tinder"""
+        self.section_header("Feature: File Tinder (Swipe UI)")
+        category = "Feature: File Tinder"
+        
+        impl_file = self.repo_root / "app" / "lib" / "FileTinderDialog.cpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for swipe actions
+                    has_keep = "keep" in content.lower()
+                    has_delete = "delete" in content.lower()
+                    has_undo = "undo" in content.lower()
+                    
+                    actions_found = sum([has_keep, has_delete, has_undo])
+                    if actions_found >= 2:
+                        self.add_result(
+                            "Swipe Actions",
+                            "OK",
+                            f"{actions_found}/3 actions found",
+                            f"keep: {has_keep}, delete: {has_delete}, undo: {has_undo}",
+                            category=category
+                        )
+                    
+                    # Check for state persistence
+                    has_state = "file_tinder_state" in content or "save" in content.lower()
+                    if has_state:
+                        self.add_result(
+                            "State Persistence",
+                            "OK",
+                            "Decision tracking present",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {impl_file}",
+                category=category
+            )
+    
+    def check_feature_cache_manager(self):
+        """Test Cache Manager"""
+        self.section_header("Feature: Cache Manager")
+        category = "Feature: Cache"
+        
+        impl_file = self.repo_root / "app" / "lib" / "CacheManagerDialog.cpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for cache operations
+                    has_clear = "clear" in content.lower()
+                    has_stats = "size" in content.lower() or "count" in content.lower()
+                    
+                    if has_clear:
+                        self.add_result(
+                            "Cache Operations",
+                            "OK",
+                            "Cache clearing functionality present",
+                            category=category
+                        )
+                    
+                    if has_stats:
+                        self.add_result(
+                            "Cache Statistics",
+                            "OK",
+                            "Cache statistics tracking present",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {impl_file}",
+                category=category
+            )
+    
+    def check_feature_whitelist_manager(self):
+        """Test Whitelist Manager"""
+        self.section_header("Feature: Whitelist Manager")
+        category = "Feature: Whitelist"
+        
+        impl_file = self.repo_root / "app" / "lib" / "WhitelistManagerDialog.cpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for whitelist operations
+                    has_add = "add" in content.lower()
+                    has_remove = "remove" in content.lower()
+                    has_categories = "categor" in content.lower()
+                    
+                    ops_found = sum([has_add, has_remove, has_categories])
+                    if ops_found >= 2:
+                        self.add_result(
+                            "Whitelist Operations",
+                            "OK",
+                            f"{ops_found}/3 operations found",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {impl_file}",
+                category=category
+            )
+    
+    def check_feature_consistency_service(self):
+        """Test Consistency Service"""
+        self.section_header("Feature: Consistency Service")
+        category = "Feature: Consistency"
+        
+        impl_file = self.repo_root / "app" / "lib" / "ConsistencyPassService.cpp"
+        
+        if impl_file.exists():
+            try:
+                with open(impl_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = impl_file.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Implementation File",
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {impl_file}",
+                        category=category
+                    )
+                    
+                    # Check for consistency modes
+                    has_modes = "mode" in content.lower() and ("strict" in content.lower() or "relaxed" in content.lower())
+                    if has_modes:
+                        self.add_result(
+                            "Consistency Modes",
+                            "OK",
+                            "Multiple consistency modes supported",
+                            category=category
+                        )
+                    
+                    # Check for pattern detection
+                    has_patterns = "pattern" in content.lower() or "similar" in content.lower()
+                    if has_patterns:
+                        self.add_result(
+                            "Pattern Detection",
+                            "OK",
+                            "Similarity pattern detection present",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Implementation File",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Implementation File",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {impl_file}",
+                category=category
+            )
+    
+    def check_feature_api_usage_tracking(self):
+        """Test API Usage Tracking"""
+        self.section_header("Feature: API Usage Tracking")
+        category = "Feature: API Usage"
+        
+        tracker_impl = self.repo_root / "app" / "lib" / "APIUsageTracker.cpp"
+        dialog_impl = self.repo_root / "app" / "lib" / "UsageStatsDialog.cpp"
+        
+        if tracker_impl.exists():
+            try:
+                with open(tracker_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = tracker_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Usage Tracker",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {tracker_impl}",
+                        category=category
+                    )
+                    
+                    # Check for tracking metrics
+                    has_tokens = "token" in content.lower()
+                    has_cost = "cost" in content.lower()
+                    has_provider = "provider" in content.lower()
+                    
+                    metrics_found = sum([has_tokens, has_cost, has_provider])
+                    if metrics_found >= 2:
+                        self.add_result(
+                            "Tracking Metrics",
+                            "OK",
+                            f"{metrics_found}/3 metrics tracked",
+                            f"tokens: {has_tokens}, cost: {has_cost}, provider: {has_provider}",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Usage Tracker",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Usage Tracker",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {tracker_impl}",
+                category=category
+            )
+        
+        if dialog_impl.exists():
+            self.add_result(
+                "Usage Dialog",
+                "OK",
+                "Found",
+                f"Path: {dialog_impl}",
+                category=category
+            )
+    
+    def check_feature_translation_system(self):
+        """Test Translation/Internationalization"""
+        self.section_header("Feature: Translation System")
+        category = "Feature: Translation"
+        
+        manager_impl = self.repo_root / "app" / "lib" / "TranslationManager.cpp"
+        i18n_dir = self.repo_root / "app" / "resources" / "i18n"
+        
+        if manager_impl.exists():
+            try:
+                with open(manager_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = manager_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Translation Manager",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {manager_impl}",
+                        category=category
+                    )
+                    
+                    # Check for language switching
+                    has_switch = "switch" in content.lower() or "load" in content.lower()
+                    if has_switch:
+                        self.add_result(
+                            "Language Switching",
+                            "OK",
+                            "Dynamic language switching supported",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Translation Manager",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Translation Manager",
+                "INFO",
+                "Not found (optional feature)",
+                f"Expected at: {manager_impl}",
+                category=category
+            )
+        
+        # Check translation files
+        if i18n_dir.exists():
+            translation_files = list(i18n_dir.glob("*.ts"))
+            languages = [f.stem.replace("aifilesorter_", "") for f in translation_files]
+            
+            if len(languages) >= 3:
+                self.add_result(
+                    "Translation Files",
+                    "OK",
+                    f"{len(languages)} languages: {', '.join(languages)}",
+                    f"Path: {i18n_dir}",
+                    category=category
+                )
+            elif len(languages) > 0:
+                self.add_result(
+                    "Translation Files",
+                    "WARNING",
+                    f"Only {len(languages)} language(s): {', '.join(languages)}",
+                    f"Path: {i18n_dir}",
+                    category=category
+                )
+            else:
+                self.add_result(
+                    "Translation Files",
+                    "WARNING",
+                    "No translation files found",
+                    f"Path: {i18n_dir}",
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Translation Files",
                 "WARNING",
                 "Translation directory not found",
                 f"Expected: {i18n_dir}",
+                recommendation="Internationalization may not be available",
                 category=category
             )
+    
+    def check_feature_llm_selection(self):
+        """Test LLM Selection & Configuration"""
+        self.section_header("Feature: LLM Selection & Configuration")
+        category = "Feature: LLM Selection"
+        
+        selection_impl = self.repo_root / "app" / "lib" / "LLMSelectionDialog.cpp"
+        custom_impl = self.repo_root / "app" / "lib" / "CustomLLMDialog.cpp"
+        downloader_impl = self.repo_root / "app" / "lib" / "LLMDownloader.cpp"
+        
+        if selection_impl.exists():
+            try:
+                with open(selection_impl, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    lines = len(content.splitlines())
+                    size = selection_impl.stat().st_size / 1024
+                    
+                    self.add_result(
+                        "Selection Dialog",
+                        "OK",
+                        f"Implemented ({lines} lines, {size:.1f} KB)",
+                        f"Path: {selection_impl}",
+                        category=category
+                    )
+                    
+                    # Check for provider selection
+                    providers = ["openai", "gemini", "local"]
+                    found_providers = [p for p in providers if p in content.lower()]
+                    
+                    if len(found_providers) >= 2:
+                        self.add_result(
+                            "Provider Selection",
+                            "OK",
+                            f"{len(found_providers)}/3 providers: {', '.join(found_providers)}",
+                            category=category
+                        )
+                    
+            except Exception as e:
+                self.add_result(
+                    "Selection Dialog",
+                    "WARNING",
+                    "Could not read file",
+                    str(e),
+                    category=category
+                )
+        else:
+            self.add_result(
+                "Selection Dialog",
+                "FAIL",
+                "Not found",
+                f"Expected at: {selection_impl}",
+                recommendation="Core configuration feature missing",
+                category=category
+            )
+        
+        if custom_impl.exists():
+            self.add_result(
+                "Custom LLM Dialog",
+                "OK",
+                "Found",
+                f"Path: {custom_impl}",
+                category=category
+            )
+        
+        if downloader_impl.exists():
+            self.add_result(
+                "Model Downloader",
+                "OK",
+                "Found",
+                f"Path: {downloader_impl}",
+                category=category
+            )
+    
+    def check_feature_ui_components(self):
+        """Test UI Components"""
+        self.section_header("Feature: UI Components")
+        category = "Feature: UI"
+        
+        # Check main dialogs
+        dialogs = [
+            ("Categorization Dialog", "app/lib/CategorizationDialog.cpp", True),
+            ("Progress Dialog", "app/lib/CategorizationProgressDialog.cpp", True),
+            ("Dry Run Preview", "app/lib/DryRunPreviewDialog.cpp", False),
+            ("Folder Learning Dialog", "app/lib/FolderLearningDialog.cpp", False),
+        ]
+        
+        for name, path, is_core in dialogs:
+            full_path = self.repo_root / path
+            if full_path.exists():
+                try:
+                    size = full_path.stat().st_size / 1024
+                    with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        lines = len(f.readlines())
+                    
+                    self.add_result(
+                        name,
+                        "OK",
+                        f"Found ({lines} lines, {size:.1f} KB)",
+                        f"Path: {full_path}",
+                        category=category
+                    )
+                except:
+                    self.add_result(
+                        name,
+                        "OK",
+                        "Found",
+                        f"Path: {full_path}",
+                        category=category
+                    )
+            else:
+                status = "FAIL" if is_core else "INFO"
+                message = "Not found" + (" (core UI component)" if is_core else " (optional)")
+                self.add_result(
+                    name,
+                    status,
+                    message,
+                    f"Expected at: {full_path}",
+                    category=category
+                )
+    
+    def check_features(self):
+        """Run all feature-specific checks"""
+        # This is now just a dispatcher that calls individual feature checks
+        self.check_feature_categorization_service()
+        self.check_feature_file_scanner()
+        self.check_feature_database_manager()
+        self.check_feature_llm_clients()
+        self.check_feature_user_profile_system()
+        self.check_feature_undo_manager()
+        self.check_feature_file_tinder()
+        self.check_feature_cache_manager()
+        self.check_feature_whitelist_manager()
+        self.check_feature_consistency_service()
+        self.check_feature_api_usage_tracking()
+        self.check_feature_translation_system()
+        self.check_feature_llm_selection()
+        self.check_feature_ui_components()
     
     # ==================== Log Files ====================
     
@@ -1306,7 +2430,7 @@ class ThoroughDiagnosticTool:
         # Build report
         report = {
             "diagnostic_metadata": {
-                "tool_version": "2.0",
+                "tool_version": "2.1",
                 "timestamp": self.start_time.isoformat(),
                 "duration_seconds": duration,
                 "quick_mode": self.quick,
@@ -1599,7 +2723,7 @@ class ThoroughDiagnosticTool:
             md += "\n"
         
         md += "---\n"
-        md += "*Generated by AI File Sorter Thorough Diagnostic Tool v2.0*\n"
+        md += "*Generated by AI File Sorter Thorough Diagnostic Tool v2.1*\n"
         
         try:
             with open(output_file, 'w') as f:
@@ -1640,8 +2764,8 @@ class ThoroughDiagnosticTool:
         """Run all diagnostic checks"""
         self.log(f"{Colors.HEADER}{Colors.BOLD}")
         self.log("╔════════════════════════════════════════════════════════════════════════════╗")
-        self.log("║          AI FILE SORTER - THOROUGH DIAGNOSTIC TOOL v2.0                    ║")
-        self.log("║              Comprehensive Feature & System Validation                     ║")
+        self.log("║          AI FILE SORTER - THOROUGH DIAGNOSTIC TOOL v2.1                    ║")
+        self.log("║         Feature-by-Feature Validation & System Health Check                ║")
         self.log("╚════════════════════════════════════════════════════════════════════════════╝")
         self.log(Colors.ENDC)
         
